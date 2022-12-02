@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func handle_some(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func handleIndex(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	_, err := fmt.Fprint(w, "Hello, world!")
 	if err != nil {
 		return
@@ -16,6 +16,6 @@ func handle_some(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 func main() {
 	router := httprouter.New()
-	router.GET("/", handle_some)
+	router.GET("/", handleIndex)
 	log.Fatal(http.ListenAndServe("0.0.0.0:8080", router))
 }
