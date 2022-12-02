@@ -1,0 +1,14 @@
+add income
+add outcome
+
+automatic archive previous month
+
+view:
+ show all transactions for this month
+				       for previous month
+				       etc
+
+db:
+ transaction:
+ amount, currency, (display additionally in base currency) description, date, attachments
+
