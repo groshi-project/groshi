@@ -1,14 +1,19 @@
-add income
-add outcome
+database objects:
 
-automatic archive previous month
+users: // there should be default user root
+    fields:
+        login, password
+    actions:
+        create
+        delete
+        edit
+        get
 
-view:
- show all transactions for this month
-				       for previous month
-				       etc
-
-db:
- transaction:
- amount, currency, (display additionally in base currency) description, date, attachments
-
+transactions:
+    fields:
+        amount, currency, description, date, file attachments
+    actions:
+        create
+        delete
+        edit
+        get (with filters and pagination)
