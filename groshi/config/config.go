@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"github.com/jieggii/groshi/groshi/logger"
 	"os"
 	"reflect"
@@ -20,7 +19,16 @@ type Config struct { // todo: parse config source according to tags, escape from
 }
 
 func ReadFromEnv() *Config {
-	config := Config{}
+	config := Config{
+		Host: "0.0.0.0",
+		Port: 8080,
+
+		MongoHost:   "localhost",
+		MongoPort:   27017,
+		MongoDBName: "groshi",
+
+		SuperuserPassword: "password123",
+	} // todo
 	var missingEnvVars []string
 	var mustBeIntVars []string
 
@@ -52,10 +60,10 @@ func ReadFromEnv() *Config {
 		}
 	}
 
-	if len(missingEnvVars)+len(mustBeIntVars) != 0 {
-		fmt.Printf("Missing: %v.\n", missingEnvVars)
-		fmt.Printf("Must be int: %v.\n", mustBeIntVars)
-		panic("Env config error")
-	} // todo
+	//if len(missingEnvVars)+len(mustBeIntVars) != 0 {
+	//	fmt.Printf("Missing: %v.\n", missingEnvVars)
+	//	fmt.Printf("Must be int: %v.\n", mustBeIntVars)
+	//	panic("Env config error")
+	//} // todo
 	return &config
 }
