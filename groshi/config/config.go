@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"github.com/jieggii/groshi/groshi/logger"
 	"os"
 	"reflect"
@@ -8,8 +9,9 @@ import (
 )
 
 type Config struct { // todo: parse config source according to tags, escape from code replication
-	Host string `env:"GROSHI_HOST"`
-	Port int    `env:"GROSHI_PORT"`
+	Host         string `env:"GROSHI_HOST"`
+	Port         int    `env:"GROSHI_PORT"`
+	JWTSecretKey []byte `env:"GROSHI_JWT_SECRET_KEY"`
 
 	MongoHost   string `env:"GROSHI_MONGO_HOST"`
 	MongoPort   int    `env:"GROSHI_MONGO_PORT"`
@@ -20,8 +22,9 @@ type Config struct { // todo: parse config source according to tags, escape from
 
 func ReadFromEnv() *Config {
 	config := Config{
-		Host: "0.0.0.0",
-		Port: 8080,
+		Host:         "0.0.0.0",
+		Port:         8080,
+		JWTSecretKey: []byte("secret-key"),
 
 		MongoHost:   "localhost",
 		MongoPort:   27017,
@@ -46,6 +49,7 @@ func ReadFromEnv() *Config {
 		}
 		fieldValueObj := reflect.ValueOf(&config).Elem().Field(i)
 		fieldType := fieldValueObj.Type().Name()
+		fmt.Println(fieldType)
 		if fieldType == "int" {
 			n, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
@@ -55,6 +59,8 @@ func ReadFromEnv() *Config {
 			}
 		} else if fieldType == "string" {
 			fieldValueObj.SetString(value)
+		} else if fieldType == "bytes" {
+			fieldValueObj.SetBytes([]byte(value))
 		} else {
 			logger.Fatal.Panicf("Unimplemented Config struct type %v.", fieldType)
 		}
