@@ -2,32 +2,42 @@ package database
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
 )
 
-var users *mongo.Collection
-var transactions *mongo.Collection
+var ctx = context.Background()
+var db *bun.DB
 
-var ctx = context.TODO()
-
-func buildURI(host string, port int) string {
-	return fmt.Sprintf("mongodb://%v:%v/", host, port)
+func createTables(db *bun.DB) error {
+	_, errUsers := db.NewCreateTable().IfNotExists().Model((*User)(nil)).Exec(ctx)
+	_, errTransactions := db.NewCreateTable().IfNotExists().Model((*Transaction)(nil)).Exec(ctx)
+	if errUsers != nil || errTransactions != nil {
+		return errors.New("could not create necessary tables")
+	}
+	return nil
 }
 
-func Connect(host string, port int, dbName string) error {
-	clientOptions := options.Client().ApplyURI(buildURI(host, port))
-	client, err := mongo.Connect(ctx, clientOptions)
-	if err != nil {
+func Initialize(host string, port int, username string, password string, dbName string) error {
+	dsn := fmt.Sprintf(
+		"postgres://%v:%v@%v:%v/%v?sslmode=disable",
+		username, password, host, port, dbName,
+	)
+	pgdb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+	if err := pgdb.Ping(); err != nil {
+		return err
+		//logger.Fatal.Fatalf("Could not ping database.")
+	}
+	db = bun.NewDB(pgdb, pgdialect.New())
+
+	// Print all queries to stdout.
+	//db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
+	if err := createTables(db); err != nil {
 		return err
 	}
-	err = client.Ping(ctx, nil)
-	if err != nil {
-		return err
-	}
-	db := client.Database(dbName)
-	users = db.Collection("users")
-	transactions = db.Collection("transactions")
 	return nil
 }

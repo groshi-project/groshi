@@ -31,10 +31,6 @@ func GenerateJWT(username string) (string, error) {
 	return tokenString, nil
 }
 
-//func GetJWT(headers http.Header) {
-//
-//}
-
 func ParseJWT(tokenString string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {

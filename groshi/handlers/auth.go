@@ -5,6 +5,11 @@ import (
 	"net/http"
 )
 
-func Auth(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+type credentials struct {
+	Username string
+	Password string
+}
 
+func Auth(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	//request.Body
 }

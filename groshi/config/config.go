@@ -9,27 +9,31 @@ import (
 )
 
 type Config struct { // todo: parse config source according to tags, escape from code replication
-	Host         string `env:"GROSHI_HOST"`
-	Port         int    `env:"GROSHI_PORT"`
-	JWTSecretKey []byte `env:"GROSHI_JWT_SECRET_KEY"`
+	Host string `env:"GROSHI_HOST"`
+	Port int    `env:"GROSHI_PORT"`
 
-	MongoHost   string `env:"GROSHI_MONGO_HOST"`
-	MongoPort   int    `env:"GROSHI_MONGO_PORT"`
-	MongoDBName string `env:"GROSHI_MONGO_DB_NAME"`
+	PostgresHost         string `env:"GROSHI_MONGO_HOST"`
+	PostgresPort         int    `env:"GROSHI_MONGO_PORT"`
+	PostgresUsername     string `env:"GROSHI_MONGO_DB_NAME"`
+	PostgresPassword     string `env:"GROSHI_MONGO_DB_NAME"`
+	PostgresDatabaseName string `env:"GROSHI_MONGO_DB_NAME"`
 
+	JWTSecretKey      []byte `env:"GROSHI_JWT_SECRET_KEY"`
 	SuperuserPassword string `env:"GROSHI_SUPERUSER_PASSWORD"`
 }
 
 func ReadFromEnv() *Config {
 	config := Config{
-		Host:         "0.0.0.0",
-		Port:         8080,
-		JWTSecretKey: []byte("secret-key"),
+		Host: "0.0.0.0",
+		Port: 8080,
 
-		MongoHost:   "localhost",
-		MongoPort:   27017,
-		MongoDBName: "groshi",
+		PostgresHost:         "localhost",
+		PostgresPort:         5432,
+		PostgresUsername:     "postgres",
+		PostgresPassword:     "",
+		PostgresDatabaseName: "groshi",
 
+		JWTSecretKey:      []byte("secret-key"),
 		SuperuserPassword: "password123",
 	} // todo
 	var missingEnvVars []string

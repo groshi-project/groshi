@@ -1,18 +1,33 @@
 package database
 
+import "github.com/uptrace/bun"
+
 type Currency string
 
-type User struct {
-	Username    string `json:"username"`
-	Password    string `json:"password"`
-	IsSuperuser bool   `json:"is_superuser"`
+//type User struct {
+//	bun.BaseModel `bun:"table:users,alias:u"`
+//
+//	ID	 int64  `bun:",pk,autoincrement"`
+//	Name string
+//}
 
-	BaseCurrency Currency `json:"base_currency"`
+type User struct {
+	bun.BaseModel `bun:"table:users"`
+	ID            int64 `bun:",pk,autoincrement"`
+
+	Username    string
+	Password    string
+	IsSuperuser bool
+
+	BaseCurrency Currency
 }
 
 type Transaction struct {
-	Amount      int      `json:"amount"`
-	Currency    Currency `json:"currency"`
-	Description string   `json:"description"`
-	Timestamp   int8     `json:"timestamp"`
+	bun.BaseModel `bun:"table:transactions"`
+	ID            int64 `bun:",pk,autoincrement"`
+
+	UUID      string
+	Amount    int
+	Currency  Currency
+	Timestamp int
 }

@@ -1,0 +1,26 @@
+$ means methods allowed only to superusers
+- or *nothing* means methods allowed to usual users and superusers
+
+Authorization
+- /auth
+    username, password
+
+Users:
+$ post   /user/create
+    username, password, base_currency, is_superuser
+
+- get    /user/:username
+$ get    /user/list
+    # pagination params
+
+- put    /user/:username/update
+    username, password, base_currency, $is_superuser
+
+- delete /user/:username/delete
+
+Transactions:
+- post   /transaction/create
+- get    /transaction/:id
+- get    /transaction/list
+- put    /transaction/:id/update
+- delete /transaction/:id/delete
