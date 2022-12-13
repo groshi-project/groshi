@@ -26,20 +26,25 @@ func startHTTPServer(host string, port int) {
 	}
 }
 
+func initializeApp(cfg *config.Config) {
+	jwt.SecretKey = cfg.JWTSecretKey
+	if err := database.Connect(
+		cfg.PostgresHost,
+		cfg.PostgresPort,
+		cfg.PostgresUser,
+		cfg.PostgresPassword,
+		cfg.PostgresDatabase,
+	); err != nil {
+		logger.Fatal.Fatalf("Failed to connect to PostgreSQL database \"%v\" at %v:%v: %v.", cfg.PostgresDatabase, cfg.PostgresHost, cfg.PostgresPort, err)
+	}
+	if err := database.Initialize(); err != nil {
+		logger.Fatal.Fatalf("Failed to initialize PostgreSQL database \"%v\" at %v:%v: %v.", cfg.PostgresDatabase, cfg.PostgresHost, cfg.PostgresPort, err)
+	}
+}
+
 func main() {
 	logger.Info.Println("Starting groshi server.")
 	cfg := config.ReadFromEnv()
-	jwt.SecretKey = cfg.JWTSecretKey
-
-	err := database.Initialize(
-		cfg.PostgresHost,
-		cfg.PostgresPort,
-		cfg.PostgresUsername,
-		cfg.PostgresPassword,
-		cfg.PostgresDatabaseName,
-	)
-	if err != nil {
-		logger.Fatal.Fatalf("Could not initialize PostgreSQL database \"%v\" at %v:%v (%v).", cfg.PostgresDatabaseName, cfg.PostgresHost, cfg.PostgresPort, err)
-	}
+	initializeApp(cfg)
 	startHTTPServer(cfg.Host, cfg.Port)
 }

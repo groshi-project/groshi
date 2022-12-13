@@ -1,21 +1,18 @@
 package database
 
-import "github.com/uptrace/bun"
+import (
+	"github.com/google/uuid"
+	"github.com/uptrace/bun"
+	"time"
+)
 
 type Currency string
 
-//type User struct {
-//	bun.BaseModel `bun:"table:users,alias:u"`
-//
-//	ID	 int64  `bun:",pk,autoincrement"`
-//	Name string
-//}
-
 type User struct {
-	bun.BaseModel `bun:"table:users"`
-	ID            int64 `bun:",pk,autoincrement"`
+	bun.BaseModel `bun:"table:users"` // todo: alias
+	ID            int64               `bun:",pk,autoincrement"`
 
-	Username    string
+	Username    string // todo: unique
 	Password    string
 	IsSuperuser bool
 
@@ -26,8 +23,8 @@ type Transaction struct {
 	bun.BaseModel `bun:"table:transactions"`
 	ID            int64 `bun:",pk,autoincrement"`
 
-	UUID      string
+	UUID      uuid.UUID `bun:"type:uuid,default:uuid_generate_v4()"` // CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; (https://bun.uptrace.dev/postgres/postgres-uuid-generate.html#uuid-in-postgresql)
 	Amount    int
 	Currency  Currency
-	Timestamp int
+	Timestamp time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 }
