@@ -1,41 +1,63 @@
 package config
 
 import (
+	"fmt"
 	"github.com/jieggii/groshi/groshi/logger"
 	"github.com/jieggii/lookupcfg"
 	"os"
+	"strings"
 )
 
 type Config struct {
-	Host         string `env:"GROSHI_HOST"`
-	Port         int    `env:"GROSHI_PORT"`
-	JWTSecretKey []byte `env:"GROSHI_JWT_SECRET_KEY"`
+	Host         string `env:"GROSHI_HOST" $default:"0.0.0.0"`
+	Port         int    `env:"GROSHI_PORT" $default:"8080"`
+	JWTSecretKey []byte `env:"GROSHI_JWT_SECRET_KEY" $default:"secret-key"`
 
-	SuperuserUsername string `env:"GROSHI_SUPERUSER_USERNAME"`
-	SuperuserPassword string `env:"GROSHI_SUPERUSER_PASSWORD"`
+	SuperuserUsername     string `env:"GROSHI_SUPERUSER_USERNAME" $default:"root"`
+	SuperuserPassword     string `env:"GROSHI_SUPERUSER_PASSWORD" $default:"password123"`
+	SuperuserBaseCurrency string `env:"GROSHI_SUPERUSER_BASE_CURRENCY" $default:"EUR"`
 
-	PostgresHost     string `env:"GROSHI_POSTGRES_HOST"`
-	PostgresPort     int    `env:"GROSHI_POSTGRES_PORT"`
-	PostgresUser     string `env:"GROSHI_POSTGRES_USER"`
-	PostgresPassword string `env:"GROSHI_POSTGRES_PASSWORD"`
-	PostgresDatabase string `env:"GROSHI_POSTGRES_DATABASE"`
+	PostgresHost     string `env:"GROSHI_POSTGRES_HOST" $default:"localhost"`
+	PostgresPort     int    `env:"GROSHI_POSTGRES_PORT" $default:"5432"`
+	PostgresUser     string `env:"GROSHI_POSTGRES_USER" $default:"postgres"`
+	PostgresPassword string `env:"GROSHI_POSTGRES_PASSWORD" $default:"postgres"`
+	PostgresDatabase string `env:"GROSHI_POSTGRES_DATABASE" $default:"groshi"`
 }
 
 func ReadFromEnv() *Config {
 	config := &Config{}
 	result := lookupcfg.PopulateConfig("env", os.LookupEnv, config)
-	ok := true
+	success := true
 
 	if len(result.MissingFields) != 0 {
-		ok = false
-		logger.Fatal.Printf("Missing: %v\n", result.MissingFields)
+		success = false
+
+		var envVarNames []string
+		for _, field := range result.MissingFields {
+			envVarNames = append(envVarNames, field.SourceName)
+		}
+		logger.Fatal.Printf(
+			"Missing the following necessary environ variables: %v.\n",
+			strings.Join(envVarNames, ", "),
+		)
 	}
 	if len(result.IncorrectTypeFields) != 0 {
-		ok = false
-		logger.Fatal.Printf("Incorrect type: %v\n", result.IncorrectTypeFields)
+		success = false
+
+		var incorrectTypeFieldsFmt []string
+		for _, field := range result.IncorrectTypeFields {
+			incorrectTypeFieldsFmt = append(
+				incorrectTypeFieldsFmt,
+				fmt.Sprintf("%v (got `%v`, but expected value type: %v)", field.SourceName, field.RawValue, field.ExpectedValueType.String()),
+			)
+		}
+		logger.Fatal.Printf(
+			"Incorrect values of environmental variables: %v.\n",
+			strings.Join(incorrectTypeFieldsFmt, ","),
+		)
 	}
-	if !ok {
-		logger.Fatal.Fatalln("Exiting according to the previous errors.")
+	if !success {
+		logger.Fatal.Fatalln("Exiting due to previous errors.")
 	}
 	return config
 }

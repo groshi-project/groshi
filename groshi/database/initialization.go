@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/jieggii/groshi/groshi/logger"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
@@ -12,20 +13,27 @@ import (
 var ctx = context.Background()
 var DB *bun.DB
 
-//func createSuperuser(username string, password string) error {
-//	user := new(User)
-//	err := DB.NewSelect().Model(user).Where("username = ?", username).Scan(ctx)
-//
-//	user := &User{
-//		Username:    username,
-//		Password:    password,
-//		IsSuperuser: true,
-//	}
-//	res, err := DB.NewInsert().Model(user).Exec(ctx)
-//	return nil
-//}
+func createSuperuserIfNotExist(username string, password string) error {
+	superUserExists, err := DB.NewSelect().Model((*User)(nil)).Where("username = ?", username).Exists(ctx)
+	if err != nil {
+		return fmt.Errorf("could not check if superuser @%v exists: %v", username, err)
+	}
+	if !superUserExists {
+		user := &User{
+			Username:    username,
+			Password:    password,
+			IsSuperuser: true,
+		}
+		_, err := DB.NewInsert().Model(user).Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("could not create new superuser @%v: %v", username, err)
+		}
+		logger.Info.Printf("Created superuser @%v.", username)
+	}
+	return nil
+}
 
-func createTables() error {
+func createTablesIfNotExist() error {
 	_, errUsers := DB.NewCreateTable().IfNotExists().Model((*User)(nil)).Exec(ctx)
 	_, errTransactions := DB.NewCreateTable().IfNotExists().Model((*Transaction)(nil)).Exec(ctx)
 	if errUsers != nil || errTransactions != nil {
@@ -49,13 +57,12 @@ func Connect(host string, port int, username string, password string, dbName str
 	return nil
 }
 
-func Initialize() error {
-	if err := createTables(); err != nil {
+func Initialize(superuserUsername string, superuserPassword string) error {
+	if err := createTablesIfNotExist(); err != nil {
 		return err
 	}
-	user := new(User)
-	err := DB.NewSelect().Model(user).Where("username = ?", "root").Scan(ctx)
-	fmt.Printf("|%v|\n", err)
-	fmt.Println(user)
+	if err := createSuperuserIfNotExist(superuserUsername, superuserPassword); err != nil {
+		return err
+	}
 	return nil
 }

@@ -5,11 +5,18 @@ import (
 	"net/http"
 )
 
-type credentials struct {
-	Username string
-	Password string
+type _credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 func Auth(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	//request.Body
+	var credentials _credentials
+	if ok := decodeBodyJSON(writer, request, &credentials); !ok {
+		return
+	}
+	if len(credentials.Username) == 0 || len(credentials.Password) == 0 {
+		returnError(writer, http.StatusBadRequest, "Invalid bruh")
+		return
+	}
 }
