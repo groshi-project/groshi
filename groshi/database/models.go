@@ -11,11 +11,12 @@ type User struct {
 	bun.BaseModel `bun:"table:users,alias:u"`
 	ID            int64 `bun:",pk,autoincrement"`
 
-	Username    string // todo: unique
+	Username    string `bun:",unique"`
 	Password    string
 	IsSuperuser bool
 
-	BaseCurrency Currency
+	PrimaryCurrency   Currency
+	SecondaryCurrency Currency
 }
 
 type Transaction struct {

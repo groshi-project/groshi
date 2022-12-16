@@ -13,9 +13,10 @@ type Config struct {
 	Port         int    `env:"GROSHI_PORT" $default:"8080"`
 	JWTSecretKey []byte `env:"GROSHI_JWT_SECRET_KEY" $default:"secret-key"`
 
-	SuperuserUsername     string `env:"GROSHI_SUPERUSER_USERNAME" $default:"root"`
-	SuperuserPassword     string `env:"GROSHI_SUPERUSER_PASSWORD" $default:"password123"`
-	SuperuserBaseCurrency string `env:"GROSHI_SUPERUSER_BASE_CURRENCY" $default:"EUR"`
+	SuperuserUsername          string `env:"GROSHI_SUPERUSER_USERNAME" $default:"root"`
+	SuperuserPassword          string `env:"GROSHI_SUPERUSER_PASSWORD" $default:"password123"`
+	SuperuserPrimaryCurrency   string `env:"GROSHI_SUPERUSER_PRIMARY_CURRENCY" $default:"EUR"`
+	SuperuserSecondaryCurrency string `env:"GROSHI_SUPERUSER_SECONDARY_CURRENCY" $default:"USD"`
 
 	PostgresHost     string `env:"GROSHI_POSTGRES_HOST" $default:"localhost"`
 	PostgresPort     int    `env:"GROSHI_POSTGRES_PORT" $default:"5432"`
