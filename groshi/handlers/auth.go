@@ -26,27 +26,28 @@ func Auth(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 		return
 	}
 	if len(credentials.Username) == 0 || len(credentials.Password) == 0 {
-		util.ReturnError(writer, http.StatusBadRequest, "todo")
+		util.ReturnError(writer, http.StatusBadRequest, "Invalid request body.")
 		return
 	}
 
 	user := new(database.User)
 	err := database.Db.NewSelect().Model(user).Where("username = ?", credentials.Username).Scan(database.Ctx)
 	if err != nil {
-		util.ReturnError(writer, http.StatusUnauthorized, "User does not exist todo")
+		util.ReturnError(writer, http.StatusUnauthorized, "User does not exist.")
 		return
 	}
 
 	if !hashing.CheckPasswordHash(credentials.Password, user.Password) {
-		util.ReturnError(writer, http.StatusUnauthorized, "Invalid password")
+		util.ReturnError(writer, http.StatusUnauthorized, "Invalid password.")
 		return
 	}
-	jwtToken, err := jwt.GenerateJWT(credentials.Username)
+
+	token, err := jwt.GenerateJWT(credentials.Username)
 	if err != nil {
-		util.ReturnError(writer, http.StatusInternalServerError, "")
+		util.ReturnError(writer, http.StatusInternalServerError, "Could not generate JWT.")
 		return
 	}
-	response := _response{Token: jwtToken, TTL: int(jwt.TTL / time.Second)}
+	response := _response{Token: token, TTL: int(jwt.TTL / time.Second)}
 	util.ReturnJSON(writer, http.StatusOK, &response)
 	return
 }
