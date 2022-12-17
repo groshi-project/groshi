@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/jieggii/groshi/groshi/auth/jwt"
 	"github.com/jieggii/groshi/groshi/config"
 	"github.com/jieggii/groshi/groshi/database"
 	"github.com/jieggii/groshi/groshi/handlers"
-	"github.com/jieggii/groshi/groshi/jwt"
-	"github.com/jieggii/groshi/groshi/logger"
+	"github.com/jieggii/groshi/groshi/loggers"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
@@ -19,7 +19,7 @@ func startHTTPServer(host string, port int) error {
 	router := httprouter.New()
 	setupHandles(router)
 
-	logger.Info.Printf("Starting HTTP server on %v:%v.\n", host, port)
+	loggers.Info.Printf("Starting HTTP server on %v:%v.\n", host, port)
 	return http.ListenAndServe(fmt.Sprintf("%v:%v", host, port), router)
 }
 
@@ -41,12 +41,12 @@ func initializeApp(cfg *config.Config) error {
 }
 
 func main() {
-	logger.Info.Println("Starting groshi server.")
+	loggers.Info.Println("Starting groshi server.")
 	cfg := config.ReadFromEnv()
 	if err := initializeApp(cfg); err != nil {
-		logger.Fatal.Fatalf("Error initializing groshi: %v.\n", err)
+		loggers.Fatal.Fatalf("Error initializing groshi: %v.\n", err)
 	}
 	if err := startHTTPServer(cfg.Host, cfg.Port); err != nil {
-		logger.Fatal.Fatalf("Error starting HTTP server: %v.", err)
+		loggers.Fatal.Fatalf("Error starting HTTP server: %v.", err)
 	}
 }

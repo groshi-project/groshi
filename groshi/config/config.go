@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/jieggii/groshi/groshi/logger"
+	"github.com/jieggii/groshi/groshi/loggers"
 	"github.com/jieggii/lookupcfg"
 	"os"
 	"strings"
@@ -37,7 +37,7 @@ func ReadFromEnv() *Config {
 		for _, field := range result.MissingFields {
 			envVarNames = append(envVarNames, field.SourceName)
 		}
-		logger.Fatal.Printf(
+		loggers.Fatal.Printf(
 			"Missing the following necessary environ variables: %v.\n",
 			strings.Join(envVarNames, ", "),
 		)
@@ -52,13 +52,13 @@ func ReadFromEnv() *Config {
 				fmt.Sprintf("%v (got `%v`, but expected value type: %v)", field.SourceName, field.RawValue, field.ExpectedValueType.String()),
 			)
 		}
-		logger.Fatal.Printf(
+		loggers.Fatal.Printf(
 			"Incorrect values of environmental variables: %v.\n",
 			strings.Join(incorrectTypeFieldsFmt, ","),
 		)
 	}
 	if !success {
-		logger.Fatal.Fatalln("Exiting due to previous errors.")
+		loggers.Fatal.Fatalln("Exiting due to previous errors.")
 	}
 	return config
 }

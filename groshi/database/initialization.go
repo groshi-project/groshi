@@ -4,38 +4,43 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/jieggii/groshi/groshi/logger"
+	"github.com/jieggii/groshi/groshi/auth/hashing"
+	"github.com/jieggii/groshi/groshi/loggers"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 )
 
-var ctx = context.Background()
-var DB *bun.DB
+var Ctx = context.Background()
+var Db *bun.DB
 
 func createSuperuserIfNotExist(username string, password string) error {
-	superUserExists, err := DB.NewSelect().Model((*User)(nil)).Where("username = ?", username).Exists(ctx)
+	superUserExists, err := Db.NewSelect().Model((*User)(nil)).Where("username = ?", username).Exists(Ctx)
 	if err != nil {
 		return fmt.Errorf("could not check if superuser @%v exists: %v", username, err)
 	}
 	if !superUserExists {
+		passwordHash, err := hashing.HashPassword(password)
+		if err != nil {
+			return fmt.Errorf("could not generate password hash for superuser @%v\n", username)
+		}
 		user := &User{
 			Username:    username,
-			Password:    password,
+			Password:    passwordHash,
 			IsSuperuser: true,
 		}
-		_, err := DB.NewInsert().Model(user).Exec(ctx)
+		_, err = Db.NewInsert().Model(user).Exec(Ctx)
 		if err != nil {
 			return fmt.Errorf("could not create new superuser @%v: %v", username, err)
 		}
-		logger.Info.Printf("Created superuser @%v.", username)
+		loggers.Info.Printf("Created superuser @%v.", username)
 	}
 	return nil
 }
 
 func createTablesIfNotExist() error {
-	_, errUsers := DB.NewCreateTable().IfNotExists().Model((*User)(nil)).Exec(ctx)
-	_, errTransactions := DB.NewCreateTable().IfNotExists().Model((*Transaction)(nil)).Exec(ctx)
+	_, errUsers := Db.NewCreateTable().IfNotExists().Model((*User)(nil)).Exec(Ctx)
+	_, errTransactions := Db.NewCreateTable().IfNotExists().Model((*Transaction)(nil)).Exec(Ctx)
 	if errUsers != nil || errTransactions != nil {
 		return fmt.Errorf("could not create necessary tables (%v; %v)", errUsers, errTransactions)
 	}
@@ -50,9 +55,9 @@ func Connect(host string, port int, username string, password string, dbName str
 	pgdb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	if err := pgdb.Ping(); err != nil {
 		return err
-		//logger.Fatal.Fatalf("Could not ping database.")
+		//logger.LoggerFatal.Fatalf("Could not ping database.")
 	}
-	DB = bun.NewDB(pgdb, pgdialect.New())
+	Db = bun.NewDB(pgdb, pgdialect.New())
 	//db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 	return nil
 }
