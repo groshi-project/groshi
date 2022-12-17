@@ -11,13 +11,9 @@ import (
 	"net/http"
 )
 
-func setupHandles(router *httprouter.Router) {
-	router.Handle("POST", "/auth", handlers.Auth)
-}
-
 func startHTTPServer(host string, port int) error {
 	router := httprouter.New()
-	setupHandles(router)
+	router.Handle("POST", "/auth", handlers.Auth)
 
 	loggers.Info.Printf("Starting HTTP server on %v:%v.\n", host, port)
 	return http.ListenAndServe(fmt.Sprintf("%v:%v", host, port), router)

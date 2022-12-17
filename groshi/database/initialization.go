@@ -14,7 +14,7 @@ import (
 var Ctx = context.Background()
 var Db *bun.DB
 
-func createSuperuserIfNotExist(username string, password string) error {
+func createSuperuserIfNotExists(username string, password string) error {
 	superUserExists, err := Db.NewSelect().Model((*User)(nil)).Where("username = ?", username).Exists(Ctx)
 	if err != nil {
 		return fmt.Errorf("could not check if superuser @%v exists: %v", username, err)
@@ -22,7 +22,7 @@ func createSuperuserIfNotExist(username string, password string) error {
 	if !superUserExists {
 		passwordHash, err := hashing.HashPassword(password)
 		if err != nil {
-			return fmt.Errorf("could not generate password hash for superuser @%v\n", username)
+			return fmt.Errorf("could not generate password hash for superuser @%v: %v\n", username, err)
 		}
 		user := &User{
 			Username:    username,
@@ -66,7 +66,7 @@ func Initialize(superuserUsername string, superuserPassword string) error {
 	if err := createTablesIfNotExist(); err != nil {
 		return err
 	}
-	if err := createSuperuserIfNotExist(superuserUsername, superuserPassword); err != nil {
+	if err := createSuperuserIfNotExists(superuserUsername, superuserPassword); err != nil {
 		return err
 	}
 	return nil
