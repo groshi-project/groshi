@@ -1,7 +1,7 @@
 $ means methods allowed only to superusers
 - or *nothing* means methods allowed to usual users and superusers
 
-Authorization
+Authorization:
 - /auth
     username, password
 
