@@ -11,8 +11,9 @@ const IgnoranceTag = "lookupcfg:\"ignore\""
 type FieldMeta struct {
 	Participate bool // indicates if this field participates in all stuff that this lib does
 
-	ValueSources map[string]string // map of sources of value. E.g {"env": "HOST", "json": "host"}
-	DefaultValue string            // default value is stored as string because we parse it from string
+	ValueSources       map[string]string // map of sources of value. E.g {"env": "HOST", "json": "host"}
+	DefaultValue       string            // default value is stored as string because we parse it from string
+	DefaultValueWasSet bool              // indicates if default value was set. (needed to check if default value was set if default value was set to "")
 }
 
 func ParseFieldTag(fieldTag reflect.StructTag) (error, *FieldMeta) {
@@ -43,6 +44,7 @@ func ParseFieldTag(fieldTag reflect.StructTag) (error, *FieldMeta) {
 			// todo: check if user tries to set default value multiple times
 			// todo: check if type of default value matches field type
 			fieldMeta.DefaultValue = value
+			fieldMeta.DefaultValueWasSet = true
 		} else {
 			// todo: check if key already exists
 			fieldMeta.ValueSources[key] = value
