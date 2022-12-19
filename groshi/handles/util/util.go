@@ -2,7 +2,6 @@ package util
 
 import (
 	"encoding/json"
-	"github.com/jieggii/groshi/groshi/handlers/schemas"
 	"net/http"
 )
 
@@ -21,7 +20,11 @@ func ReturnJSON(writer http.ResponseWriter, httpStatusCode int, object interface
 	json.NewEncoder(writer).Encode(object)
 }
 
+type ErrorResponse struct {
+	ErrorMessage string `json:"error_message"`
+}
+
 func ReturnError(writer http.ResponseWriter, httpStatusCode int, errorMessage string) {
-	errorObject := schemas.ErrorResponse{ErrorMessage: errorMessage}
+	errorObject := ErrorResponse{ErrorMessage: errorMessage}
 	ReturnJSON(writer, httpStatusCode, errorObject)
 }

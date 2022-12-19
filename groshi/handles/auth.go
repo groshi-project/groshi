@@ -1,10 +1,10 @@
-package handlers
+package handles
 
 import (
-	"github.com/jieggii/groshi/groshi/auth/hashing"
-	"github.com/jieggii/groshi/groshi/auth/jwt"
+	"github.com/jieggii/groshi/groshi/auth"
 	"github.com/jieggii/groshi/groshi/database"
-	"github.com/jieggii/groshi/groshi/handlers/util"
+	"github.com/jieggii/groshi/groshi/handles/jwt"
+	"github.com/jieggii/groshi/groshi/handles/util"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"time"
@@ -16,8 +16,8 @@ type _request struct {
 }
 
 type _response struct {
-	Token string `json:"token"`
-	TTL   int    `json:"TTL"`
+	Token string `json:"token"` // JWT
+	TTL   int    `json:"TTL"`   // JWT TTL in seconds
 }
 
 func Auth(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -37,7 +37,7 @@ func Auth(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 		return
 	}
 
-	if !hashing.CheckPasswordHash(credentials.Password, user.Password) {
+	if !auth.CheckPasswordHash(credentials.Password, user.Password) {
 		util.ReturnError(writer, http.StatusUnauthorized, "Invalid password.")
 		return
 	}
@@ -49,5 +49,6 @@ func Auth(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	}
 	response := _response{Token: token, TTL: int(jwt.TTL / time.Second)}
 	util.ReturnJSON(writer, http.StatusOK, &response)
+
 	return
 }

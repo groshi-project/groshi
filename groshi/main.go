@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/jieggii/groshi/groshi/auth/jwt"
 	"github.com/jieggii/groshi/groshi/config"
 	"github.com/jieggii/groshi/groshi/database"
-	"github.com/jieggii/groshi/groshi/handlers"
+	"github.com/jieggii/groshi/groshi/handles"
+	"github.com/jieggii/groshi/groshi/handles/jwt"
 	"github.com/jieggii/groshi/groshi/loggers"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -13,10 +13,25 @@ import (
 
 func startHTTPServer(host string, port int) error {
 	router := httprouter.New()
-	router.Handle("POST", "/auth", handlers.Auth)
+	// auth handle
+	router.Handle("POST", "/auth", handles.Auth)
+
+	// user handles
+	router.Handle("POST", "/user/create", jwt.ValidateJWTMiddleware(handles.UserCreate))
+	router.Handle("GET", "/user/:username", handles.UserRead)
+	router.Handle("PUT", "/user/:username/update", handles.UserUpdate)
+	router.Handle("DELETE", "/user/:username/delete", handles.UserDelete)
+
+	// transaction handles
+	router.Handle("POST", "/transaction/create", handles.TransactionCreate)
+	router.Handle("GET", "/transaction/:uuid", handles.TransactionRead)
+	router.Handle("PUT", "/transaction/:uuid/update", handles.TransactionUpdate)
+	router.Handle("DELETE", "/transaction/:uuid/delete", handles.TransactionDelete)
 
 	loggers.Info.Printf("Starting HTTP server on %v:%v.\n", host, port)
-	return http.ListenAndServe(fmt.Sprintf("%v:%v", host, port), router)
+	err := http.ListenAndServe(fmt.Sprintf("%v:%v", host, port), router)
+
+	return err
 }
 
 func initializeApp(cfg *config.Config) error {

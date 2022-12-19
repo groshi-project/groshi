@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/jieggii/groshi/groshi/auth/hashing"
+	"github.com/jieggii/groshi/groshi/auth"
 	"github.com/jieggii/groshi/groshi/loggers"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -20,7 +20,7 @@ func createSuperuserIfNotExists(username string, password string) error {
 		return fmt.Errorf("could not check if superuser @%v exists: %v", username, err)
 	}
 	if !superUserExists {
-		passwordHash, err := hashing.HashPassword(password)
+		passwordHash, err := auth.HashPassword(password)
 		if err != nil {
 			return fmt.Errorf("could not generate password hash for superuser @%v: %v\n", username, err)
 		}
@@ -28,6 +28,7 @@ func createSuperuserIfNotExists(username string, password string) error {
 			Username:    username,
 			Password:    passwordHash,
 			IsSuperuser: true,
+			Currency:    CurrencyEUR,
 		}
 		_, err = Db.NewInsert().Model(user).Exec(Ctx)
 		if err != nil {
@@ -39,6 +40,9 @@ func createSuperuserIfNotExists(username string, password string) error {
 }
 
 func createTablesIfNotExist() error {
+	// todo: check if table exists and then create table
+	// don't use IfNotExists() construction
+	// notify user about newly created tables
 	_, errUsers := Db.NewCreateTable().IfNotExists().Model((*User)(nil)).Exec(Ctx)
 	_, errTransactions := Db.NewCreateTable().IfNotExists().Model((*Transaction)(nil)).Exec(Ctx)
 	if errUsers != nil || errTransactions != nil {

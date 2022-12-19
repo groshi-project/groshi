@@ -1,4 +1,4 @@
-package handlers
+package handles
 
 import (
 	"github.com/julienschmidt/httprouter"
