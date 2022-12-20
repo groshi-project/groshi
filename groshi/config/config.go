@@ -9,18 +9,18 @@ import (
 )
 
 type Config struct {
-	Host         string `env:"GROSHI_HOST" $default:"0.0.0.0"`
-	Port         int    `env:"GROSHI_PORT" $default:"8080"`
+	Host         string `env:"GROSHI_HOST"           $default:"0.0.0.0"`
+	Port         int    `env:"GROSHI_PORT"           $default:"8080"`
 	JWTSecretKey []byte `env:"GROSHI_JWT_SECRET_KEY" $default:"secret-key"`
 
-	SuperuserUsername          string `env:"GROSHI_SUPERUSER_USERNAME" $default:"root"`
-	SuperuserPassword          string `env:"GROSHI_SUPERUSER_PASSWORD" $default:"hello-world"`
-	SuperuserPrimaryCurrency   string `env:"GROSHI_SUPERUSER_PRIMARY_CURRENCY" $default:"EUR"`
+	SuperuserUsername          string `env:"GROSHI_SUPERUSER_USERNAME"           $default:"root"`
+	SuperuserPassword          string `env:"GROSHI_SUPERUSER_PASSWORD"           $default:"hello-world"`
+	SuperuserPrimaryCurrency   string `env:"GROSHI_SUPERUSER_PRIMARY_CURRENCY"   $default:"EUR"`
 	SuperuserSecondaryCurrency string `env:"GROSHI_SUPERUSER_SECONDARY_CURRENCY" $default:"USD"`
 
-	PostgresHost     string `env:"GROSHI_POSTGRES_HOST" $default:"localhost"`
-	PostgresPort     int    `env:"GROSHI_POSTGRES_PORT" $default:"5432"`
-	PostgresUser     string `env:"GROSHI_POSTGRES_USER" $default:"postgres"`
+	PostgresHost     string `env:"GROSHI_POSTGRES_HOST"     $default:"localhost"`
+	PostgresPort     int    `env:"GROSHI_POSTGRES_PORT"     $default:"5432"`
+	PostgresUser     string `env:"GROSHI_POSTGRES_USER"     $default:"postgres"`
 	PostgresPassword string `env:"GROSHI_POSTGRES_PASSWORD" $default:""`
 	PostgresDatabase string `env:"GROSHI_POSTGRES_DATABASE" $default:"groshi"`
 }
@@ -49,7 +49,12 @@ func ReadFromEnv() *Config {
 		for _, field := range result.IncorrectTypeFields {
 			incorrectTypeFieldsFmt = append(
 				incorrectTypeFieldsFmt,
-				fmt.Sprintf("%v (got `%v`, but expected value type: %v)", field.SourceName, field.RawValue, field.ExpectedValueType.String()),
+				fmt.Sprintf(
+					"%v (got `%v`, but expected value type: %v)",
+					field.SourceName,
+					field.RawValue,
+					field.ExpectedValueType.String(),
+				),
 			)
 		}
 		loggers.Fatal.Printf(

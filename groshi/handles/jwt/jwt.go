@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const TTL = 24 * time.Hour // todo: set convenient
+const TTL = 10 * 365 * 24 * time.Hour // todo: set convenient
 
 var SecretKey []byte
 

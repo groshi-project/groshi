@@ -43,10 +43,22 @@ func initializeApp(cfg *config.Config) error {
 		cfg.PostgresPassword,
 		cfg.PostgresDatabase,
 	); err != nil {
-		return fmt.Errorf("failed to connect to PostgreSQL database \"%v\" at %v:%v: %v", cfg.PostgresDatabase, cfg.PostgresHost, cfg.PostgresPort, err)
+		return fmt.Errorf(
+			"failed to connect to PostgreSQL database \"%v\" at %v:%v: %v",
+			cfg.PostgresDatabase,
+			cfg.PostgresHost,
+			cfg.PostgresPort,
+			err,
+		)
 	}
 	if err := database.Initialize(cfg.SuperuserUsername, cfg.SuperuserPassword); err != nil {
-		return fmt.Errorf("failed to initialize PostgreSQL database \"%v\" at %v:%v: %v", cfg.PostgresDatabase, cfg.PostgresHost, cfg.PostgresPort, err)
+		return fmt.Errorf(
+			"failed to initialize PostgreSQL database \"%v\" at %v:%v: %v",
+			cfg.PostgresDatabase,
+			cfg.PostgresHost,
+			cfg.PostgresPort,
+			err,
+		)
 	}
 	return nil
 }

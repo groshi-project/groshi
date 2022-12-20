@@ -15,7 +15,10 @@ var Ctx = context.Background()
 var Db *bun.DB
 
 func createSuperuserIfNotExists(username string, password string) error {
-	superUserExists, err := Db.NewSelect().Model((*User)(nil)).Where("username = ?", username).Exists(Ctx)
+	superUserExists, err := Db.NewSelect().
+		Model((*User)(nil)).
+		Where("username = ?", username).
+		Exists(Ctx)
 	if err != nil {
 		return fmt.Errorf("could not check if superuser @%v exists: %v", username, err)
 	}

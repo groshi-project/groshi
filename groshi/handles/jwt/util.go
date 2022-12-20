@@ -13,7 +13,8 @@ func parseJWTHeader(header http.Header) (string, error) {
 	}
 	data := authHeader[0]
 	parts := strings.Split(data, " ")
-	if len(parts) != 2 || parts[0] != "Bearer" { // this check doesn't panic with parts of length 0 'cause the second condition is not being checked
+	if len(parts) != 2 ||
+		parts[0] != "Bearer" { // this check doesn't panic with parts of length 0 'cause the second condition is not being checked
 		return "", errors.New("invalid authorization header")
 	}
 	return parts[1], nil

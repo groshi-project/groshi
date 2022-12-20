@@ -31,7 +31,10 @@ func Auth(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	}
 
 	user := new(database.User)
-	err := database.Db.NewSelect().Model(user).Where("username = ?", credentials.Username).Scan(database.Ctx)
+	err := database.Db.NewSelect().
+		Model(user).
+		Where("username = ?", credentials.Username).
+		Scan(database.Ctx)
 	if err != nil {
 		util.ReturnError(writer, http.StatusUnauthorized, "User does not exist.")
 		return
