@@ -23,8 +23,6 @@ type User struct {
 	Username    string `bun:",unique"`
 	Password    string
 	IsSuperuser bool
-
-	Currency Currency
 }
 
 func (u User) String() string {

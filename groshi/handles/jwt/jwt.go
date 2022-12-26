@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/jieggii/groshi/groshi/handles/schema"
 	"github.com/jieggii/groshi/groshi/handles/util"
-	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"time"
 )
@@ -62,23 +62,25 @@ func ParseJWT(tokenString string) (*Claims, error) {
 }
 
 type HandleWithJWTClaims func(
-	http.ResponseWriter, *http.Request, httprouter.Params, *Claims,
+	http.ResponseWriter, *http.Request, *Claims,
 )
 
-func ValidateJWTMiddleware(handle HandleWithJWTClaims) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		token, err := parseJWTHeader(r.Header)
-		fmt.Println(token)
-		if err != nil {
-			util.ReturnError(w, http.StatusBadRequest, "invalid headers todo")
+type _requestWithJWT struct {
+	Token string `json:"token"`
+}
+
+func ValidateJWTMiddleware(handle HandleWithJWTClaims) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := _requestWithJWT{}
+		if ok := util.DecodeBodyJSON(w, r, &req); !ok {
 			return
 		}
-		claims, err := ParseJWT(token)
+		claims, err := ParseJWT(req.Token)
 		if err != nil {
 			fmt.Println(err)
-			util.ReturnError(w, http.StatusUnauthorized, "invalid JWT")
+			util.ReturnErrorResponse(w, schema.ClientSideError, "Invalid token.", nil)
 			return
 		}
-		handle(w, r, ps, claims)
+		handle(w, r, claims)
 	}
 }

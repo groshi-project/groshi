@@ -2,34 +2,38 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"github.com/jieggii/groshi/groshi/config"
 	"github.com/jieggii/groshi/groshi/database"
 	"github.com/jieggii/groshi/groshi/handles"
 	"github.com/jieggii/groshi/groshi/handles/jwt"
 	"github.com/jieggii/groshi/groshi/loggers"
-	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
 
 func startHTTPServer(host string, port int) error {
-	router := httprouter.New()
-	// auth handle
-	router.Handle("POST", "/auth", handles.Auth)
+	// todo: use `r.Use` for middlewares
+	r := chi.NewRouter()
 
-	// user handles
-	router.Handle("POST", "/user/create", jwt.ValidateJWTMiddleware(handles.UserCreate))
-	router.Handle("GET", "/user/:username", handles.UserRead)
-	router.Handle("PUT", "/user/:username/update", handles.UserUpdate)
-	router.Handle("DELETE", "/user/:username/delete", handles.UserDelete)
+	// service handles:
+	r.Post("/auth", handles.Auth)
 
-	// transaction handles
-	router.Handle("POST", "/transaction/create", handles.TransactionCreate)
-	router.Handle("GET", "/transaction/:uuid", handles.TransactionRead)
-	router.Handle("PUT", "/transaction/:uuid/update", handles.TransactionUpdate)
-	router.Handle("DELETE", "/transaction/:uuid/delete", handles.TransactionDelete)
+	// users handles:
+	r.Route("/user", func(r chi.Router) {
+		r.Post("/create", jwt.ValidateJWTMiddleware(handles.UserCreate))
+		r.Post("/{username}", jwt.ValidateJWTMiddleware(handles.UserRead))
+		r.Post("/{username}/update", jwt.ValidateJWTMiddleware(handles.UserUpdate))
+		r.Post("/{username}/delete", jwt.ValidateJWTMiddleware(handles.UserDelete))
+	})
+
+	// transaction handles:
+	//router.Handle("POST", "/transaction/create", handles.TransactionCreate)
+	//router.Handle("GET", "/transaction/:uuid", handles.TransactionRead)
+	//router.Handle("PUT", "/transaction/:uuid/update", handles.TransactionUpdate)
+	//router.Handle("DELETE", "/transaction/:uuid/delete", handles.TransactionDelete)
 
 	loggers.Info.Printf("Starting HTTP server on %v:%v.\n", host, port)
-	err := http.ListenAndServe(fmt.Sprintf("%v:%v", host, port), router)
+	err := http.ListenAndServe(fmt.Sprintf("%v:%v", host, port), r)
 
 	return err
 }

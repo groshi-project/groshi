@@ -1,5 +1,5 @@
 SOURCES := ./groshi/
-MAX_LINE_LENGTH := 105
+MAX_LINE_LENGTH := 120
 
 .PHONY: all
 all: help
@@ -28,3 +28,7 @@ fmt: gofmt golines
 todo:
 	grep -irn todo $(SOURCES)
 	cat todo.txt
+
+.PHONY: start
+start:
+	go run ./groshi/main.go

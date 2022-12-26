@@ -3,9 +3,9 @@ module github.com/jieggii/groshi
 go 1.19
 
 require (
+	github.com/go-chi/chi/v5 v5.0.8
 	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/jieggii/lookupcfg v0.1.0
-	github.com/julienschmidt/httprouter v1.3.0
 	github.com/uptrace/bun v1.1.9
 	github.com/uptrace/bun/dialect/pgdialect v1.1.9
 	github.com/uptrace/bun/driver/pgdriver v1.1.9

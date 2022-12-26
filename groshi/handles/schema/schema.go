@@ -1,16 +1,16 @@
 package schema
 
-type SuccessResponse struct {
-	Success bool `json:"success"`
-	Data    any  `json:"data"`
-}
-
 type ErrorCode int
 
 var (
 	ClientSideError ErrorCode = 1
 	ServerSideError ErrorCode = 2
 )
+
+type SuccessResponse struct {
+	Success bool `json:"success"`
+	Data    any  `json:"data"`
+}
 
 type ErrorResponse struct {
 	Success      bool      `json:"success"`
