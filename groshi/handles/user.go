@@ -16,16 +16,13 @@ type _newUser struct {
 
 func UserCreate(w http.ResponseWriter, r *http.Request, claims *jwt.Claims) {
 	currentUser := new(database.User)
-	err := database.Db.NewSelect().
-		Model(currentUser).
-		Where("username = ?", claims.Username).
-		Scan(database.Ctx)
+	err := database.Db.NewSelect().Model(currentUser).Where("username = ?", claims.Username).Scan(database.Ctx)
 	if err != nil {
 		util.ReturnErrorResponse(
 			w,
 			schema.ServerSideError,
-			"Could not fetch information about you.",
-			nil,
+			"Could not fetch information about user.",
+			err,
 		)
 		return
 	}

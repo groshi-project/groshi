@@ -2,7 +2,7 @@ package auth
 
 import "golang.org/x/crypto/bcrypt"
 
-const bcryptCost = 14
+const bcryptCost = 14 // todo: set convenient
 
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)

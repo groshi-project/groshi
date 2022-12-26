@@ -2,7 +2,6 @@ package jwt
 
 import (
 	"errors"
-	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/jieggii/groshi/groshi/handles/schema"
 	"github.com/jieggii/groshi/groshi/handles/util"
@@ -10,7 +9,7 @@ import (
 	"time"
 )
 
-const TTL = 10 * 365 * 24 * time.Hour // todo: set convenient
+const TTL = 31 * 24 * time.Hour // todo: set convenient
 
 var SecretKey []byte
 
@@ -22,14 +21,14 @@ type Claims struct {
 // Validate validates claims provided by user.
 // username check happens only if expectedUsername != ""
 // todo: validate ValidAfter, etc.
-func (claims *Claims) Validate(expectedUsername string) error {
-	if expectedUsername != "" {
-		if claims.Username != expectedUsername {
-			return errors.New("no access to this user")
-		}
-	}
-	return nil
-}
+//func (claims *Claims) Validate(expectedUsername string) error {
+//	if expectedUsername != "" {
+//		if claims.Username != expectedUsername {
+//			return errors.New("no access to this user")
+//		}
+//	}
+//	return nil
+//}
 
 func GenerateJWT(username string) (string, error) {
 	expirationTime := time.Now().Add(TTL)
@@ -72,12 +71,11 @@ type _requestWithJWT struct {
 func ValidateJWTMiddleware(handle HandleWithJWTClaims) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := _requestWithJWT{}
-		if ok := util.DecodeBodyJSON(w, r, &req); !ok {
+		if !util.DecodeBodyJSON(w, r, &req) {
 			return
 		}
 		claims, err := ParseJWT(req.Token)
 		if err != nil {
-			fmt.Println(err)
 			util.ReturnErrorResponse(w, schema.ClientSideError, "Invalid token.", nil)
 			return
 		}
