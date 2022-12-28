@@ -32,6 +32,15 @@ func (u User) String() string {
 	)
 }
 
+func FetchUserByUsername(username string) (*User, error) {
+	user := new(User)
+	err := Db.NewSelect().Model(user).Where("username = ?", username).Scan(Ctx)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 type Transaction struct {
 	bun.BaseModel `bun:"table:transactions,alias:t"`
 
