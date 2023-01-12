@@ -11,9 +11,6 @@ github.com/jieggii/lookupcfg/internal
 # github.com/jinzhu/inflection v1.0.0
 ## explicit
 github.com/jinzhu/inflection
-# github.com/julienschmidt/httprouter v1.3.0
-## explicit; go 1.7
-github.com/julienschmidt/httprouter
 # github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc
 ## explicit
 github.com/tmthrgd/go-hex
