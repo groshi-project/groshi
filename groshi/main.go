@@ -2,29 +2,31 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-chi/chi/v5"
 	"github.com/jieggii/groshi/groshi/config"
 	"github.com/jieggii/groshi/groshi/database"
 	"github.com/jieggii/groshi/groshi/handles"
 	"github.com/jieggii/groshi/groshi/handles/jwt"
 	"github.com/jieggii/groshi/groshi/loggers"
+	"github.com/jieggii/groshi/groshi/middlewares"
 	"net/http"
 )
 
 func startHTTPServer(host string, port int) error {
-	// todo: use `r.Use` for middlewares
-	r := chi.NewRouter()
+	mux := http.NewServeMux()
 
-	// service handles:
-	r.Post("/auth", handles.Auth)
+	// user handles:
+	mux.HandleFunc("/user/auth", middlewares.ParseRequest(handles.UserAuth))
+	mux.HandleFunc("/user/create", middlewares.ParseRequest(handles.UserCreate))
+	mux.HandleFunc("/user/info", middlewares.ParseRequest(handles.UserRead))
+	mux.HandleFunc("/user/delete", middlewares.ParseRequest(handles.UserDelete))
 
-	// users handles:
-	r.Route("/user", func(r chi.Router) {
-		r.Post("/create", jwt.ValidateJWTMiddleware(handles.UserCreate))
-		r.Post("/{username}", jwt.ValidateJWTMiddleware(handles.UserRead))
-		r.Post("/{username}/update", jwt.ValidateJWTMiddleware(handles.UserUpdate))
-		r.Post("/{username}/delete", jwt.ValidateJWTMiddleware(handles.UserDelete))
-	})
+	//	r.Route("/user", func(r chi.Router) {
+	//	r.Post("/create", middlewares.ParseRequest(middlewares.ValidateJWT(handles.UserCreate)))
+	//	r.Post("/read", util.ValidateJWTMiddleware(handles.UserRead))
+	//	//r.Post("/update", jwt.ValidateJWTMiddleware(handles.UserUpdate))
+	//	r.Post("/delete", util.ValidateJWTMiddleware(handles.UserDelete))
+	//	r.Post("/auth", handles.Auth)
+	//})
 
 	// transaction handles:
 	//router.Handle("POST", "/transaction/create", handles.TransactionCreate)
@@ -33,7 +35,7 @@ func startHTTPServer(host string, port int) error {
 	//router.Handle("DELETE", "/transaction/:uuid/delete", handles.TransactionDelete)
 
 	loggers.Info.Printf("Starting HTTP server on %v:%v.\n", host, port)
-	err := http.ListenAndServe(fmt.Sprintf("%v:%v", host, port), r)
+	err := http.ListenAndServe(fmt.Sprintf("%v:%v", host, port), mux)
 
 	return err
 }

@@ -3,9 +3,6 @@ package jwt
 import (
 	"errors"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/jieggii/groshi/groshi/handles/schema"
-	"github.com/jieggii/groshi/groshi/handles/util"
-	"net/http"
 	"time"
 )
 
@@ -60,25 +57,26 @@ func ParseJWT(tokenString string) (*Claims, error) {
 	return claims, nil
 }
 
-type HandleWithJWTClaims func(
-	http.ResponseWriter, *http.Request, *Claims,
-)
+//type HandleWithJWTClaims func(
+//	http.ResponseWriter, *http.Request, *Claims,
+//)
 
-type _requestWithJWT struct {
-	Token string `json:"token"`
-}
-
-func ValidateJWTMiddleware(handle HandleWithJWTClaims) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		req := _requestWithJWT{}
-		if !util.DecodeBodyJSON(w, r, &req) {
-			return
-		}
-		claims, err := ParseJWT(req.Token)
-		if err != nil {
-			util.ReturnErrorResponse(w, schema.ClientSideError, "Invalid token.", nil)
-			return
-		}
-		handle(w, r, claims)
-	}
-}
+//func ValidateJWTMiddleware(handle HandleWithJWTClaims) http.HandlerFunc {
+//	return func(w http.ResponseWriter, r *http.Request) {
+//		jwtFieldHolder := _JWTFieldHolder{}
+//		req, ok := util.NewSafelyParsedRequest(w, r, &jwtFieldHolder)
+//		if !ok {
+//			return
+//		}
+//		token := jwtFieldHolder.Token
+//		if ok = req.WrapCondition(token != "", "Missing required field `token`."); !ok {
+//			return
+//		}
+//		claims, err := ParseJWT(token)
+//		if err != nil {
+//			req.SendErrorResponse(schema.ClientSideError, "Invalid JWT.", nil)
+//			return
+//		}
+//		handle(w, r, claims)
+//	}
+//}
