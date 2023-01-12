@@ -31,4 +31,4 @@ todo:
 
 .PHONY: start
 start:
-	go run ./groshi/main.go
+	go run ./groshi/main.go ./groshi/middleware.go

@@ -43,13 +43,14 @@ func FetchUserByUsername(username string) (*User, error) {
 type Transaction struct {
 	bun.BaseModel `bun:"table:transactions,alias:t"`
 
-	ID   int64 `bun:",pk,autoincrement"`
-	UUID string
+	ID   int64  `bun:",pk,autoincrement"`
+	UUID string `bun:",notnull"`
 
-	Amount   int64
-	Currency Currency
+	Amount      float64  `bun:",notnull"`
+	Currency    Currency `bun:",notnull"`
+	Description string   `bun:",notnull"`
 
-	OwnerId int64
+	OwnerId int64 `bun:",notnull"`
 	Owner   *User `bun:"rel:belongs-to,join:owner_id=id"`
 
 	Timestamp time.Time `bun:",nullzero,notnull,default:current_timestamp"`
@@ -61,3 +62,4 @@ type Transaction struct {
 //		t.ID, t.Owner, t.Amount, t.Currency,
 //	)
 //}
+// todo: auto generate uuid

@@ -16,25 +16,14 @@ func startHTTPServer(host string, port int) error {
 	// user handles:
 	mux.HandleFunc("/user/auth", middleware(false, handles.UserAuth))
 	mux.HandleFunc("/user/create", middleware(true, handles.UserCreate))
-	mux.HandleFunc("/user/info", middleware(false, handles.UserRead))
+	mux.HandleFunc("/user/read", middleware(false, handles.UserRead))
 	mux.HandleFunc("/user/delete", middleware(true, handles.UserDelete))
 
 	// transaction handles:
-
-	//mux.HandleFunc("/transaction/create")
-	//	r.Route("/user", func(r chi.Router) {
-	//	r.Post("/create", middlewares.ParseRequest(middlewares.ValidateJWT(handles.UserCreate)))
-	//	r.Post("/read", util.ValidateJWTMiddleware(handles.UserRead))
-	//	//r.Post("/update", jwt.ValidateJWTMiddleware(handles.UserUpdate))
-	//	r.Post("/delete", util.ValidateJWTMiddleware(handles.UserDelete))
-	//	r.Post("/auth", handles.Auth)
-	//})
-
-	// transaction handles:
-	//router.Handle("POST", "/transaction/create", handles.TransactionCreate)
-	//router.Handle("GET", "/transaction/:uuid", handles.TransactionRead)
-	//router.Handle("PUT", "/transaction/:uuid/update", handles.TransactionUpdate)
-	//router.Handle("DELETE", "/transaction/:uuid/delete", handles.TransactionDelete)
+	mux.HandleFunc("/transaction/create", middleware(true, handles.TransactionCreate))
+	mux.HandleFunc("/transaction/read", middleware(true, handles.TransactionRead))
+	mux.HandleFunc("/transaction/update", middleware(true, handles.TransactionUpdate))
+	mux.HandleFunc("/transaction/delete", middleware(true, handles.TransactionDelete))
 
 	loggers.Info.Printf("Starting HTTP server on %v:%v.\n", host, port)
 	err := http.ListenAndServe(fmt.Sprintf("%v:%v", host, port), mux)

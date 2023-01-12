@@ -1,9 +1,12 @@
 package ghttp
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/jieggii/groshi/groshi/handles/schema"
 	"github.com/jieggii/groshi/groshi/loggers"
+	"io"
 	"net/http"
 )
 
@@ -22,7 +25,15 @@ func (req *Request) sendJSONResponse(data interface{}) {
 
 // Decode decodes request body.
 func (req *Request) Decode(v interface{}) error {
-	err := json.NewDecoder(req.RawRequest.Body).Decode(&v)
+	body, err := io.ReadAll(req.RawRequest.Body)
+	if err != nil {
+		panic(err) // todo
+	}
+	// todo:
+	req.RawRequest.Body = io.NopCloser(bytes.NewBuffer(body))
+	err = json.NewDecoder(req.RawRequest.Body).Decode(&v)
+	req.RawRequest.Body = io.NopCloser(bytes.NewBuffer(body))
+
 	return err
 }
 
@@ -30,6 +41,7 @@ func (req *Request) Decode(v interface{}) error {
 // Returns true if there was no error.
 func (req *Request) DecodeSafe(v interface{}) bool {
 	if err := req.Decode(v); err != nil {
+		fmt.Println("decode err", err)
 		req.HandleError(err, schema.ClientSideError, schema.InvalidRequestBody)
 		return false
 	}
@@ -39,7 +51,7 @@ func (req *Request) DecodeSafe(v interface{}) bool {
 // HandleError handles any provided error. Does nothing if provided error is nil.
 // Returns true if error was handled.
 func (req *Request) HandleError(err error, errorCode schema.ErrorCode, errorMessage string) bool {
-	if err != nil {
+	if err == nil {
 		return false
 	}
 	req.SendErrorResponse(errorCode, errorMessage, err)
@@ -48,14 +60,14 @@ func (req *Request) HandleError(err error, errorCode schema.ErrorCode, errorMess
 
 // WrapCondition is wrapper for request body validations.
 // Returns result value.
-func (req *Request) WrapCondition(result bool, errorMessage string) bool {
-	if !result {
-		req.SendErrorResponse(
-			schema.ClientSideError, errorMessage, nil,
-		)
-	}
-	return result
-}
+//func (req *Request) WrapCondition(result bool, errorMessage string) bool {
+//	if !result {
+//		req.SendErrorResponse(
+//			schema.ClientSideError, errorMessage, nil,
+//		)
+//	}
+//	return result
+//}
 
 // SendSuccessResponse sends success response.
 func (req *Request) SendSuccessResponse(data interface{}) {
@@ -80,8 +92,8 @@ func NewRequest(w http.ResponseWriter, r *http.Request) *Request {
 }
 
 // NewSafelyParsedRequest creates Request object and safely parses request body.
-func NewSafelyParsedRequest(w http.ResponseWriter, r *http.Request, v interface{}) (*Request, bool) {
-	req := NewRequest(w, r)
-	ok := req.DecodeSafe(v)
-	return req, ok
-}
+//func NewSafelyParsedRequest(w http.ResponseWriter, r *http.Request, v interface{}) (*Request, bool) {
+//	req := NewRequest(w, r)
+//	ok := req.DecodeSafe(v)
+//	return req, ok
+//}

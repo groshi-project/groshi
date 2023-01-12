@@ -22,10 +22,10 @@ func UserAuth(request *ghttp.Request, _ *database.User) {
 	if ok := request.DecodeSafe(&credentials); !ok {
 		return
 	}
-	if ok := request.WrapCondition(len(credentials.Username) != 0 && len(credentials.Password) != 0, schema.InvalidRequestBody); ok {
+	if len(credentials.Username) == 0 || len(credentials.Password) == 0 {
+		request.SendErrorResponse(schema.ClientSideError, schema.InvalidRequestBody, nil)
 		return
 	}
-
 	user := new(database.User)
 	err := database.Db.NewSelect().Model(user).Where("username = ?", credentials.Username).Scan(database.Ctx)
 	if err != nil {
@@ -55,6 +55,7 @@ type userCreateRequest struct {
 type userCreateResponse struct{}
 
 func UserCreate(request *ghttp.Request, currentUser *database.User) {
+
 	if !currentUser.IsSuperuser {
 		request.SendErrorResponse(
 			schema.ClientSideError,
@@ -68,6 +69,7 @@ func UserCreate(request *ghttp.Request, currentUser *database.User) {
 	if ok := request.DecodeSafe(&newUserData); !ok {
 		return
 	}
+
 	passwordHash, err := passwords.HashPassword(newUserData.Password)
 	if err != nil {
 		request.SendErrorResponse(schema.ServerSideError, "Could not generate password hash.", err)
@@ -80,17 +82,19 @@ func UserCreate(request *ghttp.Request, currentUser *database.User) {
 	}
 
 	newUserExists, err := database.Db.NewSelect().
-		Model((*database.User)(nil)).
+		Model(newUser).
 		Where("username = ?", newUserData.Username).
 		Exists(database.Ctx)
 	if err != nil {
 		request.SendErrorResponse(schema.ServerSideError, "Could not check if user already exists.", err)
 		return
 	}
+
 	if newUserExists {
 		request.SendErrorResponse(schema.ClientSideError, "User already exists.", nil)
 		return
 	}
+
 	_, err = database.Db.NewInsert().Model(&newUser).Exec(database.Ctx)
 	if err != nil {
 		request.SendErrorResponse(schema.ServerSideError, "Could not create new user.", err)
@@ -157,7 +161,7 @@ func UserDelete(request *ghttp.Request, currentUser *database.User) {
 		request.SendErrorResponse(schema.ClientSideError, schema.UserNotFound, nil)
 		return
 	}
-	_, err = database.Db.NewDelete().Model(targetUser).Exec(database.Ctx)
+	_, err = database.Db.NewDelete().Model(targetUser).Where("username = ?", targetUser.Username).Exec(database.Ctx)
 	if err != nil {
 		request.SendErrorResponse(schema.ServerSideError, "Could not delete user.", err)
 		return
