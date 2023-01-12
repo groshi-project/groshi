@@ -1,7 +1,6 @@
 package database
 
 import (
-	"fmt"
 	"github.com/uptrace/bun"
 	"time"
 )
@@ -25,12 +24,12 @@ type User struct {
 	IsSuperuser bool
 }
 
-func (u User) String() string {
-	return fmt.Sprintf(
-		"User<id=%v, @%v, isSuperuser=%v>",
-		u.ID, u.Username, u.IsSuperuser,
-	)
-}
+//func (u User) String() string {
+//	return fmt.Sprintf(
+//		"User<id=%v, @%v, isSuperuser=%v>",
+//		u.ID, u.Username, u.IsSuperuser,
+//	)
+//}
 
 func FetchUserByUsername(username string) (*User, error) {
 	user := new(User)
@@ -56,9 +55,9 @@ type Transaction struct {
 	Timestamp time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 }
 
-func (t Transaction) String() string {
-	return fmt.Sprintf(
-		"Transaction<id=%v, by=%v, amount=%v (%v)>",
-		t.ID, t.Owner, t.Amount, t.Currency,
-	)
-}
+//func (t Transaction) String() string {
+//	return fmt.Sprintf(
+//		"Transaction<id=%v, by=%v, amount=%v (%v)>",
+//		t.ID, t.Owner, t.Amount, t.Currency,
+//	)
+//}

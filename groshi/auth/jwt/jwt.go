@@ -56,27 +56,3 @@ func ParseJWT(tokenString string) (*Claims, error) {
 	}
 	return claims, nil
 }
-
-//type HandleWithJWTClaims func(
-//	http.ResponseWriter, *http.Request, *Claims,
-//)
-
-//func ValidateJWTMiddleware(handle HandleWithJWTClaims) http.HandlerFunc {
-//	return func(w http.ResponseWriter, r *http.Request) {
-//		jwtFieldHolder := _JWTFieldHolder{}
-//		req, ok := util.NewSafelyParsedRequest(w, r, &jwtFieldHolder)
-//		if !ok {
-//			return
-//		}
-//		token := jwtFieldHolder.Token
-//		if ok = req.WrapCondition(token != "", "Missing required field `token`."); !ok {
-//			return
-//		}
-//		claims, err := ParseJWT(token)
-//		if err != nil {
-//			req.SendErrorResponse(schema.ClientSideError, "Invalid JWT.", nil)
-//			return
-//		}
-//		handle(w, r, claims)
-//	}
-//}

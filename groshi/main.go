@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/jieggii/groshi/groshi/auth/jwt"
 	"github.com/jieggii/groshi/groshi/config"
 	"github.com/jieggii/groshi/groshi/database"
 	"github.com/jieggii/groshi/groshi/handles"
-	"github.com/jieggii/groshi/groshi/handles/jwt"
 	"github.com/jieggii/groshi/groshi/loggers"
-	"github.com/jieggii/groshi/groshi/middlewares"
 	"net/http"
 )
 
@@ -15,11 +14,14 @@ func startHTTPServer(host string, port int) error {
 	mux := http.NewServeMux()
 
 	// user handles:
-	mux.HandleFunc("/user/auth", middlewares.ParseRequest(handles.UserAuth))
-	mux.HandleFunc("/user/create", middlewares.ParseRequest(handles.UserCreate))
-	mux.HandleFunc("/user/info", middlewares.ParseRequest(handles.UserRead))
-	mux.HandleFunc("/user/delete", middlewares.ParseRequest(handles.UserDelete))
+	mux.HandleFunc("/user/auth", middleware(false, handles.UserAuth))
+	mux.HandleFunc("/user/create", middleware(true, handles.UserCreate))
+	mux.HandleFunc("/user/info", middleware(false, handles.UserRead))
+	mux.HandleFunc("/user/delete", middleware(true, handles.UserDelete))
 
+	// transaction handles:
+
+	//mux.HandleFunc("/transaction/create")
 	//	r.Route("/user", func(r chi.Router) {
 	//	r.Post("/create", middlewares.ParseRequest(middlewares.ValidateJWT(handles.UserCreate)))
 	//	r.Post("/read", util.ValidateJWTMiddleware(handles.UserRead))

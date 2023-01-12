@@ -1,8 +1,8 @@
-package auth
+package passwords
 
 import "golang.org/x/crypto/bcrypt"
 
-const bcryptCost = 14 // todo: set convenient
+const bcryptCost = 12 // todo: set convenient
 
 func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost)

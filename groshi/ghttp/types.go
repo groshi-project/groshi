@@ -1,9 +1,7 @@
 package ghttp
 
 import (
-	"github.com/jieggii/groshi/groshi/handles/jwt"
+	"github.com/jieggii/groshi/groshi/database"
 )
 
-type Handle func(req *Request, claims *jwt.Claims)
-
-//type AuthorizedHandle func(req *Request, user database.User, claims *jwt.Claims)
+type Handle func(request *Request, currentUser *database.User)
