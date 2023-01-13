@@ -1,4 +1,4 @@
-SOURCES := ./groshi/
+SOURCES := ./internal/ ./cmd/
 MAX_LINE_LENGTH := 120
 
 .PHONY: all
@@ -8,8 +8,6 @@ all: help
 help:
 	@echo "COMMAND      DESCRIPTION                                 "
 	@echo "---------------------------------------------------------"
-	@echo "make gofmt   run gofmt                                   "
-	@echo "make golines run golines                                 "
 	@echo "make fmt     format source code (using gofmt and golines)"
 	@echo "make todo    grep TODOs                                  "
 
