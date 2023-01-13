@@ -47,6 +47,6 @@ golang.org/x/crypto/pbkdf2
 golang.org/x/sys/cpu
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
-# mellium.im/sasl v0.3.0
+# mellium.im/sasl v0.3.1
 ## explicit; go 1.18
 mellium.im/sasl
