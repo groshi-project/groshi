@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/jieggii/groshi/internal/auth/passwords"
+	"github.com/jieggii/groshi/internal/auth/passhash"
 	"github.com/jieggii/groshi/internal/loggers"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -20,7 +20,7 @@ func createSuperuserIfNotExists(username string, password string) error {
 		return fmt.Errorf("could not check if superuser @%v exists: %v", username, err)
 	}
 	if !superUserExists {
-		passwordHash, err := passwords.HashPassword(password)
+		passwordHash, err := passhash.HashPassword(password)
 		if err != nil {
 			return fmt.Errorf("could not generate password hash for superuser @%v: %v\n", username, err)
 		}

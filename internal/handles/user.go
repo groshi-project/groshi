@@ -2,7 +2,7 @@ package handles
 
 import (
 	"github.com/jieggii/groshi/internal/auth/jwt"
-	"github.com/jieggii/groshi/internal/auth/passwords"
+	"github.com/jieggii/groshi/internal/auth/passhash"
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/ghttp"
 	"github.com/jieggii/groshi/internal/handles/schema"
@@ -33,7 +33,7 @@ func UserAuth(request *ghttp.Request, _ *database.User) {
 		return
 	}
 
-	if !passwords.CheckPasswordHash(credentials.Password, user.Password) {
+	if !passhash.CheckPasswordHash(credentials.Password, user.Password) {
 		request.SendErrorResponse(schema.ClientSideError, "Invalid password.", nil)
 		return
 	}
@@ -70,7 +70,7 @@ func UserCreate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	passwordHash, err := passwords.HashPassword(newUserData.Password)
+	passwordHash, err := passhash.HashPassword(newUserData.Password)
 	if err != nil {
 		request.SendErrorResponse(schema.ServerSideError, "Could not generate password hash.", err)
 		return
