@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/jieggii/groshi/groshi/auth/jwt"
-	"github.com/jieggii/groshi/groshi/config"
-	"github.com/jieggii/groshi/groshi/database"
-	"github.com/jieggii/groshi/groshi/handles"
-	"github.com/jieggii/groshi/groshi/loggers"
+	"github.com/jieggii/groshi/internal/auth/jwt"
+	"github.com/jieggii/groshi/internal/config"
+	"github.com/jieggii/groshi/internal/database"
+	"github.com/jieggii/groshi/internal/handles"
+	"github.com/jieggii/groshi/internal/loggers"
+	"github.com/jieggii/groshi/internal/middleware"
 	"net/http"
 )
 
@@ -14,16 +15,16 @@ func startHTTPServer(host string, port int) error {
 	mux := http.NewServeMux()
 
 	// user handles:
-	mux.HandleFunc("/user/auth", middleware(false, handles.UserAuth))
-	mux.HandleFunc("/user/create", middleware(true, handles.UserCreate))
-	mux.HandleFunc("/user/read", middleware(false, handles.UserRead))
-	mux.HandleFunc("/user/delete", middleware(true, handles.UserDelete))
+	mux.HandleFunc("/user/auth", middleware.Middleware(false, handles.UserAuth))
+	mux.HandleFunc("/user/create", middleware.Middleware(true, handles.UserCreate))
+	mux.HandleFunc("/user/read", middleware.Middleware(false, handles.UserRead))
+	mux.HandleFunc("/user/delete", middleware.Middleware(true, handles.UserDelete))
 
 	// transaction handles:
-	mux.HandleFunc("/transaction/create", middleware(true, handles.TransactionCreate))
-	mux.HandleFunc("/transaction/read", middleware(true, handles.TransactionRead))
-	mux.HandleFunc("/transaction/update", middleware(true, handles.TransactionUpdate))
-	mux.HandleFunc("/transaction/delete", middleware(true, handles.TransactionDelete))
+	mux.HandleFunc("/transaction/create", middleware.Middleware(true, handles.TransactionCreate))
+	mux.HandleFunc("/transaction/read", middleware.Middleware(true, handles.TransactionRead))
+	mux.HandleFunc("/transaction/update", middleware.Middleware(true, handles.TransactionUpdate))
+	mux.HandleFunc("/transaction/delete", middleware.Middleware(true, handles.TransactionDelete))
 
 	loggers.Info.Printf("Starting HTTP server on %v:%v.\n", host, port)
 	err := http.ListenAndServe(fmt.Sprintf("%v:%v", host, port), mux)

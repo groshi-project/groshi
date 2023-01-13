@@ -2,9 +2,9 @@ package handles
 
 import (
 	"fmt"
-	"github.com/jieggii/groshi/groshi/database"
-	"github.com/jieggii/groshi/groshi/ghttp"
-	"github.com/jieggii/groshi/groshi/handles/schema"
+	"github.com/jieggii/groshi/internal/database"
+	"github.com/jieggii/groshi/internal/ghttp"
+	"github.com/jieggii/groshi/internal/handles/schema"
 )
 
 type transactionCreateRequest struct {

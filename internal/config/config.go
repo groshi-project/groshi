@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github.com/jieggii/groshi/groshi/loggers"
+	"github.com/jieggii/groshi/internal/loggers"
 	"github.com/jieggii/lookupcfg"
 	"os"
 	"strings"

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/jieggii/groshi/groshi/handles/schema"
-	"github.com/jieggii/groshi/groshi/loggers"
+	"github.com/jieggii/groshi/internal/handles/schema"
+	"github.com/jieggii/groshi/internal/loggers"
 	"io"
 	"net/http"
 )

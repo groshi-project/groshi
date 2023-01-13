@@ -1,11 +1,11 @@
 package handles
 
 import (
-	"github.com/jieggii/groshi/groshi/auth/jwt"
-	"github.com/jieggii/groshi/groshi/auth/passwords"
-	"github.com/jieggii/groshi/groshi/database"
-	"github.com/jieggii/groshi/groshi/ghttp"
-	"github.com/jieggii/groshi/groshi/handles/schema"
+	"github.com/jieggii/groshi/internal/auth/jwt"
+	"github.com/jieggii/groshi/internal/auth/passwords"
+	"github.com/jieggii/groshi/internal/database"
+	"github.com/jieggii/groshi/internal/ghttp"
+	"github.com/jieggii/groshi/internal/handles/schema"
 )
 
 type userAuthRequest struct {

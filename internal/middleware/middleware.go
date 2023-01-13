@@ -1,10 +1,10 @@
-package main
+package middleware
 
 import (
-	"github.com/jieggii/groshi/groshi/auth/jwt"
-	"github.com/jieggii/groshi/groshi/database"
-	"github.com/jieggii/groshi/groshi/ghttp"
-	"github.com/jieggii/groshi/groshi/handles/schema"
+	"github.com/jieggii/groshi/internal/auth/jwt"
+	"github.com/jieggii/groshi/internal/database"
+	"github.com/jieggii/groshi/internal/ghttp"
+	"github.com/jieggii/groshi/internal/handles/schema"
 	"net/http"
 )
 
@@ -12,7 +12,7 @@ type _JWTFieldHolder struct {
 	Token string `json:"token"`
 }
 
-func middleware(auth bool, handle ghttp.Handle) http.HandlerFunc {
+func Middleware(auth bool, handle ghttp.Handle) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := ghttp.NewRequest(w, r)
 		if req.RawRequest.Method != http.MethodPost {
