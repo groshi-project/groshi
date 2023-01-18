@@ -26,13 +26,6 @@ type User struct {
 	IsSuperuser bool
 }
 
-//func (u User) String() string {
-//	return fmt.Sprintf(
-//		"User<id=%v, @%v, isSuperuser=%v>",
-//		u.ID, u.Username, u.IsSuperuser,
-//	)
-//}
-
 func FetchUserByUsername(username string) (*User, error) {
 	user := User{}
 	err := Db.NewSelect().Model(&user).Where("username = ?", username).Scan(Ctx)
@@ -64,13 +57,6 @@ func FetchTransactionByUUID(uuid string) (*Transaction, error) {
 	err := Db.NewSelect().Model(&transaction).Where("uuid = ?", uuid).Scan(Ctx)
 	return &transaction, err
 }
-
-//func (t Transaction) String() string {
-//	return fmt.Sprintf(
-//		"Transaction<id=%v, by=%v, amount=%v (%v)>",
-//		t.ID, t.Owner, t.Amount, t.Currency,
-//	)
-//}
 
 var _ bun.BeforeAppendModelHook = (*Transaction)(nil)
 

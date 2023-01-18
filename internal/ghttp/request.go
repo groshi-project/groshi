@@ -3,7 +3,6 @@ package ghttp
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/jieggii/groshi/internal/handles/schema"
 	"github.com/jieggii/groshi/internal/loggers"
 	"io"
@@ -41,7 +40,6 @@ func (req *Request) Decode(v interface{}) error {
 // Returns true if there was no error.
 func (req *Request) DecodeSafe(v interface{}) bool {
 	if err := req.Decode(v); err != nil {
-		fmt.Println("decode err", err)
 		req.HandleError(err, schema.ClientSideError, schema.InvalidRequestBody)
 		return false
 	}
@@ -57,17 +55,6 @@ func (req *Request) HandleError(err error, errorCode schema.ErrorCode, errorMess
 	req.SendErrorResponse(errorCode, errorMessage, err)
 	return true
 }
-
-// WrapCondition is wrapper for request body validations.
-// Returns result value.
-//func (req *Request) WrapCondition(result bool, errorMessage string) bool {
-//	if !result {
-//		req.SendErrorResponse(
-//			schema.ClientSideError, errorMessage, nil,
-//		)
-//	}
-//	return result
-//}
 
 // SendSuccessResponse sends success response.
 func (req *Request) SendSuccessResponse(data interface{}) {
@@ -90,10 +77,3 @@ func (req *Request) SendErrorResponse(errorCode schema.ErrorCode, errorMessage s
 func NewRequest(w http.ResponseWriter, r *http.Request) *Request {
 	return &Request{ResponseWriter: w, RawRequest: r}
 }
-
-// NewSafelyParsedRequest creates Request object and safely parses request body.
-//func NewSafelyParsedRequest(w http.ResponseWriter, r *http.Request, v interface{}) (*Request, bool) {
-//	req := NewRequest(w, r)
-//	ok := req.DecodeSafe(v)
-//	return req, ok
-//}

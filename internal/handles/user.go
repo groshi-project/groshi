@@ -18,7 +18,8 @@ type userAuthResponse struct {
 }
 
 func UserAuth(request *ghttp.Request, _ *database.User) {
-	var params userAuthRequest
+	params := userAuthRequest{}
+
 	if ok := request.DecodeSafe(&params); !ok {
 		return
 	}
