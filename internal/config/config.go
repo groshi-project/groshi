@@ -21,7 +21,7 @@ type Config struct {
 	// postgresql settings:
 	PostgresHost     string `env:"GROSHI_POSTGRES_HOST" $default:"localhost"`
 	PostgresPort     int    `env:"GROSHI_POSTGRES_PORT" $default:"5432"`
-	PostgresUser     string `env:"GROSHI_POSTGRES_USER" $default:"postgres"`
+	PostgresUser     string `env:"GROSHI_POSTGRES_USER" $default:"jieggii"`
 	PostgresPassword string `env:"GROSHI_POSTGRES_PASSWORD" $default:""`
 	PostgresDatabase string `env:"GROSHI_POSTGRES_DATABASE" $default:"groshi"`
 }

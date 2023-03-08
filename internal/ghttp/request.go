@@ -3,8 +3,8 @@ package ghttp
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/jieggii/groshi/internal/handles/schema"
 	"github.com/jieggii/groshi/internal/loggers"
+	schema2 "github.com/jieggii/groshi/internal/schema"
 	"io"
 	"net/http"
 )
@@ -13,6 +13,11 @@ import (
 type Request struct {
 	ResponseWriter http.ResponseWriter
 	RawRequest     *http.Request
+}
+
+// NewRequest creates new Request instance.
+func NewRequest(w http.ResponseWriter, r *http.Request) *Request {
+	return &Request{ResponseWriter: w, RawRequest: r}
 }
 
 // sendJSONResponse sends JSON response.
@@ -38,42 +43,37 @@ func (req *Request) Decode(v interface{}) error {
 
 // DecodeSafe decodes request body and handles error.
 // Returns true if there was no error.
+// todo?: merge Decode and DecodeSafe
 func (req *Request) DecodeSafe(v interface{}) bool {
 	if err := req.Decode(v); err != nil {
-		req.HandleError(err, schema.ClientSideError, schema.InvalidRequestBody)
+		req.SendClientSideErrorResponse(schema2.InvalidRequestBody)
 		return false
 	}
-	return true
-}
-
-// HandleError handles any provided error. Does nothing if provided error is nil.
-// Returns true if error was handled.
-func (req *Request) HandleError(err error, errorCode schema.ErrorCode, errorMessage string) bool {
-	if err == nil {
-		return false
-	}
-	req.SendErrorResponse(errorCode, errorMessage, err)
 	return true
 }
 
 // SendSuccessResponse sends success response.
 func (req *Request) SendSuccessResponse(data interface{}) {
-	successObject := schema.SuccessResponse{Success: true, Data: data}
+	successObject := schema2.SuccessResponse{Success: true, Data: data}
 	req.sendJSONResponse(successObject)
 }
 
-// SendErrorResponse sends error response. Sends "Internal server error"
-// and logs error if it is server side error.
-func (req *Request) SendErrorResponse(errorCode schema.ErrorCode, errorMessage string, err error) {
-	if errorCode == schema.ServerSideError {
-		loggers.Warn.Printf("Internal server error: `%v` (%v).\n", errorMessage, err)
-		errorMessage = "Internal server error."
-	}
-	errorObject := schema.ErrorResponse{Success: false, ErrorCode: errorCode, ErrorMessage: errorMessage}
-	req.sendJSONResponse(errorObject)
+// SendClientSideErrorResponse sends client-side error response containing error message.
+func (req *Request) SendClientSideErrorResponse(errorMessage string) {
+	req.sendJSONResponse(schema2.ErrorResponse{
+		Success:      false,
+		ErrorOrigin:  schema2.ErrorOriginClient,
+		ErrorMessage: errorMessage,
+	})
 }
 
-// NewRequest creates Request object.
-func NewRequest(w http.ResponseWriter, r *http.Request) *Request {
-	return &Request{ResponseWriter: w, RawRequest: r}
+// SendServerSideErrorResponse sends server-side error response containing error message
+// "Internal Server Error", logs error comment and error object.
+func (req *Request) SendServerSideErrorResponse(errorComment string, err error) {
+	req.sendJSONResponse(schema2.ErrorResponse{
+		Success:      false,
+		ErrorOrigin:  schema2.ErrorOriginServer,
+		ErrorMessage: schema2.InternalServerError,
+	})
+	loggers.Error.Printf("%v (%v)", errorComment, err)
 }

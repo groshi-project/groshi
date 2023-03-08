@@ -3,7 +3,7 @@ package handles
 import (
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/ghttp"
-	"github.com/jieggii/groshi/internal/handles/schema"
+	"github.com/jieggii/groshi/internal/schema"
 	"time"
 )
 
@@ -31,7 +31,9 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 	}
 	_, err := database.Db.NewInsert().Model(&transaction).Exec(database.Ctx)
 	if err != nil {
-		request.SendErrorResponse(schema.ServerSideError, "Could not create new transaction.", err)
+		request.SendServerSideErrorResponse(
+			"Could not create new transaction.", err,
+		)
 		return
 	}
 
@@ -62,16 +64,12 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 
 	transaction, err := database.FetchTransactionByUUID(params.UUID)
 	if err != nil {
-		request.SendErrorResponse(schema.ClientSideError, schema.TransactionNotFound, nil)
+		request.SendClientSideErrorResponse(schema.TransactionNotFound)
 		return
 	}
 
-	if transaction.Owner.ID != currentUser.ID {
-		request.SendErrorResponse(
-			schema.ServerSideError,
-			"You are not allowed to read transactions of other users.",
-			nil,
-		) // todo
+	if transaction.Owner.ID != currentUser.ID && !currentUser.IsSuperuser {
+		request.SendClientSideErrorResponse(schema.AccessDenied)
 		return
 	}
 
@@ -112,20 +110,16 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 
 	transaction, err := database.FetchTransactionByUUID(params.UUID)
 	if err != nil {
-		request.SendErrorResponse(schema.ClientSideError, schema.TransactionNotFound, nil)
+		request.SendClientSideErrorResponse(schema.TransactionNotFound)
 		return
 	}
-	if currentUser.ID != transaction.OwnerId { // todo: allow delete any transaction for superusers?
-		request.SendErrorResponse(
-			schema.ClientSideError,
-			"You are not allowed to delete transactions of other users.",
-			nil,
-		)
+	if currentUser.ID != transaction.OwnerId && !currentUser.IsSuperuser {
+		request.SendClientSideErrorResponse(schema.AccessDenied)
 		return
 	}
 	_, err = database.Db.NewDelete().Model(&transaction).Where("uuid = ", transaction.UUID).Exec(database.Ctx)
 	if err != nil {
-		request.SendErrorResponse(schema.ServerSideError, "Could not delete transaction.", err)
+		request.SendServerSideErrorResponse("Could not delete transaction.", err)
 		return
 	}
 	response := transactionDeleteResponse{}
