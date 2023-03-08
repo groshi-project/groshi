@@ -1,10 +1,12 @@
+// Package middleware consists of the only one middleware
+// which validates ghttp and parses JWT from it.
 package middleware
 
 import (
-	"github.com/jieggii/groshi/internal/auth/jwt"
 	"github.com/jieggii/groshi/internal/database"
-	"github.com/jieggii/groshi/internal/ghttp"
-	"github.com/jieggii/groshi/internal/schema"
+	"github.com/jieggii/groshi/internal/http/ghttp"
+	"github.com/jieggii/groshi/internal/http/jwt"
+	"github.com/jieggii/groshi/internal/http/schema"
 	"net/http"
 )
 
@@ -12,6 +14,7 @@ type _JWTFieldHolder struct {
 	Token string `json:"token"`
 }
 
+// Middleware is the only and the main groshi middleware.
 func Middleware(auth bool, handle ghttp.Handle) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := ghttp.NewRequest(w, r)

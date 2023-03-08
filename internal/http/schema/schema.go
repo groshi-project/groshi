@@ -1,5 +1,7 @@
 package schema
 
+// ErrorOrigin represents origin of error.
+// It can only be server or client.
 type ErrorOrigin string
 
 const (

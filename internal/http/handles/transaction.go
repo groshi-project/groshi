@@ -2,8 +2,8 @@ package handles
 
 import (
 	"github.com/jieggii/groshi/internal/database"
-	"github.com/jieggii/groshi/internal/ghttp"
-	"github.com/jieggii/groshi/internal/schema"
+	"github.com/jieggii/groshi/internal/http/ghttp"
+	"github.com/jieggii/groshi/internal/http/schema"
 	"time"
 )
 

@@ -6,6 +6,7 @@ const (
 	InvalidRequestMethod = "Invalid request method."
 
 	// JWT
+
 	MissingJWTField = "Missing required `token` field."
 	InvalidJWT      = "Invalid JWT."
 
@@ -13,6 +14,7 @@ const (
 	InternalServerError = "Internal server error."
 
 	// high-level error messages
+
 	AccessDenied        = "Access denied."
 	UserNotFound        = "User not found."
 	TransactionNotFound = "Transaction not found."
