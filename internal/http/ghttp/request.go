@@ -48,7 +48,7 @@ func (req *Request) Decode(v interface{}) error {
 // todo?: merge Decode and DecodeSafe
 func (req *Request) DecodeSafe(v interface{}) bool {
 	if err := req.Decode(v); err != nil {
-		req.SendClientSideErrorResponse(schema.InvalidRequestBody)
+		req.SendClientSideErrorResponse(schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation)
 		return false
 	}
 	return true
@@ -61,21 +61,22 @@ func (req *Request) SendSuccessResponse(data interface{}) {
 }
 
 // SendClientSideErrorResponse sends client-side error response containing error message.
-func (req *Request) SendClientSideErrorResponse(errorMessage string) {
+func (req *Request) SendClientSideErrorResponse(errorTag schema.ErrorTag, errorDetails string) {
 	req.sendJSONResponse(schema.ErrorResponse{
 		Success:      false,
-		ErrorOrigin:  schema.ErrorOriginClient,
-		ErrorMessage: errorMessage,
+		ErrorOrigin:  schema.ClientErrorOrigin,
+		ErrorTag:     errorTag,
+		ErrorDetails: errorDetails,
 	})
 }
 
-// SendServerSideErrorResponse sends server-side error response containing error message
-// "Internal Server Error", logs error comment and error object.
+// SendServerSideErrorResponse sends server-side error response without details and logs the error.
 func (req *Request) SendServerSideErrorResponse(errorComment string, err error) {
 	req.sendJSONResponse(schema.ErrorResponse{
 		Success:      false,
-		ErrorOrigin:  schema.ErrorOriginServer,
-		ErrorMessage: schema.InternalServerError,
+		ErrorOrigin:  schema.ServerErrorOrigin,
+		ErrorTag:     schema.InternalServerErrorErrorTag,
+		ErrorDetails: "Internal server error.",
 	})
-	loggers.Error.Printf("%v (%v)", errorComment, err)
+	loggers.Error.Printf("returned server-side error response 'cause %v (%v)", errorComment, err)
 }

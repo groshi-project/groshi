@@ -14,7 +14,7 @@ type userAuthRequest struct {
 }
 
 func (p *userAuthRequest) validate() bool {
-	return len(p.Username)*len(p.Password) != 0 // todo: use optimal condition
+	return p.Username != "" && p.Password != ""
 }
 
 type userAuthResponse struct {
@@ -23,29 +23,35 @@ type userAuthResponse struct {
 
 func UserAuth(request *ghttp.Request, _ *database.User) {
 	params := userAuthRequest{}
-
 	if ok := request.DecodeSafe(&params); !ok {
 		return
 	}
+
 	if !params.validate() {
-		request.SendClientSideErrorResponse(schema.InvalidRequestBody)
+		request.SendClientSideErrorResponse(
+			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+		)
 		return
 	}
 
 	user, err := database.FetchUserByUsername(params.Username)
 	if err != nil {
-		request.SendClientSideErrorResponse(schema.UserNotFound)
+		request.SendClientSideErrorResponse(
+			schema.ObjectNotFoundErrorTag, schema.UserNotFoundErrorDetail,
+		)
 		return
 	}
 
 	if !passhash.CheckPasswordHash(params.Password, user.Password) {
-		request.SendClientSideErrorResponse("Invalid password.") // todo?
+		request.SendClientSideErrorResponse(
+			schema.AccessDeniedErrorTag, "Invalid password.",
+		)
 		return
 	}
 
 	token, err := jwt.GenerateJWT(params.Username)
 	if err != nil {
-		request.SendServerSideErrorResponse("Could not generate JWT.", err)
+		request.SendServerSideErrorResponse("could not generate JWT", err)
 		return
 	}
 	response := userAuthResponse{Token: token}
@@ -59,11 +65,17 @@ type userCreateRequest struct {
 	IsSuperUser bool `json:"is_superuser"`
 }
 
+func (p *userCreateRequest) validate() bool {
+	return p.Username != "" && p.Password != ""
+}
+
 type userCreateResponse struct{}
 
 func UserCreate(request *ghttp.Request, currentUser *database.User) {
 	if !currentUser.IsSuperuser {
-		request.SendClientSideErrorResponse(schema.AccessDenied)
+		request.SendClientSideErrorResponse(
+			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
+		)
 		return
 	}
 
@@ -72,16 +84,23 @@ func UserCreate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
+	if !params.validate() {
+		request.SendClientSideErrorResponse(
+			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+		)
+		return
+	}
+
 	userExists, err := database.UserExists(params.Username)
 	if err != nil {
 		request.SendServerSideErrorResponse(
-			"Could not check if user already exists.", err,
+			"could not check if user already exists", err,
 		)
 		return
 	}
 	if userExists {
 		request.SendClientSideErrorResponse(
-			"User with such username already exists.",
+			schema.ConflictErrorTag, "User with this username already exists.",
 		)
 		return
 	}
@@ -89,7 +108,7 @@ func UserCreate(request *ghttp.Request, currentUser *database.User) {
 	passwordHash, err := passhash.HashPassword(params.Password)
 	if err != nil {
 		request.SendServerSideErrorResponse(
-			"Could not generate password hash.", err,
+			"could not generate password hash", err,
 		)
 		return
 	}
@@ -102,7 +121,7 @@ func UserCreate(request *ghttp.Request, currentUser *database.User) {
 	_, err = database.Db.NewInsert().Model(&user).Exec(database.Ctx)
 	if err != nil {
 		request.SendServerSideErrorResponse(
-			"Could not insert new user.", err,
+			"could not insert new user", err,
 		)
 		return
 	}
@@ -114,20 +133,40 @@ type userReadRequest struct {
 	Username string `json:"username"`
 }
 
+func (p *userReadRequest) validate() bool {
+	return p.Username != ""
+}
+
 type userReadResponse struct {
 	Username    string `json:"username"`
 	IsSuperuser bool   `json:"is_superuser"`
 }
 
-func UserRead(request *ghttp.Request, _ *database.User) {
+func UserRead(request *ghttp.Request, currentUser *database.User) {
 	params := userReadRequest{}
 	if ok := request.DecodeSafe(&params); !ok {
 		return
 	}
 
+	if !params.validate() {
+		request.SendClientSideErrorResponse(
+			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+		)
+		return
+	}
+
+	if currentUser.Username != params.Username && !currentUser.IsSuperuser {
+		request.SendClientSideErrorResponse(
+			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
+		)
+		return
+	}
+
 	user, err := database.FetchUserByUsername(params.Username)
 	if err != nil {
-		request.SendClientSideErrorResponse(schema.UserNotFound)
+		request.SendClientSideErrorResponse(
+			schema.ObjectNotFoundErrorTag, schema.UserNotFoundErrorDetail,
+		)
 		return
 	}
 	response := userReadResponse{
@@ -147,6 +186,10 @@ type userUpdateRequest struct {
 	Demote  bool `json:"demote"`
 }
 
+func (p *userUpdateRequest) validate() bool {
+	return p.Username != ""
+}
+
 type userUpdateResponse struct {
 }
 
@@ -156,8 +199,17 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
+	if !params.validate() {
+		request.SendClientSideErrorResponse(
+			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+		)
+		return
+	}
+
 	if params.Username != currentUser.Username && !currentUser.IsSuperuser {
-		request.SendClientSideErrorResponse(schema.AccessDenied)
+		request.SendClientSideErrorResponse(
+			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
+		)
 		return
 	}
 
@@ -169,7 +221,9 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 		var err error
 		user, err = database.FetchUserByUsername(params.Username)
 		if err != nil {
-			request.SendClientSideErrorResponse(schema.UserNotFound)
+			request.SendClientSideErrorResponse(
+				schema.ObjectNotFoundErrorTag, schema.UserNotFoundErrorDetail,
+			)
 			return
 		}
 	}
@@ -177,11 +231,14 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 	if params.NewUsername != "" {
 		newUsernameTaken, err := database.UserExists(params.NewUsername)
 		if err != nil {
-			request.SendServerSideErrorResponse("Could not check if user exists.", err)
+			request.SendServerSideErrorResponse("could not check if user exists", err)
 			return
 		}
+
 		if newUsernameTaken {
-			request.SendClientSideErrorResponse("New username is already taken.")
+			request.SendClientSideErrorResponse(
+				schema.ConflictErrorTag, "New username chosen by you is already taken.",
+			)
 			return
 		}
 		user.Username = params.NewUsername
@@ -191,7 +248,7 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 		passwordHash, err := passhash.HashPassword(params.NewPassword)
 		if err != nil {
 			request.SendServerSideErrorResponse(
-				"Could not generate password hash.", err,
+				"could not generate password hash", err,
 			)
 			return
 		}
@@ -202,13 +259,15 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 	if params.Promote || params.Demote {
 		if !currentUser.IsSuperuser {
 			request.SendClientSideErrorResponse(
-				"You are not allowed to affect `promote` and `demote` fields.",
-			) // todo
+				schema.AccessDeniedErrorTag,
+				"You have no right to use `promote` and `demote` fields.",
+			)
 			return
 		}
 		if params.Promote && params.Demote {
 			request.SendClientSideErrorResponse(
-				"`promote` and `demote` fields cannot be used at once.",
+				schema.InvalidRequestErrorTag,
+				"`promote` and `demote` fields cannot both be used at once.",
 			)
 			return
 		}
@@ -222,7 +281,7 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 
 	_, err := database.Db.NewUpdate().Model(&user).WherePK().Exec(database.Ctx)
 	if err != nil {
-		request.SendServerSideErrorResponse("Could not update user.", err)
+		request.SendServerSideErrorResponse("could not update user", err)
 		return
 	}
 	response := userUpdateResponse{}
@@ -232,7 +291,14 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 type userDeleteRequest struct {
 	Username string `json:"username"`
 }
-type userDeleteResponse struct{}
+
+func (p *userDeleteRequest) validate() bool {
+	return p.Username != ""
+}
+
+type userDeleteResponse struct {
+	Username string `json:"username"`
+}
 
 func UserDelete(request *ghttp.Request, currentUser *database.User) {
 	params := userDeleteRequest{}
@@ -240,22 +306,34 @@ func UserDelete(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if currentUser.Username != params.Username && !currentUser.IsSuperuser {
-		request.SendClientSideErrorResponse(schema.AccessDenied)
+	if !params.validate() {
+		request.SendClientSideErrorResponse(
+			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+		)
 		return
 	}
+
+	if currentUser.Username != params.Username && !currentUser.IsSuperuser {
+		request.SendClientSideErrorResponse(
+			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
+		)
+		return
+	}
+
 	user, err := database.FetchUserByUsername(params.Username)
 	if err != nil {
-		request.SendClientSideErrorResponse(schema.UserNotFound)
+		request.SendClientSideErrorResponse(
+			schema.ObjectNotFoundErrorTag, schema.UserNotFoundErrorDetail,
+		)
 		return
 	}
 
 	_, err = database.Db.NewDelete().Model(user).WherePK().Exec(database.Ctx)
 	if err != nil {
-		request.SendServerSideErrorResponse("Could not delete user.", err)
+		request.SendServerSideErrorResponse("could not delete user", err)
 		return
 	}
 
-	response := userDeleteResponse{}
+	response := userDeleteResponse{Username: user.Username}
 	request.SendSuccessResponse(&response)
 }

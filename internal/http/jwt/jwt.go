@@ -47,7 +47,7 @@ func ParseJWT(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return SecretKey, nil
 	})
-	if err != nil {
+	if err != nil { // todo: inspect these statements
 		return nil, err
 	}
 	if !token.Valid {

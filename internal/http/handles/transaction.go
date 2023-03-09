@@ -12,6 +12,11 @@ type transactionCreateRequest struct {
 	Currency    database.Currency `json:"currency"`
 	Description string            `json:"description"`
 }
+
+func (p *transactionCreateRequest) validate() bool {
+	return p.Currency != "" && p.Amount >= 0
+}
+
 type transactionCreateResponse struct {
 	UUID string `json:"uuid"`
 }
@@ -19,6 +24,13 @@ type transactionCreateResponse struct {
 func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 	params := transactionCreateRequest{}
 	if ok := request.DecodeSafe(&params); !ok {
+		return
+	}
+
+	if !params.validate() {
+		request.SendClientSideErrorResponse(
+			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+		)
 		return
 	}
 
@@ -32,7 +44,7 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 	_, err := database.Db.NewInsert().Model(&transaction).Exec(database.Ctx)
 	if err != nil {
 		request.SendServerSideErrorResponse(
-			"Could not create new transaction.", err,
+			"could not create new transaction", err,
 		)
 		return
 	}
@@ -43,6 +55,10 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 
 type transactionReadRequest struct {
 	UUID string `json:"uuid"`
+}
+
+func (p *transactionReadRequest) validate() bool {
+	return p.UUID != ""
 }
 
 type transactionReadResponse struct {
@@ -62,14 +78,26 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
+	if !params.validate() {
+		request.SendClientSideErrorResponse(
+			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+		)
+
+		return
+	}
+
 	transaction, err := database.FetchTransactionByUUID(params.UUID)
 	if err != nil {
-		request.SendClientSideErrorResponse(schema.TransactionNotFound)
+		request.SendClientSideErrorResponse(
+			schema.ObjectNotFoundErrorTag, schema.TransactionNotFoundErrorDetail,
+		)
 		return
 	}
 
 	if transaction.Owner.ID != currentUser.ID && !currentUser.IsSuperuser {
-		request.SendClientSideErrorResponse(schema.AccessDenied)
+		request.SendClientSideErrorResponse(
+			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
+		)
 		return
 	}
 
@@ -88,6 +116,10 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 type transactionUpdateRequest struct {
 }
 
+func (p *transactionUpdateRequest) validate() bool {
+	return true
+}
+
 type transactionUpdateResponse struct {
 }
 
@@ -99,7 +131,12 @@ type transactionDeleteRequest struct {
 	UUID string `json:"uuid"`
 }
 
+func (p *transactionDeleteRequest) validate() bool {
+	return p.UUID != ""
+}
+
 type transactionDeleteResponse struct {
+	UUID string `json:"uuid"`
 }
 
 func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
@@ -108,20 +145,34 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
+	if !params.validate() {
+		request.SendClientSideErrorResponse(
+			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+		)
+		return
+	}
+
 	transaction, err := database.FetchTransactionByUUID(params.UUID)
 	if err != nil {
-		request.SendClientSideErrorResponse(schema.TransactionNotFound)
+		request.SendClientSideErrorResponse(
+			schema.ObjectNotFoundErrorTag, schema.TransactionNotFoundErrorDetail,
+		)
 		return
 	}
+
 	if currentUser.ID != transaction.OwnerId && !currentUser.IsSuperuser {
-		request.SendClientSideErrorResponse(schema.AccessDenied)
+		request.SendClientSideErrorResponse(
+			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
+		)
 		return
 	}
+
 	_, err = database.Db.NewDelete().Model(&transaction).Where("uuid = ", transaction.UUID).Exec(database.Ctx)
 	if err != nil {
-		request.SendServerSideErrorResponse("Could not delete transaction.", err)
+		request.SendServerSideErrorResponse("could not delete transaction", err)
 		return
 	}
-	response := transactionDeleteResponse{}
+
+	response := transactionDeleteResponse{UUID: transaction.UUID}
 	request.SendSuccessResponse(&response)
 }
