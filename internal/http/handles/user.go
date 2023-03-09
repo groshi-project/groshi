@@ -69,7 +69,9 @@ func (p *userCreateRequest) validate() bool {
 	return p.Username != "" && p.Password != ""
 }
 
-type userCreateResponse struct{}
+type userCreateResponse struct {
+	Username string `json:"username"`
+}
 
 func UserCreate(request *ghttp.Request, currentUser *database.User) {
 	if !currentUser.IsSuperuser {
@@ -125,7 +127,7 @@ func UserCreate(request *ghttp.Request, currentUser *database.User) {
 		)
 		return
 	}
-	response := userCreateResponse{}
+	response := userCreateResponse{Username: params.Username}
 	request.SendSuccessResponse(&response)
 }
 
@@ -191,6 +193,9 @@ func (p *userUpdateRequest) validate() bool {
 }
 
 type userUpdateResponse struct {
+	Username        string `json:"username"`
+	PasswordUpdated bool   `json:"password_updated"`
+	IsSuperUser     bool   `json:"is_superuser"`
 }
 
 func UserUpdate(request *ghttp.Request, currentUser *database.User) {
@@ -244,6 +249,7 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 		user.Username = params.NewUsername
 	}
 
+	passwordUpdated := false
 	if params.NewPassword != "" {
 		passwordHash, err := passhash.HashPassword(params.NewPassword)
 		if err != nil {
@@ -253,6 +259,7 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 			return
 		}
 		user.Password = passwordHash
+		passwordUpdated = true
 	}
 
 	var newIsSuperuser bool
@@ -279,12 +286,16 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 		user.IsSuperuser = newIsSuperuser
 	}
 
-	_, err := database.Db.NewUpdate().Model(&user).WherePK().Exec(database.Ctx)
+	_, err := database.Db.NewUpdate().Model(user).WherePK().Exec(database.Ctx)
 	if err != nil {
 		request.SendServerSideErrorResponse("could not update user", err)
 		return
 	}
-	response := userUpdateResponse{}
+	response := userUpdateResponse{
+		Username:        user.Username,
+		PasswordUpdated: passwordUpdated,
+		IsSuperUser:     user.IsSuperuser,
+	}
 	request.SendSuccessResponse(&response)
 }
 

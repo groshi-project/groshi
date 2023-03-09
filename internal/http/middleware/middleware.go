@@ -12,13 +12,15 @@ type _JWTFieldHolder struct {
 	Token string `json:"token"`
 }
 
-// Middleware todo...
+// Middleware is the main middleware which must be used for all groshi handles.
+// It validates request and ensures if the user is authorized if it is required.
 func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := ghttp.NewRequest(w, r)
 		if req.RawRequest.Method != http.MethodPost {
 			req.SendClientSideErrorResponse(
-				schema.InvalidRequestErrorTag, "Invalid request method (POST must be used)",
+				schema.InvalidRequestErrorTag,
+				"Invalid request method (POST must be used)",
 			)
 			return
 		}
@@ -35,7 +37,7 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 			if token == "" {
 				req.SendClientSideErrorResponse(
 					schema.UnauthorizedErrorTag,
-					"This method requires authorization, but required `token` field is missing.",
+					"This method requires authorization, but required field `token` in the request body is missing.",
 				)
 				return
 			}

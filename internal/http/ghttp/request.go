@@ -48,7 +48,9 @@ func (req *Request) Decode(v interface{}) error {
 // todo?: merge Decode and DecodeSafe
 func (req *Request) DecodeSafe(v interface{}) bool {
 	if err := req.Decode(v); err != nil {
-		req.SendClientSideErrorResponse(schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation)
+		req.SendClientSideErrorResponse(
+			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+		)
 		return false
 	}
 	return true

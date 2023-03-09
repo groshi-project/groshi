@@ -8,9 +8,10 @@ import (
 )
 
 type transactionCreateRequest struct {
-	Amount      float64           `json:"amount,string"` // todo: think about string and int
+	Amount      float64           `json:"amount"`
 	Currency    database.Currency `json:"currency"`
 	Description string            `json:"description"`
+	Date        time.Time         `json:"date"`
 }
 
 func (p *transactionCreateRequest) validate() bool {
@@ -82,7 +83,6 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
 		)
-
 		return
 	}
 
@@ -94,7 +94,16 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if transaction.Owner.ID != currentUser.ID && !currentUser.IsSuperuser {
+	transactionOwner := database.User{}
+	err = database.Db.NewSelect().Model(&transactionOwner).Where("id = ?", transaction.OwnerId).Scan(database.Ctx)
+	if err != nil {
+		request.SendServerSideErrorResponse(
+			"could not fetch transaction owner", err,
+		)
+		return
+	}
+
+	if transactionOwner.ID != currentUser.ID && !currentUser.IsSuperuser {
 		request.SendClientSideErrorResponse(
 			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
 		)
@@ -107,7 +116,7 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 		Currency:    transaction.Currency,
 		Description: transaction.Description,
 
-		Owner: transaction.Owner.Username,
+		Owner: transactionOwner.Username,
 		Date:  transaction.Date,
 	}
 	request.SendSuccessResponse(&response)
@@ -167,7 +176,7 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	_, err = database.Db.NewDelete().Model(&transaction).Where("uuid = ", transaction.UUID).Exec(database.Ctx)
+	_, err = database.Db.NewDelete().Model(transaction).Where("uuid = ?", transaction.UUID).Exec(database.Ctx)
 	if err != nil {
 		request.SendServerSideErrorResponse("could not delete transaction", err)
 		return
