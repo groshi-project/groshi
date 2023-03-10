@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"time"
 )
@@ -43,7 +42,7 @@ func GenerateJWT(username string) (string, error) {
 	return tokenString, nil
 }
 
-func ParseJWT(tokenString string) (*Claims, error) {
+func ParseJWT(tokenString string) (*Claims, bool) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(
 		tokenString, claims,
@@ -52,10 +51,10 @@ func ParseJWT(tokenString string) (*Claims, error) {
 		},
 	)
 	if err != nil {
-		return nil, err
+		return nil, false
 	}
 	if !token.Valid {
-		return nil, fmt.Errorf("invalid JWT")
+		return nil, false
 	}
-	return claims, nil
+	return claims, true
 }

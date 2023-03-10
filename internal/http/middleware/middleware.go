@@ -42,14 +42,15 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 				return
 			}
 
-			claims, err := jwt.ParseJWT(token)
-			if err != nil {
+			claims, ok := jwt.ParseJWT(token)
+			if !ok {
 				req.SendClientSideErrorResponse(
 					schema.AccessDeniedErrorTag, "Invalid JWT.",
 				)
 				return
 			}
 
+			var err error
 			currentUser, err = database.FetchUserByUsername(claims.Username)
 			if err != nil {
 				req.SendClientSideErrorResponse(

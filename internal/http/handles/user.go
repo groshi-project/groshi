@@ -42,7 +42,7 @@ func UserAuth(request *ghttp.Request, _ *database.User) {
 		return
 	}
 
-	if !passhash.CheckPasswordHash(params.Password, user.Password) {
+	if !passhash.CheckPassword(params.Password, user.Password) {
 		request.SendClientSideErrorResponse(
 			schema.AccessDeniedErrorTag, "Invalid password.",
 		)
