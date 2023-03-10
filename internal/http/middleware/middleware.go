@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-type _JWTFieldHolder struct {
+type _jwtFieldHolder struct {
 	Token string `json:"token"`
 }
 
@@ -28,7 +28,7 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 		var currentUser *database.User = nil
 
 		if authRequired {
-			jwtFieldHolder := _JWTFieldHolder{}
+			jwtFieldHolder := _jwtFieldHolder{}
 			if ok := req.DecodeSafe(&jwtFieldHolder); !ok {
 				return
 			}
