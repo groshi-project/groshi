@@ -3,8 +3,8 @@ package middleware
 import (
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http/ghttp"
+	"github.com/jieggii/groshi/internal/http/ghttp/schema"
 	"github.com/jieggii/groshi/internal/http/jwt"
-	"github.com/jieggii/groshi/internal/http/schema"
 	"net/http"
 )
 
@@ -20,7 +20,7 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 		if req.RawRequest.Method != http.MethodPost {
 			req.SendClientSideErrorResponse(
 				schema.InvalidRequestErrorTag,
-				"Invalid request method (POST must be used)",
+				"Invalid request method (POST must be used).",
 			)
 			return
 		}
@@ -45,7 +45,7 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 			claims, err := jwt.ParseJWT(token)
 			if err != nil {
 				req.SendClientSideErrorResponse(
-					schema.AccessDeniedErrorTag, "Invalid JWT",
+					schema.AccessDeniedErrorTag, "Invalid JWT.",
 				)
 				return
 			}
@@ -54,7 +54,7 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 			if err != nil {
 				req.SendClientSideErrorResponse(
 					schema.ObjectNotFoundErrorTag,
-					"The user you authorized yourself to was not found",
+					"The user you authorized yourself to was not found.",
 				)
 				return
 			}

@@ -7,15 +7,6 @@ import (
 	"time"
 )
 
-type Currency string // todo: think about currencies implementation
-// e.g: how to check if string is currency???
-
-const (
-	CurrencyUSD Currency = "USD"
-	CurrencyEUR Currency = "EUR"
-	CurrencyRUB Currency = "RUB"
-)
-
 type User struct {
 	bun.BaseModel `bun:"table:users,alias:u"`
 
@@ -42,20 +33,17 @@ type Transaction struct {
 	ID   int64  `bun:",pk,autoincrement"`
 	UUID string `bun:",unique,notnull"`
 
-	Amount      float64  `bun:",notnull"`
-	Currency    Currency `bun:",notnull"`
-	Description string   `bun:",notnull"`
+	Amount      float64 `bun:",notnull"`
+	Currency    string  `bun:",notnull"`
+	Description string  `bun:",notnull"`
 
 	OwnerId int64 `bun:",notnull"`
 	Owner   *User `bun:"rel:belongs-to,join:owner_id=id"`
 
 	Date time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-}
 
-func FetchTransactionByUUID(uuid string) (*Transaction, error) {
-	transaction := Transaction{}
-	err := Db.NewSelect().Model(&transaction).Where("uuid = ?", uuid).Scan(Ctx)
-	return &transaction, err
+	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
+	UpdatedAt time.Time `bun:",nullzero"`
 }
 
 var _ bun.BeforeAppendModelHook = (*Transaction)(nil)
@@ -66,4 +54,10 @@ func (t *Transaction) BeforeAppendModel(_ context.Context, query bun.Query) erro
 		t.UUID = uuid.NewString()
 	}
 	return nil
+}
+
+func FetchTransactionByUUID(uuid string) (*Transaction, error) {
+	transaction := Transaction{}
+	err := Db.NewSelect().Model(&transaction).Where("uuid = ?", uuid).Scan(Ctx)
+	return &transaction, err
 }

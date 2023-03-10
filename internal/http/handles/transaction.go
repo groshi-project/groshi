@@ -3,15 +3,15 @@ package handles
 import (
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http/ghttp"
-	"github.com/jieggii/groshi/internal/http/schema"
+	"github.com/jieggii/groshi/internal/http/ghttp/schema"
 	"time"
 )
 
 type transactionCreateRequest struct {
-	Amount      float64           `json:"amount"`
-	Currency    database.Currency `json:"currency"`
-	Description string            `json:"description"`
-	Date        time.Time         `json:"date"`
+	Amount      float64   `json:"amount"`
+	Currency    string    `json:"currency"`
+	Description string    `json:"description"`
+	Date        time.Time `json:"date"`
 }
 
 func (p *transactionCreateRequest) validate() bool {
@@ -39,6 +39,7 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 		Amount:      params.Amount,
 		Currency:    params.Currency,
 		Description: params.Description,
+		Date:        params.Date,
 
 		OwnerId: currentUser.ID,
 	}
@@ -65,9 +66,9 @@ func (p *transactionReadRequest) validate() bool {
 type transactionReadResponse struct {
 	UUID string `json:"uuid"`
 
-	Amount      float64           `json:"amount"`
-	Currency    database.Currency `json:"currency"`
-	Description string            `json:"description"`
+	Amount      float64 `json:"amount"`
+	Currency    string  `json:"currency"`
+	Description string  `json:"description"`
 
 	Owner string    `json:"owner"`
 	Date  time.Time `json:"date"`

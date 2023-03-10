@@ -5,13 +5,13 @@ package ghttp
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/jieggii/groshi/internal/http/schema"
+	"github.com/jieggii/groshi/internal/http/ghttp/schema"
 	"github.com/jieggii/groshi/internal/loggers"
 	"io"
 	"net/http"
 )
 
-// Request is struct which keeps user ghttp data.
+// Request is struct which keeps request data.
 type Request struct {
 	ResponseWriter http.ResponseWriter
 	RawRequest     *http.Request
@@ -29,7 +29,7 @@ func (req *Request) sendJSONResponse(data interface{}) {
 	json.NewEncoder(req.ResponseWriter).Encode(data)
 }
 
-// Decode decodes ghttp body.
+// Decode decodes request body.
 func (req *Request) Decode(v interface{}) error {
 	body, err := io.ReadAll(req.RawRequest.Body)
 	if err != nil {

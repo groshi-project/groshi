@@ -3,8 +3,8 @@ package handles
 import (
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http/ghttp"
+	"github.com/jieggii/groshi/internal/http/ghttp/schema"
 	"github.com/jieggii/groshi/internal/http/jwt"
-	"github.com/jieggii/groshi/internal/http/schema"
 	"github.com/jieggii/groshi/internal/passhash"
 )
 
