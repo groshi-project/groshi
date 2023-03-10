@@ -104,7 +104,7 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if transactionOwner.ID != currentUser.ID && !currentUser.IsSuperuser {
+	if transactionOwner.ID != currentUser.ID {
 		request.SendClientSideErrorResponse(
 			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
 		)
@@ -170,7 +170,7 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if currentUser.ID != transaction.OwnerId && !currentUser.IsSuperuser {
+	if transaction.OwnerId != currentUser.ID {
 		request.SendClientSideErrorResponse(
 			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
 		)

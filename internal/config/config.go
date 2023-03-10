@@ -14,10 +14,6 @@ type Config struct {
 	Port         int    `env:"GROSHI_PORT" $default:"8080"`
 	JWTSecretKey []byte `env:"GROSHI_JWT_SECRET_KEY" $default:"secret-key"`
 
-	// superuser settings:
-	SuperuserUsername string `env:"GROSHI_SUPERUSER_USERNAME" $default:"root"`
-	SuperuserPassword string `env:"GROSHI_SUPERUSER_PASSWORD" $default:"password1234"`
-
 	// postgresql settings:
 	PostgresHost     string `env:"GROSHI_POSTGRES_HOST" $default:"localhost"`
 	PostgresPort     int    `env:"GROSHI_POSTGRES_PORT" $default:"5432"`

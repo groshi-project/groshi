@@ -74,13 +74,6 @@ type userCreateResponse struct {
 }
 
 func UserCreate(request *ghttp.Request, currentUser *database.User) {
-	if !currentUser.IsSuperuser {
-		request.SendClientSideErrorResponse(
-			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
-		)
-		return
-	}
-
 	params := userCreateRequest{}
 	if ok := request.DecodeSafe(&params); !ok {
 		return
@@ -115,9 +108,8 @@ func UserCreate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 	user := database.User{
-		Username:    params.Username,
-		Password:    passwordHash,
-		IsSuperuser: params.IsSuperUser,
+		Username: params.Username,
+		Password: passwordHash,
 	}
 
 	_, err = database.Db.NewInsert().Model(&user).Exec(database.Ctx)
@@ -157,7 +149,7 @@ func UserRead(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if currentUser.Username != params.Username && !currentUser.IsSuperuser {
+	if params.Username != currentUser.Username {
 		request.SendClientSideErrorResponse(
 			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
 		)
@@ -172,8 +164,7 @@ func UserRead(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 	response := userReadResponse{
-		Username:    user.Username,
-		IsSuperuser: user.IsSuperuser,
+		Username: user.Username,
 	}
 	request.SendSuccessResponse(&response)
 }
@@ -183,19 +174,15 @@ type userUpdateRequest struct {
 
 	NewUsername string `json:"new_username"`
 	NewPassword string `json:"new_password"`
-
-	Promote bool `json:"promote"`
-	Demote  bool `json:"demote"`
 }
 
 func (p *userUpdateRequest) validate() bool {
-	return p.Username != ""
+	return p.Username != "" && (p.NewUsername != "" || p.NewPassword != "")
 }
 
 type userUpdateResponse struct {
 	Username        string `json:"username"`
-	PasswordUpdated bool   `json:"password_updated"`
-	IsSuperUser     bool   `json:"is_superuser"`
+	UpdatedPassword bool   `json:"updated_password"`
 }
 
 func UserUpdate(request *ghttp.Request, currentUser *database.User) {
@@ -211,7 +198,7 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if params.Username != currentUser.Username && !currentUser.IsSuperuser {
+	if params.Username != currentUser.Username {
 		request.SendClientSideErrorResponse(
 			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
 		)
@@ -249,7 +236,7 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 		user.Username = params.NewUsername
 	}
 
-	passwordUpdated := false
+	updatedPassword := false
 	if params.NewPassword != "" {
 		passwordHash, err := passhash.HashPassword(params.NewPassword)
 		if err != nil {
@@ -259,33 +246,8 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 			return
 		}
 		user.Password = passwordHash
-		passwordUpdated = true
+		updatedPassword = true
 	}
-
-	var newIsSuperuser bool
-	if params.Promote || params.Demote {
-		if !currentUser.IsSuperuser {
-			request.SendClientSideErrorResponse(
-				schema.AccessDeniedErrorTag,
-				"You have no right to use `promote` and `demote` fields.",
-			)
-			return
-		}
-		if params.Promote && params.Demote {
-			request.SendClientSideErrorResponse(
-				schema.InvalidRequestErrorTag,
-				"`promote` and `demote` fields cannot both be used at once.",
-			)
-			return
-		}
-		if params.Promote {
-			newIsSuperuser = true
-		} else if params.Demote {
-			newIsSuperuser = false
-		}
-		user.IsSuperuser = newIsSuperuser
-	}
-
 	_, err := database.Db.NewUpdate().Model(user).WherePK().Exec(database.Ctx)
 	if err != nil {
 		request.SendServerSideErrorResponse("could not update user", err)
@@ -293,8 +255,7 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 	}
 	response := userUpdateResponse{
 		Username:        user.Username,
-		PasswordUpdated: passwordUpdated,
-		IsSuperUser:     user.IsSuperuser,
+		UpdatedPassword: updatedPassword,
 	}
 	request.SendSuccessResponse(&response)
 }
@@ -324,7 +285,7 @@ func UserDelete(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if currentUser.Username != params.Username && !currentUser.IsSuperuser {
+	if params.Username != currentUser.Username {
 		request.SendClientSideErrorResponse(
 			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
 		)

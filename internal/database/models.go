@@ -12,9 +12,8 @@ type User struct {
 
 	ID int64 `bun:",pk,autoincrement"`
 
-	Username    string `bun:",unique"`
-	Password    string
-	IsSuperuser bool
+	Username string `bun:",unique"`
+	Password string
 }
 
 func FetchUserByUsername(username string) (*User, error) {
