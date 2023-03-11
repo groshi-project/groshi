@@ -55,7 +55,7 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 			if err != nil {
 				req.SendClientSideErrorResponse(
 					schema.ObjectNotFoundErrorTag,
-					"The user you authorized yourself to was not found.",
+					"The user you are authorized under has not been found.",
 				)
 				return
 			}
