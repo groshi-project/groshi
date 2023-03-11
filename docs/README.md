@@ -54,7 +54,7 @@ There are only two kinds of API responses: _Success response_ and _Error respons
 ## API methods
 ### Users
 <details>
-<summary><code>POST</code><code><b>/user/create</b></code><code>(creates new user)</code></summary>
+<summary><code>POST</code> <code><b>/user/create</b></code> <code>(creates new user)</code></summary>
 
 ##### Parameters
 |    name    | data type | required | description              |
@@ -86,7 +86,7 @@ http POST $hostname/user/create username="username" password="password"
 </details>
 
 <details>
-<summary><code>POST</code><code><b>/user/auth</b></code><code>(authorizes user)</code></summary>
+<summary><code>POST</code> <code><b>/user/auth</b></code> <code>(authorizes user)</code></summary>
 
 ##### Parameters
 |    name    | data type | required | description   |
@@ -122,7 +122,7 @@ http POST $hostname/user/auth username="username" password="password"
 </details>
 
 <details>
-<summary><code>POST</code><code><b>/user/read</b></code><code>(gets information about current user)</code></summary>
+<summary><code>POST</code> <code><b>/user/read</b></code> <code>(gets information about current user)</code></summary>
 
 ##### Parameters
 |  name   | data type | required | description         |
@@ -156,7 +156,7 @@ http POST $hostname/user/read token=$TOKEN
 </details>
 
 <details>
-<summary><code>POST</code><code><b>/user/update</b></code><code>(updates current user)</code></summary>
+<summary><code>POST</code> <code><b>/user/update</b></code> <code>(updates current user)</code></summary>
 
 ##### Parameters
 |      name      | data type | required | description                       |
@@ -192,7 +192,7 @@ http POST $hostname/user/update token=$TOKEN new_username="new-username" new_pas
 </details>
 
 <details>
-<summary><code>POST</code><code><b>/user/delete</b></code><code>(deletes current user)</code></summary>
+<summary><code>POST</code> <code><b>/user/delete</b></code> <code>(deletes current user)</code></summary>
 
 ##### Parameters
 |  name   | data type | required | description         |
