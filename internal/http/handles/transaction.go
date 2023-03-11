@@ -22,6 +22,7 @@ type transactionCreateResponse struct {
 	UUID string `json:"uuid"`
 }
 
+// TransactionCreate creates new transaction.
 func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 	params := transactionCreateRequest{}
 	if ok := request.DecodeSafe(&params); !ok {
@@ -77,6 +78,7 @@ type transactionReadResponse struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// TransactionRead returns information about transaction.
 func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 	params := transactionReadRequest{}
 	if ok := request.DecodeSafe(&params); !ok {
@@ -141,8 +143,9 @@ func (p *transactionUpdateRequest) validate() bool {
 	return p.UUID != "" && (p.NewAmount != nil || p.NewDescription != "" || p.NewDate != nil)
 }
 
-type transactionUpdateResponse struct{}
+//type transactionUpdateResponse struct{}
 
+// TransactionUpdate updates transaction.
 func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 	params := transactionUpdateRequest{}
 	if ok := request.DecodeSafe(&params); !ok {
@@ -188,8 +191,8 @@ func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 		request.SendServerSideErrorResponse("could not update transaction", err)
 		return
 	}
-	response := transactionUpdateResponse{}
-	request.SendSuccessResponse(&response)
+	//response := transactionUpdateResponse{}
+	request.SendSuccessResponse(&ghttp.EmptyResponse{})
 }
 
 type transactionDeleteRequest struct {
@@ -200,8 +203,9 @@ func (p *transactionDeleteRequest) validate() bool {
 	return p.UUID != ""
 }
 
-type transactionDeleteResponse struct{}
+//type transactionDeleteResponse struct{}
 
+// TransactionDelete deletes transaction.
 func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 	params := transactionDeleteRequest{}
 	if ok := request.DecodeSafe(&params); !ok {
@@ -236,6 +240,6 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	response := transactionDeleteResponse{}
-	request.SendSuccessResponse(&response)
+	//response := transactionDeleteResponse{}
+	request.SendSuccessResponse(&ghttp.EmptyResponse{})
 }

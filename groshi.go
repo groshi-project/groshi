@@ -19,7 +19,7 @@ func startHTTPServer(host string, port int) error {
 		"/user/auth", middleware.Middleware(false, handles.UserAuth),
 	)
 	mux.HandleFunc(
-		"/user/create", middleware.Middleware(true, handles.UserCreate),
+		"/user/create", middleware.Middleware(false, handles.UserCreate),
 	)
 	mux.HandleFunc(
 		"/user/read", middleware.Middleware(true, handles.UserRead),
