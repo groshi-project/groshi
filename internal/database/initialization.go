@@ -12,16 +12,15 @@ import (
 var Ctx = context.Background()
 var Db *bun.DB
 
-func Initialize() error {
-	// todo: check if table exists and then create table
-	// don't use IfNotExists() construction
-	// notify user about newly created tables
-	_, errUsers := Db.NewCreateTable().IfNotExists().Model((*User)(nil)).Exec(Ctx)
-	_, errTransactions := Db.NewCreateTable().IfNotExists().Model((*Transaction)(nil)).Exec(Ctx)
-	if errUsers != nil || errTransactions != nil {
-		return fmt.Errorf("could not create necessary tables (%v; %v)", errUsers, errTransactions)
-	} // todo:
-	return nil
+func Initialize() []error {
+	var errors []error
+	if _, err := Db.NewCreateTable().IfNotExists().Model((*User)(nil)).Exec(Ctx); err != nil {
+		errors = append(errors, err)
+	}
+	if _, err := Db.NewCreateTable().IfNotExists().Model((*Transaction)(nil)).Exec(Ctx); err != nil {
+		errors = append(errors, err)
+	}
+	return errors
 }
 
 func Connect(host string, port int, username string, password string, dbName string) error {
@@ -29,11 +28,10 @@ func Connect(host string, port int, username string, password string, dbName str
 		"postgres://%v:%v@%v:%v/%v?sslmode=disable",
 		username, password, host, port, dbName,
 	)
-	pgdb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
-	if err := pgdb.Ping(); err != nil {
+	postgres := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+	if err := postgres.Ping(); err != nil {
 		return err
-		//logger.LoggerFatal.Fatalf("Could not ping database.")
 	}
-	Db = bun.NewDB(pgdb, pgdialect.New())
+	Db = bun.NewDB(postgres, pgdialect.New())
 	return nil
 }

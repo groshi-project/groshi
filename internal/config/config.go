@@ -34,8 +34,8 @@ func ReadFromEnv() *Config {
 		for _, field := range result.MissingFields {
 			envVarNames = append(envVarNames, field.SourceName)
 		}
-		loggers.Fatal.Printf(
-			"Missing the following necessary environ variables: %v.\n",
+		loggers.Error.Printf(
+			"missing the following necessary environ variables: %v\n",
 			strings.Join(envVarNames, ", "),
 		)
 	}
@@ -54,13 +54,13 @@ func ReadFromEnv() *Config {
 				),
 			)
 		}
-		loggers.Fatal.Printf(
-			"Incorrect values of environmental variables: %v.\n",
-			strings.Join(incorrectTypeFieldsFmt, ","),
+		loggers.Error.Printf(
+			"incorrect values of environmental variables: %v\n",
+			strings.Join(incorrectTypeFieldsFmt, ", "),
 		)
 	}
 	if !success {
-		loggers.Fatal.Fatalln("Exiting due to previous errors.")
+		loggers.Error.Fatalln("exiting due to previous errors")
 	}
 	return config
 }

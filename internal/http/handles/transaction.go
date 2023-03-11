@@ -72,6 +72,9 @@ type transactionReadResponse struct {
 
 	Owner string    `json:"owner"`
 	Date  time.Time `json:"date"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func TransactionRead(request *ghttp.Request, currentUser *database.User) {
@@ -119,22 +122,74 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 
 		Owner: transactionOwner.Username,
 		Date:  transaction.Date,
+
+		CreatedAt: transaction.CreatedAt,
+		UpdatedAt: transaction.UpdatedAt,
 	}
 	request.SendSuccessResponse(&response)
 }
 
 type transactionUpdateRequest struct {
+	UUID string `json:"uuid"`
+
+	NewAmount      *float64   `json:"new_amount"` // todo: ?
+	NewDescription string     `json:"new_description"`
+	NewDate        *time.Time `json:"new_date"`
 }
 
 func (p *transactionUpdateRequest) validate() bool {
-	return true
+	return p.UUID != "" && (p.NewAmount != nil || p.NewDescription != "" || p.NewDate != nil)
 }
 
-type transactionUpdateResponse struct {
-}
+type transactionUpdateResponse struct{}
 
 func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
+	params := transactionUpdateRequest{}
+	if ok := request.DecodeSafe(&params); !ok {
+		return
+	}
 
+	if !params.validate() {
+		request.SendClientSideErrorResponse(
+			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+		)
+		return
+	}
+
+	transaction, err := database.FetchTransactionByUUID(params.UUID)
+	if err != nil {
+		request.SendClientSideErrorResponse(
+			schema.ObjectNotFoundErrorTag, schema.TransactionNotFoundErrorDetail,
+		)
+		return
+	}
+
+	if transaction.OwnerId != currentUser.ID {
+		request.SendClientSideErrorResponse(
+			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
+		)
+		return
+	}
+
+	if params.NewAmount != nil {
+		transaction.Amount = *params.NewAmount
+	}
+
+	if params.NewDescription != "" {
+		transaction.Description = params.NewDescription
+	}
+
+	if params.NewDate != nil {
+		transaction.Date = *params.NewDate
+		// todo: hook for transaction.UpdateAt
+	}
+
+	if _, err := database.Db.NewUpdate().Model(transaction).WherePK().Exec(database.Ctx); err != nil {
+		request.SendServerSideErrorResponse("could not update transaction", err)
+		return
+	}
+	response := transactionUpdateResponse{}
+	request.SendSuccessResponse(&response)
 }
 
 type transactionDeleteRequest struct {
@@ -145,9 +200,7 @@ func (p *transactionDeleteRequest) validate() bool {
 	return p.UUID != ""
 }
 
-type transactionDeleteResponse struct {
-	UUID string `json:"uuid"`
-}
+type transactionDeleteResponse struct{}
 
 func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 	params := transactionDeleteRequest{}
@@ -183,6 +236,6 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	response := transactionDeleteResponse{UUID: transaction.UUID}
+	response := transactionDeleteResponse{}
 	request.SendSuccessResponse(&response)
 }

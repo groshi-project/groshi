@@ -69,9 +69,7 @@ func (p *userCreateRequest) validate() bool {
 	return p.Username != "" && p.Password != ""
 }
 
-type userCreateResponse struct {
-	Username string `json:"username"`
-}
+type userCreateResponse struct{}
 
 func UserCreate(request *ghttp.Request, currentUser *database.User) {
 	params := userCreateRequest{}
@@ -119,7 +117,7 @@ func UserCreate(request *ghttp.Request, currentUser *database.User) {
 		)
 		return
 	}
-	response := userCreateResponse{Username: params.Username}
+	response := userCreateResponse{}
 	request.SendSuccessResponse(&response)
 }
 
@@ -180,10 +178,7 @@ func (p *userUpdateRequest) validate() bool {
 	return p.Username != "" && (p.NewUsername != "" || p.NewPassword != "")
 }
 
-type userUpdateResponse struct {
-	Username        string `json:"username"`
-	UpdatedPassword bool   `json:"updated_password"`
-}
+type userUpdateResponse struct{}
 
 func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 	params := userUpdateRequest{}
@@ -236,7 +231,6 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 		user.Username = params.NewUsername
 	}
 
-	updatedPassword := false
 	if params.NewPassword != "" {
 		passwordHash, err := passhash.HashPassword(params.NewPassword)
 		if err != nil {
@@ -246,17 +240,12 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 			return
 		}
 		user.Password = passwordHash
-		updatedPassword = true
 	}
-	_, err := database.Db.NewUpdate().Model(user).WherePK().Exec(database.Ctx)
-	if err != nil {
+	if _, err := database.Db.NewUpdate().Model(user).WherePK().Exec(database.Ctx); err != nil {
 		request.SendServerSideErrorResponse("could not update user", err)
 		return
 	}
-	response := userUpdateResponse{
-		Username:        user.Username,
-		UpdatedPassword: updatedPassword,
-	}
+	response := userUpdateResponse{}
 	request.SendSuccessResponse(&response)
 }
 
@@ -268,9 +257,7 @@ func (p *userDeleteRequest) validate() bool {
 	return p.Username != ""
 }
 
-type userDeleteResponse struct {
-	Username string `json:"username"`
-}
+type userDeleteResponse struct{}
 
 func UserDelete(request *ghttp.Request, currentUser *database.User) {
 	params := userDeleteRequest{}
@@ -306,6 +293,6 @@ func UserDelete(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	response := userDeleteResponse{Username: user.Username}
+	response := userDeleteResponse{}
 	request.SendSuccessResponse(&response)
 }

@@ -62,32 +62,33 @@ func initializeApp(cfg *config.Config) error {
 		cfg.PostgresDatabase,
 	); err != nil {
 		return fmt.Errorf(
-			"failed to connect to PostgreSQL database \"%v\" at %v:%v (%v)",
+			"could not connect to PostgreSQL database \"%v\" at %v:%v (%v)",
 			cfg.PostgresDatabase,
 			cfg.PostgresHost,
 			cfg.PostgresPort,
 			err,
 		)
 	}
-	if err := database.Initialize(); err != nil {
+
+	if errors := database.Initialize(); len(errors) != 0 {
 		return fmt.Errorf(
 			"failed to initialize PostgreSQL database \"%v\" at %v:%v (%v)",
 			cfg.PostgresDatabase,
 			cfg.PostgresHost,
 			cfg.PostgresPort,
-			err,
+			errors,
 		)
 	}
 	return nil
 }
 
 func main() {
-	loggers.Info.Println("Starting groshi server...")
+	loggers.Info.Println("hi there! starting groshi :)")
 	cfg := config.ReadFromEnv()
 	if err := initializeApp(cfg); err != nil {
-		loggers.Fatal.Fatal(err)
+		loggers.Error.Fatal(err)
 	}
 	if err := startHTTPServer(cfg.Host, cfg.Port); err != nil {
-		loggers.Fatal.Fatal(err)
+		loggers.Error.Fatal(err)
 	}
 }
