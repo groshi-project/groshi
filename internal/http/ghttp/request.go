@@ -1,5 +1,5 @@
 // Package ghttp (stands for "groshi HTTP") is basically a tiny HTTP framework
-// which simplifies reading and writing HTTP requests.
+// which simplifies reading HTTP request and writing HTTP responses.
 package ghttp
 
 import (
@@ -17,11 +17,6 @@ type Request struct {
 	RawRequest     *http.Request
 }
 
-// NewRequest creates new Request instance.
-func NewRequest(w http.ResponseWriter, r *http.Request) *Request {
-	return &Request{ResponseWriter: w, RawRequest: r}
-}
-
 // sendJSONResponse sends JSON response.
 func (req *Request) sendJSONResponse(data interface{}) {
 	req.ResponseWriter.Header().Set("Content-Type", "application/json")
@@ -29,25 +24,20 @@ func (req *Request) sendJSONResponse(data interface{}) {
 	json.NewEncoder(req.ResponseWriter).Encode(data)
 }
 
-// Decode decodes request body.
-func (req *Request) Decode(v interface{}) error {
+// Decode decodes request body and handles all possible errors.
+// Returns true if there was no error.
+func (req *Request) Decode(params RequestParams) bool {
 	body, err := io.ReadAll(req.RawRequest.Body)
 	if err != nil {
-		panic(err) // todo
+		req.SendServerSideErrorResponse("could not read request body", err)
+		return false
 	}
-	// todo:
+
 	req.RawRequest.Body = io.NopCloser(bytes.NewBuffer(body))
-	err = json.NewDecoder(req.RawRequest.Body).Decode(&v)
+	err = json.NewDecoder(req.RawRequest.Body).Decode(params)
 	req.RawRequest.Body = io.NopCloser(bytes.NewBuffer(body))
 
-	return err
-}
-
-// DecodeSafe decodes ghttp body and handles error.
-// Returns true if there was no error.
-// todo?: merge Decode and DecodeSafe
-func (req *Request) DecodeSafe(v interface{}) bool {
-	if err := req.Decode(v); err != nil {
+	if err != nil {
 		req.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
 		)
@@ -56,8 +46,8 @@ func (req *Request) DecodeSafe(v interface{}) bool {
 	return true
 }
 
-// SendSuccessResponse sends success response.
-func (req *Request) SendSuccessResponse(data interface{}) {
+// SendSuccessfulResponse sends successful response.
+func (req *Request) SendSuccessfulResponse(data Response) {
 	successObject := schema.SuccessResponse{Success: true, Data: data}
 	req.sendJSONResponse(successObject)
 }
@@ -81,4 +71,9 @@ func (req *Request) SendServerSideErrorResponse(errorComment string, err error) 
 		ErrorDetails: "Internal server error.",
 	})
 	loggers.Error.Printf("returned server-side error response 'cause %v (%v)", errorComment, err)
+}
+
+// NewRequest creates new Request instance.
+func NewRequest(w http.ResponseWriter, r *http.Request) *Request {
+	return &Request{ResponseWriter: w, RawRequest: r}
 }

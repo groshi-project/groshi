@@ -14,7 +14,7 @@ type transactionCreateRequest struct {
 	Date        time.Time `json:"date"`
 }
 
-func (p *transactionCreateRequest) validate() bool {
+func (p *transactionCreateRequest) Validate() bool {
 	return p.Currency != "" && p.Amount >= 0
 }
 
@@ -25,11 +25,11 @@ type transactionCreateResponse struct {
 // TransactionCreate creates new transaction.
 func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 	params := transactionCreateRequest{}
-	if ok := request.DecodeSafe(&params); !ok {
+	if ok := request.Decode(&params); !ok {
 		return
 	}
 
-	if !params.validate() {
+	if !params.Validate() {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
 		)
@@ -53,14 +53,14 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 	}
 
 	response := transactionCreateResponse{UUID: transaction.UUID}
-	request.SendSuccessResponse(&response)
+	request.SendSuccessfulResponse(&response)
 }
 
 type transactionReadRequest struct {
 	UUID string `json:"uuid"`
 }
 
-func (p *transactionReadRequest) validate() bool {
+func (p *transactionReadRequest) Validate() bool {
 	return p.UUID != ""
 }
 
@@ -81,11 +81,11 @@ type transactionReadResponse struct {
 // TransactionRead returns information about transaction.
 func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 	params := transactionReadRequest{}
-	if ok := request.DecodeSafe(&params); !ok {
+	if ok := request.Decode(&params); !ok {
 		return
 	}
 
-	if !params.validate() {
+	if !params.Validate() {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
 		)
@@ -128,7 +128,7 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 		CreatedAt: transaction.CreatedAt,
 		UpdatedAt: transaction.UpdatedAt,
 	}
-	request.SendSuccessResponse(&response)
+	request.SendSuccessfulResponse(&response)
 }
 
 type transactionUpdateRequest struct {
@@ -139,7 +139,7 @@ type transactionUpdateRequest struct {
 	NewDate        *time.Time `json:"new_date"`
 }
 
-func (p *transactionUpdateRequest) validate() bool {
+func (p *transactionUpdateRequest) Validate() bool {
 	return p.UUID != "" && (p.NewAmount != nil || p.NewDescription != "" || p.NewDate != nil)
 }
 
@@ -148,11 +148,11 @@ func (p *transactionUpdateRequest) validate() bool {
 // TransactionUpdate updates transaction.
 func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 	params := transactionUpdateRequest{}
-	if ok := request.DecodeSafe(&params); !ok {
+	if ok := request.Decode(&params); !ok {
 		return
 	}
 
-	if !params.validate() {
+	if !params.Validate() {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
 		)
@@ -192,14 +192,14 @@ func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 	//response := transactionUpdateResponse{}
-	request.SendSuccessResponse(&ghttp.EmptyResponse{})
+	request.SendSuccessfulResponse(&ghttp.EmptyResponse{})
 }
 
 type transactionDeleteRequest struct {
 	UUID string `json:"uuid"`
 }
 
-func (p *transactionDeleteRequest) validate() bool {
+func (p *transactionDeleteRequest) Validate() bool {
 	return p.UUID != ""
 }
 
@@ -208,11 +208,11 @@ func (p *transactionDeleteRequest) validate() bool {
 // TransactionDelete deletes transaction.
 func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 	params := transactionDeleteRequest{}
-	if ok := request.DecodeSafe(&params); !ok {
+	if ok := request.Decode(&params); !ok {
 		return
 	}
 
-	if !params.validate() {
+	if !params.Validate() {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
 		)
@@ -241,5 +241,5 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 	}
 
 	//response := transactionDeleteResponse{}
-	request.SendSuccessResponse(&ghttp.EmptyResponse{})
+	request.SendSuccessfulResponse(&ghttp.EmptyResponse{})
 }

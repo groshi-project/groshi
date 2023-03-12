@@ -13,7 +13,7 @@ type userAuthRequest struct {
 	Password string `json:"password"`
 }
 
-func (p *userAuthRequest) validate() bool {
+func (p *userAuthRequest) Validate() bool {
 	return p.Username != "" && p.Password != ""
 }
 
@@ -24,11 +24,11 @@ type userAuthResponse struct {
 // UserAuth authorizes user (generates and returns JWT).
 func UserAuth(request *ghttp.Request, _ *database.User) {
 	params := userAuthRequest{}
-	if ok := request.DecodeSafe(&params); !ok {
+	if ok := request.Decode(&params); !ok {
 		return
 	}
 
-	if !params.validate() {
+	if !params.Validate() {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
 		)
@@ -57,7 +57,7 @@ func UserAuth(request *ghttp.Request, _ *database.User) {
 	}
 
 	response := userAuthResponse{Token: token}
-	request.SendSuccessResponse(&response)
+	request.SendSuccessfulResponse(&response)
 }
 
 type userCreateRequest struct {
@@ -65,20 +65,20 @@ type userCreateRequest struct {
 	Password string `json:"password"`
 }
 
-func (p *userCreateRequest) validate() bool {
+func (p *userCreateRequest) Validate() bool {
 	return p.Username != "" && p.Password != ""
 }
 
-//type userCreateResponse struct{}
+type userCreateResponse ghttp.EmptyResponse
 
 // UserCreate creates new user.
 func UserCreate(request *ghttp.Request, _ *database.User) {
 	params := userCreateRequest{}
-	if ok := request.DecodeSafe(&params); !ok {
+	if ok := request.Decode(&params); !ok {
 		return
 	}
 
-	if !params.validate() {
+	if !params.Validate() {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
 		)
@@ -120,12 +120,12 @@ func UserCreate(request *ghttp.Request, _ *database.User) {
 		return
 	}
 	//response := userCreateResponse{}
-	request.SendSuccessResponse(&ghttp.EmptyResponse{})
+	request.SendSuccessfulResponse(&ghttp.EmptyResponse{})
 }
 
 //type userReadRequest struct{}
 //
-//func (p *userReadRequest) validate() bool {
+//func (p *userReadRequest) Validate() bool {
 //	return true
 //}
 
@@ -136,10 +136,10 @@ type userReadResponse struct {
 // UserRead returns information about current user.
 func UserRead(request *ghttp.Request, currentUser *database.User) {
 	//params := userReadRequest{}
-	//if ok := request.DecodeSafe(&params); !ok {
+	//if ok := request.Decode(&params); !ok {
 	//	return
 	//}
-	//if !params.validate() {
+	//if !params.Validate() {
 	//	request.SendClientSideErrorResponse(
 	//		schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
 	//	)
@@ -148,7 +148,7 @@ func UserRead(request *ghttp.Request, currentUser *database.User) {
 	response := userReadResponse{
 		Username: currentUser.Username,
 	}
-	request.SendSuccessResponse(&response)
+	request.SendSuccessfulResponse(&response)
 }
 
 type userUpdateRequest struct {
@@ -156,7 +156,7 @@ type userUpdateRequest struct {
 	NewPassword string `json:"new_password"`
 }
 
-func (p *userUpdateRequest) validate() bool {
+func (p *userUpdateRequest) Validate() bool {
 	return p.NewUsername != "" || p.NewPassword != ""
 }
 
@@ -165,11 +165,11 @@ func (p *userUpdateRequest) validate() bool {
 // UserUpdate updates current user.
 func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 	params := userUpdateRequest{}
-	if ok := request.DecodeSafe(&params); !ok {
+	if ok := request.Decode(&params); !ok {
 		return
 	}
 
-	if !params.validate() {
+	if !params.Validate() {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
 		)
@@ -207,12 +207,12 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 	//response := userUpdateResponse{}
-	request.SendSuccessResponse(&ghttp.EmptyResponse{})
+	request.SendSuccessfulResponse(&ghttp.EmptyResponse{})
 }
 
 //type userDeleteRequest struct{}
 //
-//func (p *userDeleteRequest) validate() bool {
+//func (p *userDeleteRequest) Validate() bool {
 //	return true
 //}
 
@@ -221,11 +221,11 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 // UserDelete deletes current user.
 func UserDelete(request *ghttp.Request, currentUser *database.User) {
 	//params := userDeleteRequest{}
-	//if ok := request.DecodeSafe(&params); !ok {
+	//if ok := request.Decode(&params); !ok {
 	//	return
 	//}
 	//
-	//if !params.validate() {
+	//if !params.Validate() {
 	//	request.SendClientSideErrorResponse(
 	//		schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
 	//	)
@@ -239,7 +239,7 @@ func UserDelete(request *ghttp.Request, currentUser *database.User) {
 	}
 
 	//response := userDeleteResponse{}
-	request.SendSuccessResponse(&ghttp.EmptyResponse{}) // todo: try nil
+	request.SendSuccessfulResponse(&ghttp.EmptyResponse{}) // todo: try nil
 }
 
 type userListTransactionsRequest struct {

@@ -29,7 +29,7 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 
 		if authRequired {
 			jwtFieldHolder := _jwtFieldHolder{}
-			if ok := req.DecodeSafe(&jwtFieldHolder); !ok {
+			if ok := req.Decode(&jwtFieldHolder); !ok {
 				return
 			}
 

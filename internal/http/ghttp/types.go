@@ -5,11 +5,20 @@ import "github.com/jieggii/groshi/internal/database"
 // Handle is type of handle which is used to define all groshi handles.
 type Handle func(request *Request, currentUser *database.User)
 
-// _emptyStruct is well... An empty struct!
-type _emptyStruct struct{}
+// RequestParams is interface for defining HTTP request parameters.
+type RequestParams interface {
+	Validate() bool
+}
 
-// EmptyRequest is type used to define requests without parameters.
-type EmptyRequest = _emptyStruct
+// EmptyRequestParams is type used to define requests without parameters.
+type EmptyRequestParams = struct{}
 
-// EmptyResponse is type used to define responses without any data.
-type EmptyResponse = _emptyStruct
+func (p *EmptyRequestParams) Validate() bool {
+	return true
+}
+
+// Response is interface for defining HTTP responses.
+type Response interface{}
+
+// EmptyResponse is, well... an empty response!
+type EmptyResponse = struct{}
