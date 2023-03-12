@@ -3,19 +3,21 @@ There are only two entities in groshi: **user** and **transaction**.
 And there are several appropriate methods to manage them.
 
 ## Quick notes
-* All API methods should be called using `POST` HTTP method.
-* All parameters should be placed in the request body.
-* groshi HTTP server always returns `200` status code, no matter if any errors occurred. The only exception is `404` status code when you use nonexistent API method.
-* In addition to errors mentioned in specific methods in the documentation, the following error tags always can also be returned: `invalid_request` and `internal_server_error`.
-* Don't be afraid to read source code if you are missing any information from the documentation todo.
+> * All API methods should be called using **POST** HTTP method.
+> * All parameters should be placed in the **request body**.
+> * groshi HTTP server **always** returns `200` status code, no matter if any errors occurred. The only exception is `404` status code **when you use nonexistent API method**.
 
 <details>
     <summary>Why not REST?</summary>
-    Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ab adipisci at aut est expedita fuga officia perferendis? Assumenda dicta dolore ducimus, et facilis iure, iusto, natus nesciunt numquam rem veniam?
+    Well... I am not sure that REST is so useful as everyone thinks it is.
+    At least for this project, I think REST would complicate architecture and
+    client-side code without providing any significant benefits.
+    That's why I deviate from the REST standards.
+    Of course, you may argue with me in the issues if you want so!
 </details>
 
 ## Possible responses
-There are only two kinds of API responses: successful response and error response.
+There are only two kinds of API responses: **successful response** and **error response**.
 
 ### Successful response example:
 ```json
@@ -42,11 +44,32 @@ There are only two kinds of API responses: successful response and error respons
 * `error_origin` - who is to blame for the error (`client` or `server`)
 * `error_details` - useful error details which may help with problem solution
 
-### Additional possible error tags
-todo...
+#### Possible values of `error_tag`: [(reference)](../internal/http/ghttp/schema/schema.go)
+// InvalidRequestErrorTag is returned when request did not pass any kind of validation.
+InvalidRequestErrorTag ErrorTag = "invalid_request"
+
+|        error_tag        |                      case                       |
+|:-----------------------:|:-----------------------------------------------:|
+|     `unauthorized`      | Request is not unauthorized (but it has to be). |
+| `internal_server_error` |              Internal server error              |
+|     `access_denied`     |     Current user have no access to resource     |
+|       `conflict`        |             Request causes conflict             |
+|   `object_not_found`    |              Object was not found               |
+
+#### Possible values of `error_origin`: [(reference)](../internal/http/ghttp/schema/schema.go)
+
+| error_origin |        case         |
+|:------------:|:-------------------:|
+|   `client`   | Client caused error |
+|   `server`   | Server caused error |
+
 
 ---
 ## API methods
+> In addition to errors mentioned in specific API methods in the documentation, the following error tags always can also be returned:
+> * `invalid_request` - when request did not pass validation
+> * `internal_server_error` - when something is broken on the server side
+
 ### User
 <details>
 <summary><code>POST</code> <code><b>/user/create</b></code> <code>(creates new user)</code></summary>
@@ -71,9 +94,9 @@ Username is returned in the `data` object.
 ##### Error responses
 Error responses with the following _error tags_ may be returned:
 
-| `error_tag` | case                                                    |
-|-------------|---------------------------------------------------------|
-| `conflict`  | Username you've provided is already taken by other user | 
+| error_tag  | case                                                    |
+|------------|---------------------------------------------------------|
+| `conflict` | Username you've provided is already taken by other user | 
 
 
 ##### Example request using [httpie](https://github.com/httpie/httpie)
@@ -141,9 +164,9 @@ Username is returned in the `data` object.
 ##### Error responses
 Error responses with the following _error tags_ may be returned:
 
-| error_tag          | case                                                 |
-|--------------------|------------------------------------------------------|
-| `object_not_found` | The user you are authorized under has not been found | 
+|     error_tag      |                         case                          |
+|:------------------:|:-----------------------------------------------------:|
+| `object_not_found` | The user you are authorized under has not been found  | 
 
 
 ##### Example request using [httpie](https://github.com/httpie/httpie)
@@ -156,9 +179,9 @@ http POST 127.0.0.1:8080/user/read token=$TOKEN
 <summary><code>POST</code> <code><b>/user/update</b></code> <code>(updates current user)</code></summary>
 
 ##### Parameters
-|      name      | data type | required | description                       |
-|:--------------:|:---------:|:--------:|-----------------------------------|
-|    `token`     |  string   |   yes    | Authorization token               |
+|      name      | data type | required |            description            |
+|:--------------:|:---------:|:--------:|:---------------------------------:|
+|    `token`     |  string   |   yes    |        Authorization token        |
 | `new_username` |  string   |    no    | New username for the current user |
 | `new_password` |  string   |    no    | New password for the current user |
 
@@ -178,10 +201,10 @@ New username of updated user is returned in the `data` object.
 ##### Error responses
 Error responses with the following _error tags_ may be returned:
 
-| error_tag        | case                                                 |
-|------------------|------------------------------------------------------|
-| `user_not_found` | The user you are authorized under has not been found | 
-| `conflict`       | New username chosen by you is already taken          | 
+|     error_tag     |                         case                         |
+|:-----------------:|:----------------------------------------------------:|
+| `user_not_found`  | The user you are authorized under has not been found | 
+|    `conflict`     |     New username chosen by you is already taken      | 
 
 
 ##### Example request using [httpie](https://github.com/httpie/httpie)
@@ -212,8 +235,8 @@ Username of deleted user is returned in the `data` object.
 ##### Error responses
 Error responses with the following _error tags_ may be returned:
 
-| error_tag          | case                                                 |
-|--------------------|------------------------------------------------------|
+|     error_tag      |                         case                         |
+|:------------------:|:----------------------------------------------------:|
 | `object_not_found` | The user you are authorized under has not been found | 
 
 
@@ -231,13 +254,13 @@ http POST 127.0.0.1:8080/user/delete token=$TOKEN
 <summary><code>POST</code> <code><b>/transaction/create</b></code> <code>(creates new transaction owned by current user)</code></summary>
 
 ##### Parameters
-|     name      |       data type       | required | description                                             |
-|:-------------:|:---------------------:|:--------:|---------------------------------------------------------|
-|    `token`    |        string         |   yes    | Authorization token                                     |
+|     name      |       data type       | required |                       description                       |
+|:-------------:|:---------------------:|:--------:|:-------------------------------------------------------:|
+|    `token`    |        string         |   yes    |                   Authorization token                   |
 |   `amount`    |         float         |   yes    | Amount of transaction (can be 0, positive and negative) |
-|  `currency`   | string ([currency]()) |   yes    | Currency of transaction                                 |
-| `description` |        string         |    no    | Description of transaction                              |
-|    `date`     |  string (rfc format)  |    no    | Date of transaction                                     |
+|  `currency`   | string ([currency]()) |   yes    |                 Currency of transaction                 |
+| `description` |        string         |    no    |               Description of transaction                |
+|    `date`     |  string (rfc format)  |    no    |                   Date of transaction                   |
 
 ##### Successful response
 UUID of created transaction is returned in the `data` object.
@@ -253,9 +276,9 @@ UUID of created transaction is returned in the `data` object.
 ##### Error responses
 Error responses with the following _error tags_ may be returned:
 
-| error_tag          | case                                                    |
-|--------------------|---------------------------------------------------------|
-| `object_not_found` | The user you are authorized under has not been found    |
+|      error_tag      |                           case                           |
+|:-------------------:|:--------------------------------------------------------:|
+| `object_not_found`  |   The user you are authorized under has not been found   |
 
 ##### Example request using [httpie](https://github.com/httpie/httpie)
 ```shell
@@ -268,8 +291,8 @@ http POST 127.0.0.1:8080/transaction/create token=$TOKEN amount:=2.53 currency=E
 <summary><code>POST</code> <code><b>/transaction/read</b></code> <code>(gets information about transaction owned by current user)</code></summary>
 
 ##### Parameters
-|  name   | data type | required | description         |
-|:-------:|:---------:|:--------:|---------------------|
+|  name   | data type | required |     description     |
+|:-------:|:---------:|:--------:|:-------------------:|
 | `token` |  string   |   yes    | Authorization token |
 | `uuid`  |  string   |   yes    | UUID of transaction |
 
@@ -294,10 +317,10 @@ Information about transaction is returned in the `data` object.
 ##### Error responses
 Error responses with the following _error tags_ may be returned:
 
-| error_tag          | case                                                                    |
-|--------------------|-------------------------------------------------------------------------|
-| `object_not_found` | The user you are authorized under has not been found                    | 
-| `access_denied`    | You are trying to get information about transaction owned by other user | 
+|     error_tag      |                                  case                                   |
+|:------------------:|:-----------------------------------------------------------------------:|
+| `object_not_found` |          The user you are authorized under has not been found           | 
+|  `access_denied`   | You are trying to get information about transaction owned by other user | 
 
 ##### Example request using [httpie](https://github.com/httpie/httpie)
 ```shell
@@ -310,14 +333,14 @@ http POST 127.0.0.1:8080/transaction/read token=$TOKEN uuid="d089c593-2b95-489c-
 <summary><code>POST</code> <code><b>/transaction/update</b></code> <code>(updates transaction owned by current user)</code></summary>
 
 ##### Parameters
-|       name        |       data type       | required | description                                                 |
-|:-----------------:|:---------------------:|:--------:|-------------------------------------------------------------|
-|      `token`      |        string         |   yes    | Authorization token                                         |
-|      `uuid`       |        string         |   yes    | UUID of transaction you want to update                      |
+|       name        |       data type       | required |                         description                         |
+|:-----------------:|:---------------------:|:--------:|:-----------------------------------------------------------:|
+|      `token`      |        string         |   yes    |                     Authorization token                     |
+|      `uuid`       |        string         |   yes    |           UUID of transaction you want to update            |
 |   `new_amount`    |         float         |    no    | New amount of transaction (can be 0, positive and negative) |
-|  `new_currency`   | string ([currency]()) |    no    | New currency of transaction                                 |
-| `new_description` |        string         |    no    | New description of transaction                              |
-|    `new_date`     |  string (rfc format)  |    no    | New date of transaction                                     |
+|  `new_currency`   | string ([currency]()) |    no    |                 New currency of transaction                 |
+| `new_description` |        string         |    no    |               New description of transaction                |
+|    `new_date`     |  string (rfc format)  |    no    |                   New date of transaction                   |
 At least one of the following fields is required: `new_amount`, `new_currency`, `new_description`, `new_date`.
 
 ##### Successful response
@@ -334,10 +357,10 @@ UUID of updated transaction is returned in the `data` object.
 ##### Error responses
 Error responses with the following _error tags_ may be returned:
 
-| error_tag          | case                                                     |
-|--------------------|----------------------------------------------------------|
-| `object_not_found` | The user you are authorized under has not been found     | 
-| `access_denied`    | You are trying to update transaction owned by other user | 
+|      error_tag      |                           case                            |
+|:-------------------:|:---------------------------------------------------------:|
+| `object_not_found`  |   The user you are authorized under has not been found    | 
+|   `access_denied`   | You are trying to update transaction owned by other user  | 
 
 
 ##### Example request using [httpie](https://github.com/httpie/httpie)
@@ -350,9 +373,9 @@ http POST 127.0.0.1:8080/transaction/update token=$TOKEN  uuid=03ef6901-4ebb-495
 <summary><code>POST</code> <code><b>/transaction/delete</b></code> <code>(deletes transaction owned by current user)</code></summary>
 
 ##### Parameters
-|  name   | data type | required | description                            |
-|:-------:|:---------:|:--------:|----------------------------------------|
-| `token` |  string   |   yes    | Authorization token                    |
+|  name   | data type | required |              description               |
+|:-------:|:---------:|:--------:|:--------------------------------------:|
+| `token` |  string   |   yes    |          Authorization token           |
 | `uuid`  |  string   |   yes    | UUID of transaction you want to delete |
 
 ##### Successful response
@@ -369,10 +392,10 @@ UUID of deleted transaction is returned in the `data` object.
 ##### Error responses
 Error responses with the following _error tags_ may be returned:
 
-| error_tag          | case                                                     |
-|--------------------|----------------------------------------------------------|
-| `object_not_found` | The user you are authorized under has not been found     | 
-| `access_denied`    | You are trying to delete transaction owned by other user | 
+|      error_tag      |                           case                            |
+|:-------------------:|:---------------------------------------------------------:|
+| `object_not_found`  |   The user you are authorized under has not been found    | 
+|   `access_denied`   | You are trying to delete transaction owned by other user  | 
 
 
 ##### Example request using [httpie](https://github.com/httpie/httpie)
