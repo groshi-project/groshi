@@ -11,10 +11,10 @@ const (
 type ErrorTag string
 
 const (
-	// InvalidRequestErrorTag is returned when request did not pass validation.
+	// InvalidRequestErrorTag is returned when request did not pass any kind of validation.
 	InvalidRequestErrorTag ErrorTag = "invalid_request"
 
-	// UnauthorizedErrorTag is returned when request is not unauthorized (when it has to be)
+	// UnauthorizedErrorTag is returned when request is not unauthorized (when it has to be).
 	UnauthorizedErrorTag ErrorTag = "unauthorized"
 
 	// InternalServerErrorErrorTag is returned when any internal server error happens.

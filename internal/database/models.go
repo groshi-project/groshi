@@ -42,7 +42,7 @@ type Transaction struct {
 	Date time.Time `bun:",nullzero,notnull,default:current_timestamp"`
 
 	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp"`
-	UpdatedAt time.Time `bun:",nullzero"`
+	UpdatedAt *time.Time
 }
 
 var _ bun.BeforeAppendModelHook = (*Transaction)(nil)
@@ -51,6 +51,9 @@ func (t *Transaction) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	switch query.(type) {
 	case *bun.InsertQuery:
 		t.UUID = uuid.NewString()
+	case *bun.UpdateQuery:
+		currentTime := time.Now()
+		t.UpdatedAt = &currentTime
 	}
 	return nil
 }

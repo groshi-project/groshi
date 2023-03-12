@@ -30,7 +30,7 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 		if req.RawRequest.Method != http.MethodPost {
 			req.SendClientSideErrorResponse(
 				schema.InvalidRequestErrorTag,
-				"Invalid request method (POST must be used).",
+				"invalid request method (POST must be used)",
 			)
 			return
 		}
@@ -45,14 +45,14 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 
 			if err := jwtFieldHolder.Validate(); err != nil {
 				req.SendClientSideErrorResponse(
-					schema.InvalidRequestErrorTag, err.Error(),
+					schema.UnauthorizedErrorTag, err.Error(),
 				)
 			}
 
 			claims, ok := jwt.ParseJWT(jwtFieldHolder.Token)
 			if !ok {
 				req.SendClientSideErrorResponse(
-					schema.AccessDeniedErrorTag, "Invalid JWT.",
+					schema.AccessDeniedErrorTag, "invalid token",
 				)
 				return
 			}
@@ -62,7 +62,7 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 			if err != nil {
 				req.SendClientSideErrorResponse(
 					schema.ObjectNotFoundErrorTag,
-					"The user you are authorized under has not been found.",
+					"the user you are authorized under has not been found",
 				)
 				return
 			}

@@ -9,16 +9,20 @@ import (
 )
 
 type transactionCreateRequest struct {
-	Amount      *float64  `json:"amount"`
-	Currency    string    `json:"currency"`
+	// Required params:
+	Amount   *float64 `json:"amount"`
+	Currency string   `json:"currency"`
+
+	// Optional params:
 	Description string    `json:"description"`
 	Date        time.Time `json:"date"`
 }
 
 func (p *transactionCreateRequest) Validate() error {
-	if p.Amount == nil || p.Currency == "" || p.Description == "" {
+	if p.Amount == nil || p.Currency == "" {
 		return errors.New("these fields are required: `amount`, `currency`, `description`")
 	}
+
 	return nil
 }
 
@@ -40,9 +44,17 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
+	ok, currency := database.Currencies.GetCurrency(params.Currency)
+	if !ok {
+		request.SendClientSideErrorResponse(
+			schema.InvalidRequestErrorTag, schema.UnknownCurrencyErrorDetail,
+		)
+		return
+	}
+
 	transaction := database.Transaction{
 		Amount:      *params.Amount,
-		Currency:    params.Currency,
+		Currency:    currency,
 		Description: params.Description,
 		Date:        params.Date,
 
@@ -81,8 +93,8 @@ type transactionReadResponse struct {
 	Owner string    `json:"owner"`
 	Date  time.Time `json:"date"`
 
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt *time.Time `json:"updated_at"`
 }
 
 // TransactionRead returns information about transaction.
@@ -118,7 +130,7 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 
 	if transactionOwner.ID != currentUser.ID {
 		request.SendClientSideErrorResponse(
-			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
+			schema.AccessDeniedErrorTag, schema.ThisTransactionDoesNotBelongToYouErrorDetail,
 		)
 		return
 	}
@@ -158,6 +170,10 @@ func (p *transactionUpdateRequest) Validate() error {
 	return nil
 }
 
+type transactionUpdateResponse struct {
+	UUID string `json:"uuid"`
+}
+
 // TransactionUpdate updates transaction.
 func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 	params := transactionUpdateRequest{}
@@ -182,7 +198,7 @@ func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 
 	if transaction.OwnerId != currentUser.ID {
 		request.SendClientSideErrorResponse(
-			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
+			schema.AccessDeniedErrorTag, schema.ThisTransactionDoesNotBelongToYouErrorDetail,
 		)
 		return
 	}
@@ -197,15 +213,17 @@ func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 
 	if params.NewDate != nil {
 		transaction.Date = *params.NewDate
-		// todo: hook for transaction.UpdateAt
 	}
 
 	if _, err := database.Db.NewUpdate().Model(transaction).WherePK().Exec(database.Ctx); err != nil {
 		request.SendServerSideErrorResponse("could not update transaction", err)
 		return
 	}
-	//response := transactionUpdateResponse{}
-	request.SendSuccessfulResponse(&ghttp.EmptyResponse{})
+
+	response := transactionUpdateResponse{
+		UUID: transaction.UUID,
+	}
+	request.SendSuccessfulResponse(&response)
 }
 
 type transactionDeleteRequest struct {
@@ -245,7 +263,7 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 
 	if transaction.OwnerId != currentUser.ID {
 		request.SendClientSideErrorResponse(
-			schema.AccessDeniedErrorTag, schema.NoRightToPerformOperationErrorDetail,
+			schema.AccessDeniedErrorTag, schema.ThisTransactionDoesNotBelongToYouErrorDetail,
 		)
 		return
 	}

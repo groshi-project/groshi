@@ -39,7 +39,8 @@ func (req *Request) Decode(params RequestParams) bool {
 
 	if err != nil {
 		req.SendClientSideErrorResponse(
-			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+			schema.InvalidRequestErrorTag,
+			"could not parse request (probably incorrect format of some field(s))",
 		)
 		return false
 	}

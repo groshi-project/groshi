@@ -1,14 +1,25 @@
 package database
 
+import "strings"
+
 type CurrenciesType []string
 
-func (c *CurrenciesType) IsCurrency(token string) bool {
+// GetCurrency returns true and matching currency for x.
+// If such currency does not exist, false and empty string is returned
+func (c *CurrenciesType) GetCurrency(x string) (bool, string) {
+	//  // "The official ISO 4217 standard specifies three-letter ("Alpha-3") codes for currencies worldwide"
+	if len(x) != 3 {
+		return false, ""
+	}
+
+	x = strings.ToUpper(x)
+
 	for _, currency := range *c {
-		if currency == token {
-			return true
+		if currency == x {
+			return true, x
 		}
 	}
-	return false
+	return false, ""
 }
 
 var Currencies = CurrenciesType{

@@ -1,8 +1,7 @@
 package schema
 
 const (
-	RequestBodyDidNotPassValidation      = "Request body did not pass validation."
-	UserNotFoundErrorDetail              = "User not found."
-	TransactionNotFoundErrorDetail       = "Transaction not found."
-	NoRightToPerformOperationErrorDetail = "You have no right to perform this operation."
+	TransactionNotFoundErrorDetail               = "transaction not found"
+	ThisTransactionDoesNotBelongToYouErrorDetail = "this transaction does not belong to you"
+	UnknownCurrencyErrorDetail                   = "unknown currency"
 )
