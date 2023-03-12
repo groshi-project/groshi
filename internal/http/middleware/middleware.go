@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http/ghttp"
 	"github.com/jieggii/groshi/internal/http/ghttp/schema"
@@ -10,6 +11,15 @@ import (
 
 type _jwtFieldHolder struct {
 	Token string `json:"token"`
+}
+
+func (p *_jwtFieldHolder) Validate() error {
+	if p.Token == "" {
+		return errors.New(
+			"this method requires authorization, but required field `token` in the request body is missing",
+		)
+	}
+	return nil
 }
 
 // Middleware is the main middleware which must be used for all groshi handles.
@@ -33,16 +43,13 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 				return
 			}
 
-			token := jwtFieldHolder.Token
-			if token == "" {
+			if err := jwtFieldHolder.Validate(); err != nil {
 				req.SendClientSideErrorResponse(
-					schema.UnauthorizedErrorTag,
-					"This method requires authorization, but required field `token` in the request body is missing.",
+					schema.InvalidRequestErrorTag, err.Error(),
 				)
-				return
 			}
 
-			claims, ok := jwt.ParseJWT(token)
+			claims, ok := jwt.ParseJWT(jwtFieldHolder.Token)
 			if !ok {
 				req.SendClientSideErrorResponse(
 					schema.AccessDeniedErrorTag, "Invalid JWT.",

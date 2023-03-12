@@ -7,14 +7,14 @@ type Handle func(request *Request, currentUser *database.User)
 
 // RequestParams is interface for defining HTTP request parameters.
 type RequestParams interface {
-	Validate() bool
+	Validate() error
 }
 
 // EmptyRequestParams is type used to define requests without parameters.
-type EmptyRequestParams = struct{}
+type EmptyRequestParams struct{}
 
-func (p *EmptyRequestParams) Validate() bool {
-	return true
+func (p *EmptyRequestParams) Validate() error {
+	return nil
 }
 
 // Response is interface for defining HTTP responses.

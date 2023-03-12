@@ -1,6 +1,7 @@
 package handles
 
 import (
+	"errors"
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http/ghttp"
 	"github.com/jieggii/groshi/internal/http/ghttp/schema"
@@ -8,14 +9,17 @@ import (
 )
 
 type transactionCreateRequest struct {
-	Amount      float64   `json:"amount"`
+	Amount      *float64  `json:"amount"`
 	Currency    string    `json:"currency"`
 	Description string    `json:"description"`
 	Date        time.Time `json:"date"`
 }
 
-func (p *transactionCreateRequest) Validate() bool {
-	return p.Currency != "" && p.Amount >= 0
+func (p *transactionCreateRequest) Validate() error {
+	if p.Amount == nil || p.Currency == "" || p.Description == "" {
+		return errors.New("these fields are required: `amount`, `currency`, `description`")
+	}
+	return nil
 }
 
 type transactionCreateResponse struct {
@@ -29,15 +33,15 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if !params.Validate() {
+	if err := params.Validate(); err != nil {
 		request.SendClientSideErrorResponse(
-			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+			schema.InvalidRequestErrorTag, err.Error(),
 		)
 		return
 	}
 
 	transaction := database.Transaction{
-		Amount:      params.Amount,
+		Amount:      *params.Amount,
 		Currency:    params.Currency,
 		Description: params.Description,
 		Date:        params.Date,
@@ -60,8 +64,11 @@ type transactionReadRequest struct {
 	UUID string `json:"uuid"`
 }
 
-func (p *transactionReadRequest) Validate() bool {
-	return p.UUID != ""
+func (p *transactionReadRequest) Validate() error {
+	if p.UUID == "" {
+		return errors.New("missing required field `uuid`")
+	}
+	return nil
 }
 
 type transactionReadResponse struct {
@@ -85,9 +92,9 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if !params.Validate() {
+	if err := params.Validate(); err != nil {
 		request.SendClientSideErrorResponse(
-			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+			schema.InvalidRequestErrorTag, err.Error(),
 		)
 		return
 	}
@@ -134,16 +141,22 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 type transactionUpdateRequest struct {
 	UUID string `json:"uuid"`
 
-	NewAmount      *float64   `json:"new_amount"` // todo: ?
+	NewAmount      *float64   `json:"new_amount"`
 	NewDescription string     `json:"new_description"`
 	NewDate        *time.Time `json:"new_date"`
 }
 
-func (p *transactionUpdateRequest) Validate() bool {
-	return p.UUID != "" && (p.NewAmount != nil || p.NewDescription != "" || p.NewDate != nil)
+func (p *transactionUpdateRequest) Validate() error {
+	if p.UUID == "" {
+		return errors.New("missing required field `uuid`")
+	}
+	if p.NewAmount == nil && p.NewDescription == "" && p.NewDate == nil {
+		return errors.New(
+			"at least one of these fields is required: `new_amount`, `new_description`, `new_date`",
+		)
+	}
+	return nil
 }
-
-//type transactionUpdateResponse struct{}
 
 // TransactionUpdate updates transaction.
 func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
@@ -152,9 +165,9 @@ func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if !params.Validate() {
+	if err := params.Validate(); err != nil {
 		request.SendClientSideErrorResponse(
-			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+			schema.InvalidRequestErrorTag, err.Error(),
 		)
 		return
 	}
@@ -199,8 +212,11 @@ type transactionDeleteRequest struct {
 	UUID string `json:"uuid"`
 }
 
-func (p *transactionDeleteRequest) Validate() bool {
-	return p.UUID != ""
+func (p *transactionDeleteRequest) Validate() error {
+	if p.UUID == "" {
+		return errors.New("missing required field `uuid`")
+	}
+	return nil
 }
 
 //type transactionDeleteResponse struct{}
@@ -212,9 +228,9 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if !params.Validate() {
+	if err := params.Validate(); err != nil {
 		request.SendClientSideErrorResponse(
-			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+			schema.InvalidRequestErrorTag, err.Error(),
 		)
 		return
 	}

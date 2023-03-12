@@ -1,6 +1,7 @@
 package handles
 
 import (
+	"errors"
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http/ghttp"
 	"github.com/jieggii/groshi/internal/http/ghttp/schema"
@@ -13,8 +14,11 @@ type userAuthRequest struct {
 	Password string `json:"password"`
 }
 
-func (p *userAuthRequest) Validate() bool {
-	return p.Username != "" && p.Password != ""
+func (p *userAuthRequest) Validate() error {
+	if p.Username == "" || p.Password == "" {
+		return errors.New("`username` and `password` are required fields")
+	}
+	return nil
 }
 
 type userAuthResponse struct {
@@ -28,9 +32,9 @@ func UserAuth(request *ghttp.Request, _ *database.User) {
 		return
 	}
 
-	if !params.Validate() {
+	if err := params.Validate(); err != nil {
 		request.SendClientSideErrorResponse(
-			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+			schema.InvalidRequestErrorTag, err.Error(),
 		)
 		return
 	}
@@ -65,8 +69,11 @@ type userCreateRequest struct {
 	Password string `json:"password"`
 }
 
-func (p *userCreateRequest) Validate() bool {
-	return p.Username != "" && p.Password != ""
+func (p *userCreateRequest) Validate() error {
+	if p.Username == "" || p.Password == "" {
+		return errors.New("`username` and `password` are required fields")
+	}
+	return nil
 }
 
 type userCreateResponse ghttp.EmptyResponse
@@ -78,9 +85,9 @@ func UserCreate(request *ghttp.Request, _ *database.User) {
 		return
 	}
 
-	if !params.Validate() {
+	if err := params.Validate(); err != nil {
 		request.SendClientSideErrorResponse(
-			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+			schema.InvalidRequestErrorTag, err.Error(),
 		)
 		return
 	}
@@ -123,28 +130,12 @@ func UserCreate(request *ghttp.Request, _ *database.User) {
 	request.SendSuccessfulResponse(&ghttp.EmptyResponse{})
 }
 
-//type userReadRequest struct{}
-//
-//func (p *userReadRequest) Validate() bool {
-//	return true
-//}
-
 type userReadResponse struct {
 	Username string `json:"username"`
 }
 
 // UserRead returns information about current user.
 func UserRead(request *ghttp.Request, currentUser *database.User) {
-	//params := userReadRequest{}
-	//if ok := request.Decode(&params); !ok {
-	//	return
-	//}
-	//if !params.Validate() {
-	//	request.SendClientSideErrorResponse(
-	//		schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
-	//	)
-	//	return
-	//}
 	response := userReadResponse{
 		Username: currentUser.Username,
 	}
@@ -156,8 +147,11 @@ type userUpdateRequest struct {
 	NewPassword string `json:"new_password"`
 }
 
-func (p *userUpdateRequest) Validate() bool {
-	return p.NewUsername != "" || p.NewPassword != ""
+func (p *userUpdateRequest) Validate() error {
+	if p.NewUsername == "" && p.NewPassword == "" {
+		return errors.New("at list one of these fields is required `new_username`, `new_password`")
+	}
+	return nil
 }
 
 //type userUpdateResponse struct{}
@@ -169,9 +163,9 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if !params.Validate() {
+	if err := params.Validate(); err != nil {
 		request.SendClientSideErrorResponse(
-			schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
+			schema.InvalidRequestErrorTag, err.Error(),
 		)
 		return
 	}
@@ -210,28 +204,10 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 	request.SendSuccessfulResponse(&ghttp.EmptyResponse{})
 }
 
-//type userDeleteRequest struct{}
-//
-//func (p *userDeleteRequest) Validate() bool {
-//	return true
-//}
-
 //type userDeleteResponse struct{}
 
 // UserDelete deletes current user.
 func UserDelete(request *ghttp.Request, currentUser *database.User) {
-	//params := userDeleteRequest{}
-	//if ok := request.Decode(&params); !ok {
-	//	return
-	//}
-	//
-	//if !params.Validate() {
-	//	request.SendClientSideErrorResponse(
-	//		schema.InvalidRequestErrorTag, schema.RequestBodyDidNotPassValidation,
-	//	)
-	//	return
-	//}
-
 	_, err := database.Db.NewDelete().Model(currentUser).WherePK().Exec(database.Ctx)
 	if err != nil {
 		request.SendServerSideErrorResponse("could not delete user", err)
