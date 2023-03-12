@@ -1,5 +1,4 @@
-SOURCES := ./internal/ ./cmd/
-MAX_LINE_LENGTH := 120
+SOURCES := ./groshi.go ./internal/
 
 .PHONY: all
 all: help
@@ -8,19 +7,12 @@ all: help
 help:
 	@echo "COMMAND      DESCRIPTION                                 "
 	@echo "---------------------------------------------------------"
-	@echo "make fmt     format source code (using gofmt and golines)"
+	@echo "make fmt     format source code (gofmt)"
 	@echo "make todo    grep TODOs                                  "
 
 .PHONY: gofmt
 gofmt:
 	gofmt -w $(SOURCES)
-
-.PHONY: golines
-golines:
-	golines --max-len $(MAX_LINE_LENGTH) -w $(SOURCES)
-
-.PHONY: fmt
-fmt: gofmt golines
 
 .PHONY: todo
 todo:
@@ -29,4 +21,4 @@ todo:
 
 .PHONY: start
 start:
-	go run ./cmd/groshi/groshi.go
+	go run ./groshi.go
