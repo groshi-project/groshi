@@ -7,7 +7,7 @@ type Handle func(request *Request, currentUser *database.User)
 
 // RequestParams is interface for defining HTTP request parameters.
 type RequestParams interface {
-	Validate() error
+	Validate() error // todo?: rename Hook or Middleware or etc...
 }
 
 // EmptyRequestParams is type used to define requests without parameters.

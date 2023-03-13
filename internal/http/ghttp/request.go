@@ -20,6 +20,7 @@ type Request struct {
 // sendJSONResponse sends JSON response.
 func (req *Request) sendJSONResponse(data interface{}) {
 	req.ResponseWriter.Header().Set("Content-Type", "application/json")
+	req.ResponseWriter.Header().Set("Access-Control-Allow-Origin", "*") // enable CORS
 	req.ResponseWriter.WriteHeader(http.StatusOK)
 	json.NewEncoder(req.ResponseWriter).Encode(data)
 }
@@ -40,7 +41,7 @@ func (req *Request) Decode(params RequestParams) bool {
 	if err != nil {
 		req.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag,
-			"could not parse request (probably incorrect format of some field(s))",
+			"could not parse request (probably incorrect format or type of some fields)",
 		)
 		return false
 	}
