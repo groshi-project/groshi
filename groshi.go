@@ -44,6 +44,9 @@ func startHTTPServer(host string, port int) error {
 	mux.HandleFunc(
 		"/transaction/delete", middleware.Middleware(true, handles.TransactionDelete),
 	)
+	mux.HandleFunc(
+		"/transaction/list", middleware.Middleware(true, handles.TransactionList),
+	)
 
 	loggers.Info.Printf("starting HTTP server on %v:%v.\n", host, port)
 	err := http.ListenAndServe(fmt.Sprintf("%v:%v", host, port), mux)
