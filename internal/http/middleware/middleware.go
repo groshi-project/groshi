@@ -47,6 +47,7 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 				req.SendClientSideErrorResponse(
 					schema.UnauthorizedErrorTag, err.Error(),
 				)
+				return
 			}
 
 			claims, ok := jwt.ParseJWT(jwtFieldHolder.Token)
