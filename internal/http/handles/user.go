@@ -224,13 +224,3 @@ func UserDelete(request *ghttp.Request, currentUser *database.User) {
 	response := userDeleteResponse{currentUser.Username}
 	request.SendSuccessfulResponse(&response)
 }
-
-type userListTransactionsRequest struct {
-}
-
-type userListTransactionsResponse struct {
-}
-
-func UserListTransactions(request *ghttp.Request, currentUser *database.User) {
-
-}
