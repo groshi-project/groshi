@@ -14,10 +14,10 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// Validate validates claims provided by user.
+// Before validates claims provided by user.
 // username check happens only if expectedUsername != ""
 // todo: validate ValidAfter, etc.
-//func (claims *Claims) Validate(expectedUsername string) error {
+//func (claims *Claims) Before(expectedUsername string) error {
 //	if expectedUsername != "" {
 //		if claims.Username != expectedUsername {
 //			return errors.New("no access to this user")

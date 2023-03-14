@@ -14,11 +14,11 @@ type userCreateRequest struct {
 	Password string `json:"password"`
 }
 
-func (p *userCreateRequest) Validate() error {
+func (p *userCreateRequest) Before() error {
 	if p.Username == "" || p.Password == "" {
 		return errors.New("`username` and `password` are required fields")
 	}
-	// todo: validate username format
+	// todo: Before username format
 	return nil
 }
 
@@ -33,7 +33,7 @@ func UserCreate(request *ghttp.Request, _ *database.User) {
 		return
 	}
 
-	if err := params.Validate(); err != nil {
+	if err := params.Before(); err != nil {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, err.Error(),
 		)
@@ -83,7 +83,7 @@ type userAuthRequest struct {
 	Password string `json:"password"`
 }
 
-func (p *userAuthRequest) Validate() error {
+func (p *userAuthRequest) Before() error {
 	if p.Username == "" || p.Password == "" {
 		return errors.New("`username` and `password` are required fields")
 	}
@@ -101,7 +101,7 @@ func UserAuth(request *ghttp.Request, _ *database.User) {
 		return
 	}
 
-	if err := params.Validate(); err != nil {
+	if err := params.Before(); err != nil {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, err.Error(),
 		)
@@ -111,7 +111,7 @@ func UserAuth(request *ghttp.Request, _ *database.User) {
 	user, err := database.FetchUserByUsername(params.Username)
 	if err != nil {
 		request.SendClientSideErrorResponse(
-			schema.ObjectNotFoundErrorTag, "user with such username does not exists",
+			schema.ObjectNotFoundErrorTag, "user with this username does not exist",
 		)
 		return
 	}
@@ -150,7 +150,7 @@ type userUpdateRequest struct {
 	NewPassword string `json:"new_password"`
 }
 
-func (p *userUpdateRequest) Validate() error {
+func (p *userUpdateRequest) Before() error {
 	if p.NewUsername == "" && p.NewPassword == "" {
 		return errors.New("at least one of these fields is required `new_username`, `new_password`")
 	}
@@ -168,7 +168,7 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if err := params.Validate(); err != nil {
+	if err := params.Before(); err != nil {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, err.Error(),
 		)

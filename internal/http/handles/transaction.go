@@ -19,7 +19,7 @@ type transactionCreateRequest struct {
 	Date        time.Time `json:"date"`
 }
 
-func (p *transactionCreateRequest) Validate() error {
+func (p *transactionCreateRequest) Before() error {
 	if p.Amount == nil || p.Currency == "" {
 		return errors.New("missing required fields `amount` and `currency`")
 	}
@@ -38,7 +38,7 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if err := params.Validate(); err != nil {
+	if err := params.Before(); err != nil {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, err.Error(),
 		)
@@ -77,7 +77,7 @@ type transactionReadRequest struct {
 	UUID string `json:"uuid"`
 }
 
-func (p *transactionReadRequest) Validate() error {
+func (p *transactionReadRequest) Before() error {
 	if p.UUID == "" {
 		return errors.New("missing required field `uuid`")
 	}
@@ -120,7 +120,7 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if err := params.Validate(); err != nil {
+	if err := params.Before(); err != nil {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, err.Error(),
 		)
@@ -154,7 +154,7 @@ type transactionUpdateRequest struct {
 	NewDate        *time.Time `json:"new_date"`
 }
 
-func (p *transactionUpdateRequest) Validate() error {
+func (p *transactionUpdateRequest) Before() error {
 	if p.UUID == "" {
 		return errors.New("missing required field `uuid`")
 	}
@@ -177,7 +177,7 @@ func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if err := params.Validate(); err != nil {
+	if err := params.Before(); err != nil {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, err.Error(),
 		)
@@ -227,7 +227,7 @@ type transactionDeleteRequest struct {
 	UUID string `json:"uuid"`
 }
 
-func (p *transactionDeleteRequest) Validate() error {
+func (p *transactionDeleteRequest) Before() error {
 	if p.UUID == "" {
 		return errors.New("missing required field `uuid`")
 	}
@@ -245,7 +245,7 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if err := params.Validate(); err != nil {
+	if err := params.Before(); err != nil {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, err.Error(),
 		)
@@ -287,7 +287,7 @@ type transactionListRequest struct {
 	Until time.Time `json:"until"`
 }
 
-func (p *transactionListRequest) Validate() error {
+func (p *transactionListRequest) Before() error {
 	if p.Since.IsZero() {
 		return errors.New("missing required field `since`")
 	}
@@ -308,7 +308,7 @@ func TransactionList(request *ghttp.Request, currentUser *database.User) {
 	if ok := request.Decode(&params); !ok {
 		return
 	}
-	if err := params.Validate(); err != nil {
+	if err := params.Before(); err != nil {
 		request.SendClientSideErrorResponse(
 			schema.InvalidRequestErrorTag, err.Error(),
 		)
