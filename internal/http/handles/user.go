@@ -2,12 +2,18 @@ package handles
 
 import (
 	"errors"
+	"fmt"
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http/ghttp"
 	"github.com/jieggii/groshi/internal/http/ghttp/schema"
 	"github.com/jieggii/groshi/internal/http/jwt"
 	"github.com/jieggii/groshi/internal/passhash"
+	"regexp"
 )
+
+const usernameRegex = ""
+const minPasswordLen = 8
+const maxPasswordLen = 128
 
 type userCreateRequest struct {
 	Username string `json:"username"`
@@ -18,7 +24,21 @@ func (p *userCreateRequest) Before() error {
 	if p.Username == "" || p.Password == "" {
 		return errors.New("`username` and `password` are required fields")
 	}
-	// todo: Before username format
+
+	usernameMatchesPattern, err := regexp.MatchString(usernameRegex, p.Username)
+	if err != nil {
+		panic(err) // todo: verify that panic should be called, not error logging
+	}
+	if !usernameMatchesPattern {
+		return errors.New("invalid username format")
+	}
+
+	if len(p.Password) < minPasswordLen || len(p.Password) > maxPasswordLen {
+		return errors.New(fmt.Sprintf(
+			"password must contain from %v to %v symbols", minPasswordLen, maxPasswordLen,
+		))
+	}
+
 	return nil
 }
 
