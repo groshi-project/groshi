@@ -13,7 +13,7 @@ type _jwtFieldHolder struct {
 	Token string `json:"token"`
 }
 
-func (p *_jwtFieldHolder) Validate() error {
+func (p *_jwtFieldHolder) Before() error {
 	if p.Token == "" {
 		return errors.New(
 			"this method requires authorization, but required field `token` in the request body is missing",
@@ -43,7 +43,7 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 				return
 			}
 
-			if err := jwtFieldHolder.Validate(); err != nil {
+			if err := jwtFieldHolder.Before(); err != nil {
 				req.SendClientSideErrorResponse(
 					schema.UnauthorizedErrorTag, err.Error(),
 				)
