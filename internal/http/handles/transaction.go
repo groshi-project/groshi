@@ -277,8 +277,6 @@ type transactionListRequest struct {
 
 	// optional options
 	Until time.Time `json:"until"`
-
-	Currency currency.Currency
 }
 
 func (p *transactionListRequest) Before() error {
