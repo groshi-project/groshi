@@ -2,8 +2,8 @@ package handles
 
 import (
 	"errors"
-	"fmt"
 	"github.com/jieggii/groshi/internal/database"
+	"github.com/jieggii/groshi/internal/database/currency"
 	"github.com/jieggii/groshi/internal/http/ghttp"
 	"github.com/jieggii/groshi/internal/http/ghttp/schema"
 	"time"
@@ -11,8 +11,8 @@ import (
 
 type transactionCreateRequest struct {
 	// Required params:
-	Amount   *float64 `json:"amount"`
-	Currency string   `json:"currency"`
+	Amount   *float64          `json:"amount"`
+	Currency currency.Currency `json:"currency"`
 
 	// Optional params:
 	Description string    `json:"description"`
@@ -45,17 +45,9 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	ok, currency := database.Currencies.GetCurrency(params.Currency)
-	if !ok {
-		request.SendClientSideErrorResponse(
-			schema.InvalidRequestErrorTag, schema.UnknownCurrencyErrorDetail,
-		)
-		return
-	}
-
 	transaction := database.Transaction{
 		Amount:      *params.Amount,
-		Currency:    currency,
+		Currency:    params.Currency,
 		Description: params.Description,
 		Date:        params.Date,
 
@@ -87,9 +79,9 @@ func (p *transactionReadRequest) Before() error {
 type transactionReadResponse struct {
 	UUID string `json:"uuid"`
 
-	Amount      float64 `json:"amount"`
-	Currency    string  `json:"currency"`
-	Description string  `json:"description"`
+	Amount      float64           `json:"amount"`
+	Currency    currency.Currency `json:"currency"`
+	Description string            `json:"description"`
 
 	Owner string    `json:"owner"`
 	Date  time.Time `json:"date"`
@@ -285,6 +277,8 @@ type transactionListRequest struct {
 
 	// optional options
 	Until time.Time `json:"until"`
+
+	Currency currency.Currency
 }
 
 func (p *transactionListRequest) Before() error {
@@ -314,9 +308,6 @@ func TransactionList(request *ghttp.Request, currentUser *database.User) {
 		)
 		return
 	}
-
-	fmt.Println(params.Since)
-	fmt.Println(params.Until)
 
 	var transactions []database.Transaction
 	err := database.Db.NewSelect().Model(&transactions).

@@ -5,6 +5,7 @@ package ghttp
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/jieggii/groshi/internal/database/currency"
 	"github.com/jieggii/groshi/internal/http/ghttp/schema"
 	"github.com/jieggii/groshi/internal/loggers"
 	"io"
@@ -39,10 +40,19 @@ func (req *Request) Decode(params RequestParams) bool {
 	req.RawRequest.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	if err != nil {
-		req.SendClientSideErrorResponse(
-			schema.InvalidRequestErrorTag,
-			"could not parse request (probably incorrect format or type of some fields)",
-		)
+		switch err.(type) {
+		case *currency.UnknownCurrencyError: // could not unmarshal currency
+			req.SendClientSideErrorResponse(
+				schema.InvalidRequestErrorTag,
+				"unknown currency",
+			)
+		default:
+			req.SendClientSideErrorResponse(
+				schema.InvalidRequestErrorTag,
+				"could not parse request (probably incorrect format or type of some fields)",
+			)
+		}
+
 		return false
 	}
 	return true

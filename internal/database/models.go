@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"github.com/google/uuid"
+	"github.com/jieggii/groshi/internal/database/currency"
 	"github.com/uptrace/bun"
 	"time"
 )
@@ -32,9 +33,9 @@ type Transaction struct {
 	ID   int64  `bun:",pk,autoincrement"`
 	UUID string `bun:",unique,notnull"`
 
-	Amount      float64 `bun:",notnull"`
-	Currency    string  `bun:",notnull"`
-	Description string  `bun:",notnull"`
+	Amount      float64           `bun:",notnull"`
+	Currency    currency.Currency `bun:",notnull"`
+	Description string            `bun:",notnull"`
 
 	OwnerId int64 `bun:",notnull"`
 	Owner   *User `bun:"rel:belongs-to,join:owner_id=id"`
