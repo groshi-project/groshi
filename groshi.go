@@ -86,7 +86,7 @@ func initializeApp(cfg *config.Config) error {
 }
 
 func main() {
-	loggers.Info.Println("hi there! starting groshi :)")
+	loggers.Info.Println("starting groshi server")
 	cfg := config.ReadFromEnv()
 	if err := initializeApp(cfg); err != nil {
 		loggers.Error.Fatal(err)
