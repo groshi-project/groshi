@@ -400,5 +400,62 @@ Error responses with the following _error tags_ may be returned:
 ```shell
 http POST 127.0.0.1:8080/transaction/delete token=$TOKEN uuid=03ef6901-4ebb-4952-bb35-a98fcf502c83
 ```
+</details>
 
+<details>
+<summary><code>POST</code> <code><b>/transaction/list</b></code> <code>(lists transactions owned by current user for given period)</code></summary>
+
+#### Parameters
+|  name   |    data type     | required |     description     |
+|:-------:|:----------------:|:--------:|:-------------------:|
+| `token` |      string      |   yes    | Authorization token |
+| `since` | string (ISO8601) |   yes    | Beginning of period |
+| `until` | string (ISO8601) |   yes    |    End of period    |
+
+#### Successful response
+List of transactions is returned in the `data` object.
+```json
+{
+  "data": {
+    "count": 2,
+    "transactions": [
+      {
+        "amount": 5,
+        "created_at": "2023-03-16T21:49:04.387814+02:00",
+        "currency": "EUR",
+        "date": "2023-03-16T21:49:04.387814+02:00",
+        "description": "",
+        "owner": "jieggii",
+        "updated_at": null,
+        "uuid": "98ca6669-cc4c-49ea-be6e-039d8cd86b58"
+      },
+      {
+        "amount": 10,
+        "created_at": "2023-03-16T21:49:08.240842+02:00",
+        "currency": "EUR",
+        "date": "2023-03-16T21:49:08.240842+02:00",
+        "description": "",
+        "owner": "jieggii",
+        "updated_at": null,
+        "uuid": "d5d9818b-8dce-4b2d-94ef-142065e199b5"
+      }
+    ]
+  },
+  "success": true
+}
+```
+
+#### Error responses
+Error responses with the following _error tags_ may be returned:
+
+|      error_tag      |                          case                           |
+|:-------------------:|:-------------------------------------------------------:|
+| `object_not_found`  |  The user you are authorized under has not been found   | 
+|   `access_denied`   | You are trying to list transactions owned by other user | 
+
+
+#### Example request using [httpie](https://github.com/httpie/httpie)
+```shell
+http POST 127.0.0.1:8080/transaction/list token=$TOKEN since="2023-03-15T21:52:08+02:00" until="2023-03-17T21:52:26+02:00"
+```
 </details>
