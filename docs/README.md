@@ -406,11 +406,11 @@ http POST 127.0.0.1:8080/transaction/delete token=$TOKEN uuid=03ef6901-4ebb-4952
 <summary><code>POST</code> <code><b>/transaction/list</b></code> <code>(lists transactions owned by current user for given period)</code></summary>
 
 #### Parameters
-|  name   |    data type     | required |     description     |
-|:-------:|:----------------:|:--------:|:-------------------:|
-| `token` |      string      |   yes    | Authorization token |
-| `since` | string (ISO8601) |   yes    | Beginning of period |
-| `until` | string (ISO8601) |   yes    |    End of period    |
+|  name   |    data type     | required |               description                |
+|:-------:|:----------------:|:--------:|:----------------------------------------:|
+| `token` |      string      |   yes    |           Authorization token            |
+| `since` | string (ISO8601) |   yes    |           Beginning of period            |
+| `until` | string (ISO8601) |    no    | End of period (defaults to current date) |
 
 #### Successful response
 List of transactions is returned in the `data` object.
