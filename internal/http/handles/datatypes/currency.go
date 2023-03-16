@@ -1,4 +1,4 @@
-package currency
+package datatypes
 
 import (
 	"encoding/json"
@@ -8,27 +8,28 @@ import (
 type UnknownCurrencyError struct{}
 
 func (e *UnknownCurrencyError) Error() string {
-	return "unknown currency"
+	return ""
 }
 
 type Currency string
 
 func (c *Currency) UnmarshalJSON(b []byte) error {
-	var s string
-	if err := json.Unmarshal(b, &s); err != nil {
+	var stringCurrency string
+	if err := json.Unmarshal(b, &stringCurrency); err != nil {
 		return err
 	}
 
-	if s == "" {
+	if stringCurrency == "" {
 		return nil // returning no error when currency is empty
 		// because it should be checked after unmarshalling
 	}
 
 	for _, currency := range currencies {
-		if s == currency {
-			*c = Currency(currency)
+		if stringCurrency == currency {
+			*c = Currency(stringCurrency)
 			return nil
 		}
 	}
-	return &UnknownCurrencyError{}
+
+	return new(UnknownCurrencyError)
 }

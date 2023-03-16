@@ -1,4 +1,4 @@
-package currency
+package datatypes
 
 /*
 todo: fill with currency and cryptocurrency codes

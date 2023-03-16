@@ -3,20 +3,20 @@ package handles
 import (
 	"errors"
 	"github.com/jieggii/groshi/internal/database"
-	"github.com/jieggii/groshi/internal/database/currency"
 	"github.com/jieggii/groshi/internal/http/ghttp"
 	"github.com/jieggii/groshi/internal/http/ghttp/schema"
+	"github.com/jieggii/groshi/internal/http/handles/datatypes"
 	"time"
 )
 
 type transactionCreateRequest struct {
 	// Required params:
-	Amount   *float64          `json:"amount"`
-	Currency currency.Currency `json:"currency"`
+	Amount   *float64           `json:"amount"`
+	Currency datatypes.Currency `json:"currency"`
 
 	// Optional params:
-	Description string    `json:"description"`
-	Date        time.Time `json:"date"`
+	Description string                `json:"description"`
+	Date        datatypes.ISO8601Date `json:"date"`
 }
 
 func (p *transactionCreateRequest) Before() error {
@@ -47,9 +47,9 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 
 	transaction := database.Transaction{
 		Amount:      *params.Amount,
-		Currency:    params.Currency,
+		Currency:    string(params.Currency),
 		Description: params.Description,
-		Date:        params.Date,
+		Date:        params.Date.Time,
 
 		OwnerId: currentUser.ID,
 	}
@@ -79,9 +79,9 @@ func (p *transactionReadRequest) Before() error {
 type transactionReadResponse struct {
 	UUID string `json:"uuid"`
 
-	Amount      float64           `json:"amount"`
-	Currency    currency.Currency `json:"currency"`
-	Description string            `json:"description"`
+	Amount      float64            `json:"amount"`
+	Currency    datatypes.Currency `json:"currency"`
+	Description string             `json:"description"`
 
 	Owner string    `json:"owner"`
 	Date  time.Time `json:"date"`
@@ -94,7 +94,7 @@ func makeTransactionReadResponse(transaction *database.Transaction, transactionO
 	return transactionReadResponse{
 		UUID:        transaction.UUID,
 		Amount:      transaction.Amount,
-		Currency:    transaction.Currency,
+		Currency:    datatypes.Currency(transaction.Currency),
 		Description: transaction.Description,
 
 		Owner: transactionOwner.Username,
@@ -141,9 +141,9 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 type transactionUpdateRequest struct {
 	UUID string `json:"uuid"`
 
-	NewAmount      *float64   `json:"new_amount"`
-	NewDescription string     `json:"new_description"`
-	NewDate        *time.Time `json:"new_date"`
+	NewAmount      *float64               `json:"new_amount"`
+	NewDescription string                 `json:"new_description"`
+	NewDate        *datatypes.ISO8601Date `json:"new_date"`
 }
 
 func (p *transactionUpdateRequest) Before() error {
@@ -200,7 +200,7 @@ func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 	}
 
 	if params.NewDate != nil {
-		transaction.Date = *params.NewDate
+		transaction.Date = params.NewDate.Time
 	}
 
 	_, err = database.Db.NewUpdate().Model(transaction).WherePK().Exec(database.Ctx)
@@ -273,10 +273,10 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 
 type transactionListRequest struct {
 	// required options
-	Since time.Time `json:"since"`
+	Since datatypes.ISO8601Date `json:"since"`
 
 	// optional options
-	Until time.Time `json:"until"`
+	Until datatypes.ISO8601Date `json:"until"`
 }
 
 func (p *transactionListRequest) Before() error {
@@ -284,14 +284,14 @@ func (p *transactionListRequest) Before() error {
 		return errors.New("missing required field `since`")
 	}
 	if p.Until.IsZero() {
-		p.Until = time.Now()
+		p.Until = datatypes.ISO8601Date{Time: time.Now()}
 	}
 	return nil
 }
 
 type transactionListResponse struct {
 	Count        int                       `json:"count"`
-	Transactions []transactionReadResponse `json:"transactions"`
+	Transactions []transactionReadResponse `json:"transactions"` // todo: do something with problem: null is returned instead of [] when Count == 0.
 }
 
 // TransactionList gets list of transactions owned by current user.
