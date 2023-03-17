@@ -271,7 +271,7 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 	request.SendSuccessfulResponse(&response)
 }
 
-type transactionListRequest struct {
+type _timePeriodRequest struct {
 	// required options
 	Since datatypes.ISO8601Date `json:"since"`
 
@@ -279,7 +279,7 @@ type transactionListRequest struct {
 	Until datatypes.ISO8601Date `json:"until"`
 }
 
-func (p *transactionListRequest) Before() error {
+func (p *_timePeriodRequest) Before() error {
 	if p.Since.IsZero() {
 		return errors.New("missing required field `since`")
 	}
@@ -288,6 +288,8 @@ func (p *transactionListRequest) Before() error {
 	}
 	return nil
 }
+
+type transactionListRequest = _timePeriodRequest
 
 type transactionListResponse struct {
 	Count        int                       `json:"count"`
@@ -334,5 +336,62 @@ func TransactionList(request *ghttp.Request, currentUser *database.User) {
 		Transactions: responseTransactions,
 	}
 
+	request.SendSuccessfulResponse(&response)
+}
+
+type transactionSummaryRequest = _timePeriodRequest
+
+type transactionSummaryResponse struct {
+	Count   int     `json:"count"`
+	Income  float64 `json:"income"`
+	Outcome float64 `json:"outcome"`
+	Total   float64 `json:"summary"`
+}
+
+// TransactionSummary returns summary for transactions owned by current user for given period.
+// (count, income, outcome, total)
+func TransactionSummary(request *ghttp.Request, currentUser *database.User) {
+	params := transactionSummaryRequest{}
+	if ok := request.Decode(&params); !ok {
+		return
+	}
+	if err := params.Before(); err != nil {
+		request.SendClientSideErrorResponse(
+			schema.InvalidRequestErrorTag, err.Error(),
+		)
+		return
+	}
+	var transactions []database.Transaction
+	err := database.Db.NewSelect().Model(&transactions).
+		Where(
+			"(owner_id = ?) AND (created_at BETWEEN ? and ?)",
+			currentUser.ID, params.Since, params.Until,
+		).Scan(database.Ctx)
+	if err != nil {
+		request.SendServerSideErrorResponse(
+			"could not fetch transactions", err,
+		)
+		return
+	}
+
+	income := 0.0
+	outcome := 0.0
+	total := 0.0
+
+	for _, transaction := range transactions {
+		if transaction.Amount >= 0 {
+			income += transaction.Amount
+		} else {
+			outcome += transaction.Amount
+		}
+		total += transaction.Amount
+	}
+
+	response := transactionSummaryResponse{
+		Count:   len(transactions),
+		Income:  income,
+		Outcome: outcome,
+		Total:   total,
+	}
 	request.SendSuccessfulResponse(&response)
 }
