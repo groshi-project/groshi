@@ -345,7 +345,7 @@ type transactionSummaryResponse struct {
 	Count   int     `json:"count"`
 	Income  float64 `json:"income"`
 	Outcome float64 `json:"outcome"`
-	Total   float64 `json:"summary"`
+	Total   float64 `json:"total"`
 }
 
 // TransactionSummary returns summary for transactions owned by current user for given period.
