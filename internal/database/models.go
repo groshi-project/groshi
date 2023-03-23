@@ -12,8 +12,9 @@ type User struct {
 
 	ID int64 `bun:",pk,autoincrement"`
 
-	Username string `bun:",unique"`
-	Password string
+	BaseCurrency string
+	Username     string `bun:",unique"`
+	Password     string
 }
 
 func FetchUserByUsername(username string) (*User, error) {
@@ -33,7 +34,6 @@ type Transaction struct {
 	UUID string `bun:",unique,notnull"`
 
 	Amount      float64 `bun:",notnull"`
-	Currency    string  `bun:",notnull"`
 	Description string  `bun:",notnull"`
 
 	OwnerId int64 `bun:",notnull"`

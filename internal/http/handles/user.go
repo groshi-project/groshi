@@ -6,26 +6,29 @@ import (
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http/ghttp"
 	"github.com/jieggii/groshi/internal/http/ghttp/schema"
+	"github.com/jieggii/groshi/internal/http/handles/datatypes"
 	"github.com/jieggii/groshi/internal/http/jwt"
 	"github.com/jieggii/groshi/internal/passhash"
 	"regexp"
 )
 
-const usernameRegex = ""
+const usernameRegex = ".+"
 const minPasswordLen = 8
 const maxPasswordLen = 128
 
 type userCreateRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username     string             `json:"username"`
+	Password     string             `json:"password"`
+	BaseCurrency datatypes.Currency `json:"base_currency"`
 }
 
 func (p *userCreateRequest) Before() error {
-	if p.Username == "" || p.Password == "" {
-		return errors.New("`username` and `password` are required fields")
+	if p.Username == "" || p.Password == "" || p.BaseCurrency.String == "" {
+		return errors.New("`username`, `password` and `base_currency` are required fields")
 	}
 
-	usernameMatchesPattern, err := regexp.MatchString(usernameRegex, p.Username)
+	// validate username
+	usernameMatchesPattern, err := regexp.MatchString(usernameRegex, p.Username) // todo
 	if err != nil {
 		panic(err) // todo: verify that panic should be called, not error logging
 	}
@@ -33,10 +36,16 @@ func (p *userCreateRequest) Before() error {
 		return errors.New("invalid username format")
 	}
 
+	// validate password
 	if len(p.Password) < minPasswordLen || len(p.Password) > maxPasswordLen {
 		return errors.New(fmt.Sprintf(
 			"password must contain from %v to %v symbols", minPasswordLen, maxPasswordLen,
 		))
+	}
+
+	// validate base currency
+	if !p.BaseCurrency.IsKnown {
+		return errors.New(schema.UnknownCurrencyErrorDetail)
 	}
 
 	return nil
@@ -83,8 +92,9 @@ func UserCreate(request *ghttp.Request, _ *database.User) {
 	}
 
 	user := database.User{
-		Username: params.Username,
-		Password: passwordHash,
+		Username:     params.Username,
+		Password:     passwordHash,
+		BaseCurrency: params.BaseCurrency.String,
 	}
 
 	_, err = database.Db.NewInsert().Model(&user).Exec(database.Ctx)
@@ -154,31 +164,42 @@ func UserAuth(request *ghttp.Request, _ *database.User) {
 }
 
 type userReadResponse struct {
-	Username string `json:"username"`
+	Username     string `json:"username"`
+	BaseCurrency string `json:"base_currency"`
 }
 
 // UserRead returns information about current user.
 func UserRead(request *ghttp.Request, currentUser *database.User) {
 	response := userReadResponse{
-		Username: currentUser.Username,
+		Username:     currentUser.Username,
+		BaseCurrency: currentUser.BaseCurrency,
 	}
 	request.SendSuccessfulResponse(&response)
 }
 
 type userUpdateRequest struct {
-	NewUsername string `json:"new_username"`
-	NewPassword string `json:"new_password"`
+	NewUsername     string             `json:"new_username"`
+	NewPassword     string             `json:"new_password"`
+	NewBaseCurrency datatypes.Currency `json:"new_base_currency"`
 }
 
 func (p *userUpdateRequest) Before() error {
-	if p.NewUsername == "" && p.NewPassword == "" {
-		return errors.New("at least one of these fields is required `new_username`, `new_password`")
+	if p.NewUsername == "" && p.NewPassword == "" && p.NewBaseCurrency.String == "" {
+		return errors.New(
+			"at least one of these fields is required: " +
+				"`new_username`, `new_password` and `new_base_currency`",
+		)
+	}
+	if !p.NewBaseCurrency.IsKnown {
+		return errors.New(schema.UnknownCurrencyErrorDetail)
 	}
 	return nil
 }
 
 type userUpdateResponse struct {
-	Username string `json:"username"`
+	Username           string `json:"username"`
+	PasswordWasUpdated bool   `json:"password_was_updated"`
+	BaseCurrency       string `json:"base_currency"`
 }
 
 // UserUpdate updates current user.
@@ -211,6 +232,7 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 		currentUser.Username = params.NewUsername
 	}
 
+	passwordWasUpdated := false
 	if params.NewPassword != "" {
 		passwordHash, err := passhash.HashPassword(params.NewPassword)
 		if err != nil {
@@ -220,12 +242,22 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 			return
 		}
 		currentUser.Password = passwordHash
+		passwordWasUpdated = true
 	}
+
+	if params.NewBaseCurrency.String != "" {
+		currentUser.BaseCurrency = params.NewBaseCurrency.String
+	}
+
 	if _, err := database.Db.NewUpdate().Model(currentUser).WherePK().Exec(database.Ctx); err != nil {
 		request.SendServerSideErrorResponse("could not update user", err)
 		return
 	}
-	response := userUpdateResponse{Username: currentUser.Username}
+	response := userUpdateResponse{
+		Username:           currentUser.Username,
+		PasswordWasUpdated: passwordWasUpdated,
+		BaseCurrency:       params.NewBaseCurrency.String,
+	}
 	request.SendSuccessfulResponse(response)
 }
 

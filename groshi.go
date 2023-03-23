@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"net/http"
+
 	"github.com/jieggii/groshi/internal/config"
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http/handles"
 	"github.com/jieggii/groshi/internal/http/jwt"
 	"github.com/jieggii/groshi/internal/http/middleware"
 	"github.com/jieggii/groshi/internal/loggers"
-	"net/http"
 )
 
 func startHTTPServer(host string, port int) error {

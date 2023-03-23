@@ -10,19 +10,25 @@ import (
 )
 
 type transactionCreateRequest struct {
-	// Required params:
-	Amount   *float64           `json:"amount"`
-	Currency datatypes.Currency `json:"currency"`
+	// required params:
+	Amount *float64 `json:"amount"`
 
-	// Optional params:
+	// optional params:
 	Description string                `json:"description"`
 	Date        datatypes.ISO8601Date `json:"date"`
 }
 
 func (p *transactionCreateRequest) Before() error {
-	if p.Amount == nil || p.Currency == "" {
-		return errors.New("missing required fields `amount` and `currency`")
+	if p.Amount == nil {
+		return errors.New("missing required field `amount`")
 	}
+
+	// validate amount
+	if *p.Amount <= 0 {
+		return errors.New("`amount` must be more than 0")
+	}
+
+	// validate description (todo)
 
 	return nil
 }
@@ -47,7 +53,6 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 
 	transaction := database.Transaction{
 		Amount:      *params.Amount,
-		Currency:    string(params.Currency),
 		Description: params.Description,
 		Date:        params.Date.Time,
 
@@ -61,7 +66,9 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	response := transactionCreateResponse{UUID: transaction.UUID}
+	response := transactionCreateResponse{
+		UUID: transaction.UUID,
+	}
 	request.SendSuccessfulResponse(&response)
 }
 
@@ -79,9 +86,8 @@ func (p *transactionReadRequest) Before() error {
 type transactionReadResponse struct {
 	UUID string `json:"uuid"`
 
-	Amount      float64            `json:"amount"`
-	Currency    datatypes.Currency `json:"currency"`
-	Description string             `json:"description"`
+	Amount      float64 `json:"amount"`
+	Description string  `json:"description"`
 
 	Owner string    `json:"owner"`
 	Date  time.Time `json:"date"`
@@ -94,7 +100,6 @@ func makeTransactionReadResponse(transaction *database.Transaction, transactionO
 	return transactionReadResponse{
 		UUID:        transaction.UUID,
 		Amount:      transaction.Amount,
-		Currency:    datatypes.Currency(transaction.Currency),
 		Description: transaction.Description,
 
 		Owner: transactionOwner.Username,
@@ -150,6 +155,7 @@ func (p *transactionUpdateRequest) Before() error {
 	if p.UUID == "" {
 		return errors.New("missing required field `uuid`")
 	}
+
 	if p.NewAmount == nil && p.NewDescription == "" && p.NewDate == nil {
 		return errors.New(
 			"at least one of these fields is required: `new_amount`, `new_description`, `new_date`",
@@ -271,7 +277,7 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 	request.SendSuccessfulResponse(&response)
 }
 
-type _timePeriodRequest struct {
+type transactionListRequest struct {
 	// required options
 	Since datatypes.ISO8601Date `json:"since"`
 
@@ -279,17 +285,27 @@ type _timePeriodRequest struct {
 	Until datatypes.ISO8601Date `json:"until"`
 }
 
-func (p *_timePeriodRequest) Before() error {
-	if p.Since.IsZero() {
+func (p *transactionListRequest) Before() error {
+	// validate since
+	if !p.Since.IsValid {
+		return errors.New("invalid value of field `since`")
+	}
+
+	// validate until
+	if !p.Until.IsValid {
+		return errors.New("invalid value of field `until`")
+	}
+
+	if p.Since.Time.IsZero() {
 		return errors.New("missing required field `since`")
 	}
-	if p.Until.IsZero() {
+
+	if p.Until.Time.IsZero() {
 		p.Until = datatypes.ISO8601Date{Time: time.Now()}
 	}
+
 	return nil
 }
-
-type transactionListRequest = _timePeriodRequest
 
 type transactionListResponse struct {
 	Count        int                       `json:"count"`
@@ -339,7 +355,33 @@ func TransactionList(request *ghttp.Request, currentUser *database.User) {
 	request.SendSuccessfulResponse(&response)
 }
 
-type transactionSummaryRequest = _timePeriodRequest
+type transactionSummaryRequest struct {
+	// required options
+	Since datatypes.ISO8601Date `json:"since"`
+
+	// optional options
+	Until datatypes.ISO8601Date `json:"until"`
+}
+
+func (p *transactionSummaryRequest) Before() error {
+	// validate since
+	if !p.Since.IsValid {
+		return errors.New("invalid value of field `since`")
+	}
+
+	// validate until
+	if !p.Until.IsValid {
+		return errors.New("invalid value of field `until`")
+	}
+
+	if p.Since.Time.IsZero() {
+		return errors.New("missing required field `since`")
+	}
+	if p.Until.Time.IsZero() {
+		p.Until = datatypes.ISO8601Date{Time: time.Now()}
+	}
+	return nil
+}
 
 type transactionSummaryResponse struct {
 	Count   int     `json:"count"`
@@ -361,6 +403,7 @@ func TransactionSummary(request *ghttp.Request, currentUser *database.User) {
 		)
 		return
 	}
+
 	var transactions []database.Transaction
 	err := database.Db.NewSelect().Model(&transactions).
 		Where(
@@ -379,6 +422,7 @@ func TransactionSummary(request *ghttp.Request, currentUser *database.User) {
 	total := 0.0
 
 	for _, transaction := range transactions {
+
 		if transaction.Amount >= 0 {
 			income += transaction.Amount
 		} else {

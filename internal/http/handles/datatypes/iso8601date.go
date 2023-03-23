@@ -5,21 +5,18 @@ import (
 	"time"
 )
 
-// InvalidISO8601DateError is returned by ISO8601Date JSON unmarshaler
-// when unmarshalling invalid date in ISO-8601 format.
-type InvalidISO8601DateError struct{}
-
-func (e *InvalidISO8601DateError) Error() string {
-	return ""
-}
-
 type ISO8601Date struct {
-	time.Time
+	Time time.Time
+
+	IsValid bool
 }
 
 func (d *ISO8601Date) UnmarshalJSON(b []byte) error {
-	if err := json.Unmarshal(b, &d.Time); err != nil {
-		return new(InvalidISO8601DateError)
+	err := json.Unmarshal(b, &d.Time)
+	if err != nil {
+		d.IsValid = false
+	} else {
+		d.IsValid = true
 	}
 	return nil
 }

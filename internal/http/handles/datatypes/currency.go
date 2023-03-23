@@ -1,35 +1,19 @@
 package datatypes
 
-import (
-	"encoding/json"
-)
+import "encoding/json"
 
-// UnknownCurrencyError is returned by Currency JSON unmarshaler when unmarshalling unknown currency.
-type UnknownCurrencyError struct{}
+type Currency struct {
+	String string // string representation of currency
 
-func (e *UnknownCurrencyError) Error() string {
-	return ""
+	IsKnown bool // note: IsKnown is true even when currency is an empty string ("")
 }
 
-type Currency string
-
 func (c *Currency) UnmarshalJSON(b []byte) error {
-	var stringCurrency string
-	if err := json.Unmarshal(b, &stringCurrency); err != nil {
-		return err
+	err := json.Unmarshal(b, &c.String)
+	if err != nil {
+		c.IsKnown = false
+	} else {
+		c.IsKnown = true
 	}
-
-	if stringCurrency == "" {
-		return nil // returning no error when currency is empty
-		// because it should be checked after unmarshalling
-	}
-
-	for _, currency := range currencies {
-		if stringCurrency == currency {
-			*c = Currency(stringCurrency)
-			return nil
-		}
-	}
-
-	return new(UnknownCurrencyError)
+	return nil
 }

@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
-	"github.com/jieggii/groshi/internal/loggers"
-	"github.com/jieggii/lookupcfg"
 	"os"
 	"strings"
+
+	"github.com/jieggii/groshi/internal/loggers"
+	"github.com/jieggii/lookupcfg"
 )
 
 type Config struct {
