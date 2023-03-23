@@ -5,9 +5,7 @@ package ghttp
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"github.com/jieggii/groshi/internal/http/ghttp/schema"
-	"github.com/jieggii/groshi/internal/http/handles/datatypes"
 	"github.com/jieggii/groshi/internal/loggers"
 	"io"
 	"net/http"
@@ -41,24 +39,10 @@ func (req *Request) Decode(params RequestParams) bool {
 	req.RawRequest.Body = io.NopCloser(bytes.NewBuffer(body))
 
 	if err != nil {
-		fmt.Println(err)
-		switch err.(type) {
-		case *datatypes.UnknownCurrencyError: // could not unmarshal currency
-			req.SendClientSideErrorResponse(
-				schema.InvalidRequestErrorTag,
-				"unknown currency",
-			)
-		case *datatypes.InvalidISO8601DateError: // invalid date in ISO-8601 format
-			req.SendClientSideErrorResponse(
-				schema.InvalidRequestErrorTag,
-				"invalid date in ISO-8601 format",
-			)
-		default: // other unmarshalling errors
-			req.SendClientSideErrorResponse(
-				schema.InvalidRequestErrorTag,
-				"could not parse request (probably incorrect format or type of some fields)",
-			)
-		}
+		req.SendClientSideErrorResponse(
+			schema.InvalidRequestErrorTag,
+			"could not parse request (probably incorrect format or type of some fields)",
+		)
 		return false
 	}
 	return true
