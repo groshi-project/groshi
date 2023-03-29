@@ -1,12 +1,27 @@
 package schema
 
-const (
-	TransactionNotFoundErrorDetail               = "transaction not found"
-	ThisTransactionDoesNotBelongToYouErrorDetail = "this transaction does not belong to you"
-	UnknownCurrencyErrorDetail                   = "unknown currency"
+import (
+	"fmt"
+	"strings"
 )
 
-// todo: formalize
-// - missing required fields: `a`, `b`, `c`
-// - missing required field `a`
-// - at least one of the following fields is required: `a`, `b`, `c`
+const (
+	TransactionNotFoundErrorDetail           = "transaction not found"
+	TransactionDoesNotBelongToYouErrorDetail = "this transaction does not belong to you"
+)
+
+func MissingRequiredFieldErrorDetail(field string) string {
+	return fmt.Sprintf("missing required field %v", field)
+}
+
+func MissingRequiredFieldsErrorDetail(fields ...string) string {
+	return fmt.Sprintf(
+		"one of the required fields is missing: %v", strings.Join(fields, ", "),
+	)
+}
+
+func AtLeastOneOfFieldsIsRequiredErrorDetail(fields ...string) string {
+	return fmt.Sprintf(
+		"at least one of these fields is required: %v", strings.Join(fields, ", "),
+	)
+}

@@ -2,33 +2,45 @@ package handles
 
 import (
 	"errors"
+	"fmt"
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http/ghttp"
 	"github.com/jieggii/groshi/internal/http/ghttp/schema"
 	"github.com/jieggii/groshi/internal/http/handles/datatypes"
+	"github.com/jieggii/groshi/internal/http/handles/validators"
 	"time"
 )
 
 type transactionCreateRequest struct {
-	// required params:
-	Amount *float64 `json:"amount"`
+	Amount   *float64            `json:"amount"`
+	Currency *datatypes.Currency `json:"currency"`
 
-	// optional params:
-	Description string                `json:"description"`
-	Date        datatypes.ISO8601Date `json:"date"`
+	BaseAmount  *float64               `json:"base_amount"`
+	Description *string                `json:"description"`
+	Date        *datatypes.ISO8601Date `json:"date"`
 }
 
 func (p *transactionCreateRequest) Before() error {
-	if p.Amount == nil {
-		return errors.New("missing required field `amount`")
+	if p.Amount == nil || p.Currency == nil {
+		return errors.New(
+			schema.MissingRequiredFieldsErrorDetail("amount", "currency"),
+		)
 	}
 
-	// validate amount
-	if *p.Amount <= 0 {
-		return errors.New("`amount` must be more than 0")
+	// validate currency
+	if err := validators.ValidateCurrency(*p.Currency); err != nil {
+		return err
 	}
 
-	// validate description (todo)
+	if p.Description != nil {
+		if err := validators.ValidateTransactionDescription(*p.Description); err != nil {
+			return err
+		}
+	}
+
+	if p.Date == nil {
+		p.Date = &datatypes.ISO8601Date{Time: time.Now()}
+	}
 
 	return nil
 }
@@ -51,21 +63,38 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	transaction := database.Transaction{
-		Amount:      *params.Amount,
-		Description: params.Description,
-		Date:        params.Date.Time,
+	fmt.Println(currentUser.BaseCurrency)
 
-		OwnerId: currentUser.ID,
+	if currentUser.BaseCurrency != (*params.Currency).String() {
+		if params.BaseAmount == nil {
+			request.SendClientSideErrorResponse(
+				schema.InvalidRequestErrorTag,
+				"missing required field `base_amount` (this field is required because you are creating transaction with currency other than your base currency)",
+			)
+			return
+		}
 	}
+
+	if params.BaseAmount == nil {
+		params.BaseAmount = params.Amount
+	}
+
+	transaction := database.Transaction{
+		Date:        (*params.Date).Time,
+		OwnerId:     currentUser.ID,
+		BaseAmount:  *params.BaseAmount,
+		Amount:      *params.Amount,
+		Currency:    *params.Currency,
+		Description: params.Description,
+	}
+
 	_, err := database.Db.NewInsert().Model(&transaction).Exec(database.Ctx)
 	if err != nil {
 		request.SendServerSideErrorResponse(
-			"could not create new transaction", err,
+			"could not insert new transaction", err,
 		)
 		return
 	}
-
 	response := transactionCreateResponse{
 		UUID: transaction.UUID,
 	}
@@ -73,12 +102,14 @@ func TransactionCreate(request *ghttp.Request, currentUser *database.User) {
 }
 
 type transactionReadRequest struct {
-	UUID string `json:"uuid"`
+	UUID *string `json:"uuid"`
 }
 
 func (p *transactionReadRequest) Before() error {
-	if p.UUID == "" {
-		return errors.New("missing required field `uuid`")
+	if p.UUID == nil {
+		return errors.New(
+			schema.MissingRequiredFieldErrorDetail("uuid"),
+		)
 	}
 	return nil
 }
@@ -86,8 +117,11 @@ func (p *transactionReadRequest) Before() error {
 type transactionReadResponse struct {
 	UUID string `json:"uuid"`
 
-	Amount      float64 `json:"amount"`
-	Description string  `json:"description"`
+	BaseAmount float64            `json:"base_amount"`
+	Amount     float64            `json:"amount"`
+	Currency   datatypes.Currency `json:"currency"`
+
+	Description *string `json:"description"`
 
 	Owner string    `json:"owner"`
 	Date  time.Time `json:"date"`
@@ -98,8 +132,12 @@ type transactionReadResponse struct {
 
 func makeTransactionReadResponse(transaction *database.Transaction, transactionOwner *database.User) transactionReadResponse {
 	return transactionReadResponse{
-		UUID:        transaction.UUID,
-		Amount:      transaction.Amount,
+		UUID: transaction.UUID,
+
+		BaseAmount: transaction.BaseAmount,
+		Amount:     transaction.Amount,
+		Currency:   transaction.Currency,
+
 		Description: transaction.Description,
 
 		Owner: transactionOwner.Username,
@@ -124,7 +162,7 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	transaction, err := database.FetchTransactionByUUID(params.UUID)
+	transaction, err := database.GetTransaction(*params.UUID)
 	if err != nil {
 		request.SendClientSideErrorResponse(
 			schema.ObjectNotFoundErrorTag, schema.TransactionNotFoundErrorDetail,
@@ -134,7 +172,7 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 
 	if transaction.OwnerId != currentUser.ID {
 		request.SendClientSideErrorResponse(
-			schema.AccessDeniedErrorTag, schema.ThisTransactionDoesNotBelongToYouErrorDetail,
+			schema.AccessDeniedErrorTag, schema.TransactionDoesNotBelongToYouErrorDetail,
 		)
 		return
 	}
@@ -144,23 +182,36 @@ func TransactionRead(request *ghttp.Request, currentUser *database.User) {
 }
 
 type transactionUpdateRequest struct {
-	UUID string `json:"uuid"`
+	UUID *string `json:"uuid"`
 
+	NewBaseAmount  *float64               `json:"new_base_amount"`
 	NewAmount      *float64               `json:"new_amount"`
-	NewDescription string                 `json:"new_description"`
+	NewDescription *string                `json:"new_description"`
 	NewDate        *datatypes.ISO8601Date `json:"new_date"`
 }
 
 func (p *transactionUpdateRequest) Before() error {
-	if p.UUID == "" {
-		return errors.New("missing required field `uuid`")
-	}
-
-	if p.NewAmount == nil && p.NewDescription == "" && p.NewDate == nil {
+	if p.UUID == nil {
 		return errors.New(
-			"at least one of these fields is required: `new_amount`, `new_description`, `new_date`",
+			schema.MissingRequiredFieldErrorDetail("uuid"),
 		)
 	}
+
+	if p.NewAmount == nil && p.NewDescription == nil && p.NewDate == nil {
+		return errors.New(
+			schema.AtLeastOneOfFieldsIsRequiredErrorDetail(
+				"new_amount", "new_description", "new_date",
+			),
+		)
+	}
+
+	// validate date
+	if p.NewDate != nil {
+		if !p.NewDate.IsValid {
+			return errors.New("invalid value of field `new_date`")
+		}
+	}
+
 	return nil
 }
 
@@ -182,7 +233,7 @@ func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	transaction, err := database.FetchTransactionByUUID(params.UUID)
+	transaction, err := database.GetTransaction(*params.UUID)
 	if err != nil {
 		request.SendClientSideErrorResponse(
 			schema.ObjectNotFoundErrorTag, schema.TransactionNotFoundErrorDetail,
@@ -192,7 +243,7 @@ func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 
 	if transaction.OwnerId != currentUser.ID {
 		request.SendClientSideErrorResponse(
-			schema.AccessDeniedErrorTag, schema.ThisTransactionDoesNotBelongToYouErrorDetail,
+			schema.AccessDeniedErrorTag, schema.TransactionDoesNotBelongToYouErrorDetail,
 		)
 		return
 	}
@@ -201,7 +252,7 @@ func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 		transaction.Amount = *params.NewAmount
 	}
 
-	if params.NewDescription != "" {
+	if params.NewDescription != nil {
 		transaction.Description = params.NewDescription
 	}
 
@@ -222,11 +273,11 @@ func TransactionUpdate(request *ghttp.Request, currentUser *database.User) {
 }
 
 type transactionDeleteRequest struct {
-	UUID string `json:"uuid"`
+	UUID *string `json:"uuid"`
 }
 
 func (p *transactionDeleteRequest) Before() error {
-	if p.UUID == "" {
+	if p.UUID == nil {
 		return errors.New("missing required field `uuid`")
 	}
 	return nil
@@ -250,7 +301,7 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	transaction, err := database.FetchTransactionByUUID(params.UUID)
+	transaction, err := database.GetTransaction(*params.UUID)
 	if err != nil {
 		request.SendClientSideErrorResponse(
 			schema.ObjectNotFoundErrorTag, schema.TransactionNotFoundErrorDetail,
@@ -260,7 +311,7 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 
 	if transaction.OwnerId != currentUser.ID {
 		request.SendClientSideErrorResponse(
-			schema.AccessDeniedErrorTag, schema.ThisTransactionDoesNotBelongToYouErrorDetail,
+			schema.AccessDeniedErrorTag, schema.TransactionDoesNotBelongToYouErrorDetail,
 		)
 		return
 	}
@@ -279,13 +330,21 @@ func TransactionDelete(request *ghttp.Request, currentUser *database.User) {
 
 type transactionListRequest struct {
 	// required options
-	Since datatypes.ISO8601Date `json:"since"`
+	Since *datatypes.ISO8601Date `json:"since"`
 
 	// optional options
-	Until datatypes.ISO8601Date `json:"until"`
+	Until *datatypes.ISO8601Date `json:"until"`
 }
 
 func (p *transactionListRequest) Before() error {
+	if p.Since == nil {
+		return errors.New("missing required field `since`")
+	}
+
+	if p.Until == nil {
+		p.Until = &datatypes.ISO8601Date{Time: time.Now()}
+	}
+
 	// validate since
 	if !p.Since.IsValid {
 		return errors.New("invalid value of field `since`")
@@ -294,14 +353,6 @@ func (p *transactionListRequest) Before() error {
 	// validate until
 	if !p.Until.IsValid {
 		return errors.New("invalid value of field `until`")
-	}
-
-	if p.Since.Time.IsZero() {
-		return errors.New("missing required field `since`")
-	}
-
-	if p.Until.Time.IsZero() {
-		p.Until = datatypes.ISO8601Date{Time: time.Now()}
 	}
 
 	return nil
@@ -357,29 +408,31 @@ func TransactionList(request *ghttp.Request, currentUser *database.User) {
 
 type transactionSummaryRequest struct {
 	// required options
-	Since datatypes.ISO8601Date `json:"since"`
+	Since *datatypes.ISO8601Date `json:"since"`
 
 	// optional options
-	Until datatypes.ISO8601Date `json:"until"`
+	Until *datatypes.ISO8601Date `json:"until"`
 }
 
 func (p *transactionSummaryRequest) Before() error {
-	// validate since
+	if p.Since == nil {
+		return errors.New(
+			schema.MissingRequiredFieldErrorDetail("since"),
+		)
+	}
+
+	if p.Until == nil {
+		p.Until = &datatypes.ISO8601Date{Time: time.Now()}
+	}
+
 	if !p.Since.IsValid {
 		return errors.New("invalid value of field `since`")
 	}
 
-	// validate until
 	if !p.Until.IsValid {
 		return errors.New("invalid value of field `until`")
 	}
 
-	if p.Since.Time.IsZero() {
-		return errors.New("missing required field `since`")
-	}
-	if p.Until.Time.IsZero() {
-		p.Until = datatypes.ISO8601Date{Time: time.Now()}
-	}
 	return nil
 }
 
@@ -390,8 +443,8 @@ type transactionSummaryResponse struct {
 	Total   float64 `json:"total"`
 }
 
-// TransactionSummary returns summary for transactions owned by current user for given period.
-// (count, income, outcome, total)
+// TransactionSummary returns summary for transactions owned by
+// current user for given period in base currency (count, income, outcome, total).
 func TransactionSummary(request *ghttp.Request, currentUser *database.User) {
 	params := transactionSummaryRequest{}
 	if ok := request.Decode(&params); !ok {
@@ -422,13 +475,12 @@ func TransactionSummary(request *ghttp.Request, currentUser *database.User) {
 	total := 0.0
 
 	for _, transaction := range transactions {
-
-		if transaction.Amount >= 0 {
-			income += transaction.Amount
+		if transaction.Amount > 0 {
+			income += transaction.BaseAmount
 		} else {
-			outcome += transaction.Amount
+			outcome += transaction.BaseAmount
 		}
-		total += transaction.Amount
+		total += transaction.BaseAmount
 	}
 
 	response := transactionSummaryResponse{

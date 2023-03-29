@@ -9,11 +9,17 @@ And there are several appropriate methods to manage them.
 
 <details>
     <summary>Why not REST?</summary>
+    <strike>
     Well... I am not sure that REST is so useful as everyone thinks it is.
     At least for this project, I think REST would complicate architecture and
     client-side code without providing any significant benefits.
     That's why I deviate from the REST standards.
-    Of course, you may argue with me in the issues if you want so!
+    Of course, you may argue with me in the issues if you want so!    
+    </strike>
+    
+    Some time passed, I thought, googled and asked a little about that and understood, 
+    that I was mistaken. But... Code is written, someday I will rewrite it in REST, but
+    for now let it be like that...
 </details>
 
 ## Possible responses

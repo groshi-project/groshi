@@ -1,19 +1,40 @@
 package datatypes
 
-import "encoding/json"
+import (
+	"database/sql/driver"
+	"encoding/json"
+	"fmt"
+)
 
 type Currency struct {
-	String string // string representation of currency
+	Name string // string representation of currency
 
-	IsKnown bool // note: IsKnown is true even when currency is an empty string ("")
+	IsKnown bool // note: IsKnown is false when Name is an empty string ("")
 }
 
 func (c *Currency) UnmarshalJSON(b []byte) error {
-	err := json.Unmarshal(b, &c.String)
-	if err != nil {
-		c.IsKnown = false
-	} else {
-		c.IsKnown = true
+	if err := json.Unmarshal(b, &c.Name); err != nil {
+		return err
+	}
+
+	for _, currency := range currencies {
+		if c.Name == currency {
+			c.IsKnown = true
+			break
+		}
 	}
 	return nil
+}
+
+func (c *Currency) String() string { // todo: check where used
+	return c.Name
+}
+
+func (c *Currency) Scan(src interface{}) (err error) {
+	fmt.Println(src)
+	return nil
+}
+
+func (c Currency) Value() (driver.Value, error) {
+	return c.Name, nil
 }

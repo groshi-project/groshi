@@ -59,7 +59,7 @@ func Middleware(authRequired bool, handle ghttp.Handle) http.HandlerFunc {
 			}
 
 			var err error
-			currentUser, err = database.FetchUserByUsername(claims.Username)
+			currentUser, err = database.GetUser(claims.Username)
 			if err != nil {
 				req.SendClientSideErrorResponse(
 					schema.ObjectNotFoundErrorTag,

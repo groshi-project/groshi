@@ -2,58 +2,47 @@ package handles
 
 import (
 	"errors"
-	"fmt"
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http/ghttp"
 	"github.com/jieggii/groshi/internal/http/ghttp/schema"
 	"github.com/jieggii/groshi/internal/http/handles/datatypes"
+	"github.com/jieggii/groshi/internal/http/handles/validators"
 	"github.com/jieggii/groshi/internal/http/jwt"
 	"github.com/jieggii/groshi/internal/passhash"
-	"regexp"
 )
 
-const usernameRegex = ".+"
-const minPasswordLen = 8
-const maxPasswordLen = 128
-
 type userCreateRequest struct {
-	Username     string             `json:"username"`
-	Password     string             `json:"password"`
-	BaseCurrency datatypes.Currency `json:"base_currency"`
+	Username     *string             `json:"username"`
+	Password     *string             `json:"password"`
+	BaseCurrency *datatypes.Currency `json:"base_currency"`
 }
 
 func (p *userCreateRequest) Before() error {
-	if p.Username == "" || p.Password == "" || p.BaseCurrency.String == "" {
-		return errors.New("`username`, `password` and `base_currency` are required fields")
+	if p.Username == nil || p.Password == nil || p.BaseCurrency == nil {
+		return errors.New(
+			schema.MissingRequiredFieldsErrorDetail("username", "password", "base_currency"),
+		)
 	}
 
 	// validate username
-	usernameMatchesPattern, err := regexp.MatchString(usernameRegex, p.Username) // todo
-	if err != nil {
-		panic(err) // todo: verify that panic should be called, not error logging
-	}
-	if !usernameMatchesPattern {
-		return errors.New("invalid username format")
+	if err := validators.ValidateUserUsername(*p.Username); err != nil {
+		return err
 	}
 
 	// validate password
-	if len(p.Password) < minPasswordLen || len(p.Password) > maxPasswordLen {
-		return errors.New(fmt.Sprintf(
-			"password must contain from %v to %v symbols", minPasswordLen, maxPasswordLen,
-		))
+	if err := validators.ValidateUserPassword(*p.Password); err != nil {
+		return err
 	}
 
 	// validate base currency
-	if !p.BaseCurrency.IsKnown {
-		return errors.New(schema.UnknownCurrencyErrorDetail)
+	if err := validators.ValidateCurrency(*p.BaseCurrency); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-type userCreateResponse struct {
-	Username string `json:"username"`
-}
+type userCreateResponse struct{}
 
 // UserCreate creates new user.
 func UserCreate(request *ghttp.Request, _ *database.User) {
@@ -69,7 +58,7 @@ func UserCreate(request *ghttp.Request, _ *database.User) {
 		return
 	}
 
-	userExists, err := database.UserExists(params.Username)
+	userExists, err := database.SelectUser(*params.Username).Exists(database.Ctx)
 	if err != nil {
 		request.SendServerSideErrorResponse(
 			"could not check if user already exists", err,
@@ -83,7 +72,7 @@ func UserCreate(request *ghttp.Request, _ *database.User) {
 		return
 	}
 
-	passwordHash, err := passhash.HashPassword(params.Password)
+	passwordHash, err := passhash.HashPassword(*params.Password)
 	if err != nil {
 		request.SendServerSideErrorResponse(
 			"could not generate password hash", err,
@@ -92,9 +81,9 @@ func UserCreate(request *ghttp.Request, _ *database.User) {
 	}
 
 	user := database.User{
-		Username:     params.Username,
+		Username:     *params.Username,
 		Password:     passwordHash,
-		BaseCurrency: params.BaseCurrency.String,
+		BaseCurrency: (*params.BaseCurrency).Name,
 	}
 
 	_, err = database.Db.NewInsert().Model(&user).Exec(database.Ctx)
@@ -104,18 +93,20 @@ func UserCreate(request *ghttp.Request, _ *database.User) {
 		)
 		return
 	}
-	response := userCreateResponse{Username: user.Username}
+	response := userCreateResponse{}
 	request.SendSuccessfulResponse(&response)
 }
 
 type userAuthRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username *string `json:"username"`
+	Password *string `json:"password"`
 }
 
 func (p *userAuthRequest) Before() error {
-	if p.Username == "" || p.Password == "" {
-		return errors.New("`username` and `password` are required fields")
+	if p.Username == nil || p.Password == nil {
+		return errors.New(
+			schema.MissingRequiredFieldsErrorDetail("username", "password"),
+		)
 	}
 	return nil
 }
@@ -138,7 +129,7 @@ func UserAuth(request *ghttp.Request, _ *database.User) {
 		return
 	}
 
-	user, err := database.FetchUserByUsername(params.Username)
+	user, err := database.GetUser(*params.Username)
 	if err != nil {
 		request.SendClientSideErrorResponse(
 			schema.ObjectNotFoundErrorTag, "user with this username does not exist",
@@ -146,14 +137,14 @@ func UserAuth(request *ghttp.Request, _ *database.User) {
 		return
 	}
 
-	if !passhash.ValidatePassword(params.Password, user.Password) {
+	if !passhash.ValidatePassword(*params.Password, user.Password) {
 		request.SendClientSideErrorResponse(
 			schema.AccessDeniedErrorTag, "invalid password",
 		)
 		return
 	}
 
-	token, err := jwt.GenerateJWT(params.Username)
+	token, err := jwt.GenerateJWT(*params.Username)
 	if err != nil {
 		request.SendServerSideErrorResponse("could not generate JWT", err)
 		return
@@ -178,29 +169,30 @@ func UserRead(request *ghttp.Request, currentUser *database.User) {
 }
 
 type userUpdateRequest struct {
-	NewUsername     string             `json:"new_username"`
-	NewPassword     string             `json:"new_password"`
-	NewBaseCurrency datatypes.Currency `json:"new_base_currency"`
+	NewUsername *string `json:"new_username"`
+	NewPassword *string `json:"new_password"`
 }
 
 func (p *userUpdateRequest) Before() error {
-	if p.NewUsername == "" && p.NewPassword == "" && p.NewBaseCurrency.String == "" {
+	if p.NewUsername == nil || p.NewPassword == nil {
 		return errors.New(
-			"at least one of these fields is required: " +
-				"`new_username`, `new_password` and `new_base_currency`",
+			schema.AtLeastOneOfFieldsIsRequiredErrorDetail("new_username", "new_password"),
 		)
 	}
-	if !p.NewBaseCurrency.IsKnown {
-		return errors.New(schema.UnknownCurrencyErrorDetail)
+
+	// validate new username
+	if err := validators.ValidateUserUsername(*p.NewUsername); err != nil {
+		return err
+	}
+
+	// validate new password
+	if err := validators.ValidateUserPassword(*p.NewPassword); err != nil {
+		return err
 	}
 	return nil
 }
 
-type userUpdateResponse struct {
-	Username           string `json:"username"`
-	PasswordWasUpdated bool   `json:"password_was_updated"`
-	BaseCurrency       string `json:"base_currency"`
-}
+type userUpdateResponse struct{}
 
 // UserUpdate updates current user.
 func UserUpdate(request *ghttp.Request, currentUser *database.User) {
@@ -216,8 +208,8 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	if params.NewUsername != "" {
-		newUsernameTaken, err := database.UserExists(params.NewUsername)
+	if params.NewUsername != nil {
+		newUsernameTaken, err := database.SelectUser(*params.NewUsername).Exists(database.Ctx)
 		if err != nil {
 			request.SendServerSideErrorResponse("could not check if user exists", err)
 			return
@@ -229,12 +221,11 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 			)
 			return
 		}
-		currentUser.Username = params.NewUsername
+		currentUser.Username = *params.NewUsername
 	}
 
-	passwordWasUpdated := false
-	if params.NewPassword != "" {
-		passwordHash, err := passhash.HashPassword(params.NewPassword)
+	if params.NewPassword != nil {
+		passwordHash, err := passhash.HashPassword(*params.NewPassword)
 		if err != nil {
 			request.SendServerSideErrorResponse(
 				"could not generate password hash", err,
@@ -242,28 +233,17 @@ func UserUpdate(request *ghttp.Request, currentUser *database.User) {
 			return
 		}
 		currentUser.Password = passwordHash
-		passwordWasUpdated = true
-	}
-
-	if params.NewBaseCurrency.String != "" {
-		currentUser.BaseCurrency = params.NewBaseCurrency.String
 	}
 
 	if _, err := database.Db.NewUpdate().Model(currentUser).WherePK().Exec(database.Ctx); err != nil {
 		request.SendServerSideErrorResponse("could not update user", err)
 		return
 	}
-	response := userUpdateResponse{
-		Username:           currentUser.Username,
-		PasswordWasUpdated: passwordWasUpdated,
-		BaseCurrency:       params.NewBaseCurrency.String,
-	}
-	request.SendSuccessfulResponse(response)
+	response := userUpdateResponse{}
+	request.SendSuccessfulResponse(&response)
 }
 
-type userDeleteResponse struct {
-	Username string `json:"username"`
-}
+type userDeleteResponse struct{}
 
 // UserDelete deletes current user.
 func UserDelete(request *ghttp.Request, currentUser *database.User) {
@@ -273,6 +253,6 @@ func UserDelete(request *ghttp.Request, currentUser *database.User) {
 		return
 	}
 
-	response := userDeleteResponse{currentUser.Username}
+	response := userDeleteResponse{}
 	request.SendSuccessfulResponse(&response)
 }

@@ -12,15 +12,17 @@ type RequestParams interface {
 	Before() error
 }
 
-// EmptyRequestParams is type used to define requests without parameters.
-type EmptyRequestParams struct{}
-
-func (p *EmptyRequestParams) Validate() error {
-	return nil
-}
-
-// Response is interface for defining HTTP responses.
 type Response interface{}
 
-// EmptyResponse is, well... an empty response!
-type EmptyResponse = struct{}
+// EmptyRequestParams is type used to define requests without parameters.
+//type EmptyRequestParams struct{}
+//
+//func (p *EmptyRequestParams) Validate() error {
+//	return nil
+//}
+
+// Response is interface for defining HTTP responses.
+
+//
+//// EmptyResponse is, well... an empty response!
+//type EmptyResponse = struct{}
