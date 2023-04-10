@@ -1,7 +1,7 @@
 groshi - goddamn simple tool to keep track of your finances
 
-    Using groshi you can store, read and delete basic financial transactions.
-    Work is in progress, stand by!
+Using groshi you can store, read and delete basic financial transactions.
+Work is in progress, stand by!
 
 HTTP API methods:
 * POST /auth/login               log in and obtain an authentication token.
