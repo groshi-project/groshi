@@ -7,7 +7,7 @@ all: help
 help:
 	@echo "COMMAND      DESCRIPTION                                 "
 	@echo "---------------------------------------------------------"
-	@echo "make fmt     format source code (gofmt)"
+	@echo "make gofmt   format source code using gofmt              "
 	@echo "make todo    grep TODOs                                  "
 
 .PHONY: gofmt
@@ -17,8 +17,3 @@ gofmt:
 .PHONY: todo
 todo:
 	grep -irn todo $(SOURCES)
-	cat todo.txt
-
-.PHONY: start
-start:
-	go run ./groshi.go
