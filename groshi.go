@@ -2,30 +2,51 @@ package main
 
 import (
 	"fmt"
-	"github.com/jieggii/groshi/internal/http/handlers"
-	"github.com/jieggii/groshi/internal/http/middlewares"
-
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"github.com/jieggii/groshi/internal/config"
 	"github.com/jieggii/groshi/internal/database"
+	"github.com/jieggii/groshi/internal/http/handlers"
+	"github.com/jieggii/groshi/internal/http/middlewares"
+	"github.com/jieggii/groshi/internal/http/validators"
 	"github.com/jieggii/groshi/internal/loggers"
 )
 
-func startHTTPServer(host string, port int) error {
-	r := gin.Default()
+func initHTTPRouter() *gin.Engine {
+	router := gin.Default()
 
-	// middlewares
+	// register validators
+	validatorConfig, ok := binding.Validator.Engine().(*validator.Validate)
+	if !ok {
+		panic("could not get validator config")
+	}
+
+	validatorsMap := map[string]validator.Func{
+		"username":                validators.Username,
+		"password":                validators.Password,
+		"transaction_description": validators.TransactionDescription,
+		"currency":                validators.Currency,
+	}
+
+	for tag, fn := range validatorsMap {
+		if err := validatorConfig.RegisterValidation(tag, fn); err != nil {
+			panic(fmt.Errorf("could not register validator %v: %v", tag, err))
+		}
+	}
+
+	// define and initialize middlewares
 	authHandler := middlewares.NewAuthHandler([]byte("test 123"))
 	authMiddleware := authHandler.MiddlewareFunc()
 
 	// authorization & authentication
-	auth := r.Group("/auth")
+	auth := router.Group("/auth")
 	auth.POST("/login", authHandler.LoginHandler)
 	auth.POST("/logout", authHandler.LogoutHandler)
 	auth.POST("/refresh", authHandler.RefreshHandler)
 
 	// user
-	user := r.Group("/user")
+	user := router.Group("/user")
 	//user.Use(authHandler.MiddlewareFunc())
 	user.POST("/", handlers.UserCreate) // create new user
 	user.GET("/", authMiddleware)       // read current user
@@ -33,7 +54,7 @@ func startHTTPServer(host string, port int) error {
 	user.DELETE("/", authMiddleware)    // delete current user
 
 	// transactions
-	transactions := r.Group("/transactions")
+	transactions := router.Group("/transactions")
 	transactions.Use(authHandler.MiddlewareFunc())
 	transactions.POST("/")        // create new transaction
 	transactions.GET("/:uuid")    // get transaction
@@ -41,9 +62,7 @@ func startHTTPServer(host string, port int) error {
 	transactions.PUT("/:uuid")    // update transaction
 	transactions.DELETE("/:uuid") // delete transaction
 
-	loggers.Info.Printf("starting HTTP server on %v:%v.\n", host, port)
-
-	return r.Run(fmt.Sprintf("%v:%v", host, port))
+	return router
 }
 
 func initDatabase(cfg *config.Config) error {
@@ -76,14 +95,18 @@ func initDatabase(cfg *config.Config) error {
 }
 
 func main() {
-	loggers.Info.Println("starting groshi server")
+	loggers.Info.Println("starting groshi")
 
 	cfg := config.ReadFromEnv()
 	if err := initDatabase(cfg); err != nil {
 		loggers.Error.Fatal(err)
 	}
 
-	if err := startHTTPServer(cfg.Host, cfg.Port); err != nil {
+	router := initHTTPRouter()
+	address := fmt.Sprintf("%v:%v", cfg.Host, cfg.Port)
+
+	loggers.Info.Printf("running HTTP server on %v", address)
+	if err := router.Run(fmt.Sprintf(address)); err != nil {
 		loggers.Error.Fatal(err)
 	}
 }
