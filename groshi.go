@@ -2,65 +2,51 @@ package main
 
 import (
 	"fmt"
-	"net/http"
+	"github.com/jieggii/groshi/internal/http/handlers"
+	"github.com/jieggii/groshi/internal/http/middlewares"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jieggii/groshi/internal/config"
 	"github.com/jieggii/groshi/internal/database"
-	"github.com/jieggii/groshi/internal/http/handles"
-	"github.com/jieggii/groshi/internal/http/jwt"
-	"github.com/jieggii/groshi/internal/http/middleware"
 	"github.com/jieggii/groshi/internal/loggers"
 )
 
 func startHTTPServer(host string, port int) error {
-	mux := http.NewServeMux()
+	r := gin.Default()
 
-	// user handles:
-	mux.HandleFunc(
-		"/user/auth", middleware.Middleware(false, handles.UserAuth),
-	)
-	mux.HandleFunc(
-		"/user/create", middleware.Middleware(false, handles.UserCreate),
-	)
-	mux.HandleFunc(
-		"/user/read", middleware.Middleware(true, handles.UserRead),
-	)
-	mux.HandleFunc(
-		"/user/update", middleware.Middleware(true, handles.UserUpdate),
-	)
-	mux.HandleFunc(
-		"/user/delete", middleware.Middleware(true, handles.UserDelete),
-	)
+	// middlewares
+	authHandler := middlewares.NewAuthHandler([]byte("test 123"))
+	authMiddleware := authHandler.MiddlewareFunc()
 
-	// transaction handles:
-	mux.HandleFunc(
-		"/transaction/create", middleware.Middleware(true, handles.TransactionCreate),
-	)
-	mux.HandleFunc(
-		"/transaction/read", middleware.Middleware(true, handles.TransactionRead),
-	)
-	mux.HandleFunc(
-		"/transaction/update", middleware.Middleware(true, handles.TransactionUpdate),
-	)
-	mux.HandleFunc(
-		"/transaction/delete", middleware.Middleware(true, handles.TransactionDelete),
-	)
-	mux.HandleFunc(
-		"/transaction/list", middleware.Middleware(true, handles.TransactionList),
-	)
-	mux.HandleFunc(
-		"/transaction/summary", middleware.Middleware(true, handles.TransactionSummary),
-	)
+	// authorization & authentication
+	auth := r.Group("/auth")
+	auth.POST("/login", authHandler.LoginHandler)
+	auth.POST("/logout", authHandler.LogoutHandler)
+	auth.POST("/refresh", authHandler.RefreshHandler)
+
+	// user
+	user := r.Group("/user")
+	//user.Use(authHandler.MiddlewareFunc())
+	user.POST("/", handlers.UserCreate) // create new user
+	user.GET("/", authMiddleware)       // read current user
+	user.PUT("/", authMiddleware)       // update current user
+	user.DELETE("/", authMiddleware)    // delete current user
+
+	// transactions
+	transactions := r.Group("/transactions")
+	transactions.Use(authHandler.MiddlewareFunc())
+	transactions.POST("/")        // create new transaction
+	transactions.GET("/:uuid")    // get transaction
+	transactions.GET("/")         // get transactions for given period
+	transactions.PUT("/:uuid")    // update transaction
+	transactions.DELETE("/:uuid") // delete transaction
 
 	loggers.Info.Printf("starting HTTP server on %v:%v.\n", host, port)
-	err := http.ListenAndServe(fmt.Sprintf("%v:%v", host, port), mux)
 
-	return err
+	return r.Run(fmt.Sprintf("%v:%v", host, port))
 }
 
-func initializeApp(cfg *config.Config) error {
-	jwt.SecretKey = cfg.JWTSecretKey
-
+func initDatabase(cfg *config.Config) error {
 	if err := database.Connect(
 		cfg.PostgresHost,
 		cfg.PostgresPort,
@@ -77,13 +63,13 @@ func initializeApp(cfg *config.Config) error {
 		)
 	}
 
-	if errors := database.Initialize(); len(errors) != 0 {
+	if err := database.Init(); err != nil {
 		return fmt.Errorf(
 			"failed to initialize PostgreSQL database \"%v\" at %v:%v (%v)",
 			cfg.PostgresDatabase,
 			cfg.PostgresHost,
 			cfg.PostgresPort,
-			errors,
+			err,
 		)
 	}
 	return nil
@@ -91,10 +77,12 @@ func initializeApp(cfg *config.Config) error {
 
 func main() {
 	loggers.Info.Println("starting groshi server")
+
 	cfg := config.ReadFromEnv()
-	if err := initializeApp(cfg); err != nil {
+	if err := initDatabase(cfg); err != nil {
 		loggers.Error.Fatal(err)
 	}
+
 	if err := startHTTPServer(cfg.Host, cfg.Port); err != nil {
 		loggers.Error.Fatal(err)
 	}
