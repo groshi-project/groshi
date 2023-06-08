@@ -36,10 +36,11 @@ type Transaction struct {
 	OwnerId int64 `bun:",notnull"`
 	Owner   *User `bun:"rel:belongs-to,join:owner_id=id"`
 
-	BaseAmount float64 `bun:",notnull"` // amount in base currency
+	BaseAmount   float64 `bun:",notnull"` // amount in base currency
+	BaseCurrency string  `bun:",notnull"` // base currency
 
 	Amount   float64 // amount in original currency (optional)
-	Currency string  // todo: Currency // original currency
+	Currency string  // original currency
 
 	Description *string
 }
@@ -50,6 +51,9 @@ func (t *Transaction) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	switch query.(type) {
 	case *bun.InsertQuery:
 		t.UUID = uuid.NewString() // generate transaction UUID on INSERT query
+		currentTime := time.Now()
+		t.CreatedAt = currentTime // set transaction creation time on INSERT query
+
 	case *bun.UpdateQuery:
 		currentTime := time.Now()
 		t.UpdatedAt = &currentTime // set transaction update time on UPDATE query

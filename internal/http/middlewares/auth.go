@@ -3,7 +3,7 @@ package middlewares
 import (
 	"fmt"
 	"github.com/jieggii/groshi/internal/database"
-	"github.com/jieggii/groshi/internal/passhash"
+	"github.com/jieggii/groshi/internal/hashing"
 	"time"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
@@ -52,25 +52,29 @@ func NewAuthHandler(secretKey []byte) *jwt.GinJWTMiddleware {
 
 			var user database.User
 			if err := database.SelectUser(credentials.Username).Scan(database.Ctx, &user); err != nil {
-				return nil, jwt.ErrFailedAuthentication // todo
-			}
-
-			if !passhash.ValidatePassword(credentials.Password, user.Password) {
 				return nil, jwt.ErrFailedAuthentication
 			}
 
-			c.Set("current_user", &user)
+			if !hashing.ValidatePassword(credentials.Password, user.Password) {
+				return nil, jwt.ErrFailedAuthentication
+			}
+
 			return &_claims{
 				Username: user.Username,
 			}, nil
 		},
 		Authorizator: func(data interface{}, c *gin.Context) bool {
-			return true
-			//if v, ok := data.(*_claims); ok && v.Username == "admin" {
-			//	return true
-			//}
-			//
-			//return false
+			if v, ok := data.(*_claims); ok {
+				var currentUser database.User
+				err := database.SelectUser(v.Username).Scan(database.Ctx, &currentUser)
+				if err != nil { // if user does not exist
+					return false
+				}
+				c.Set("currentUser", &currentUser)
+				return true
+			} else {
+				return false
+			}
 		},
 		Unauthorized: func(c *gin.Context, code int, message string) {
 			c.JSON(code, gin.H{

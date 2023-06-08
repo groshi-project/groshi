@@ -13,7 +13,7 @@ import (
 	"github.com/jieggii/groshi/internal/loggers"
 )
 
-func initHTTPRouter() *gin.Engine {
+func initHTTPRouter(jwtSecretKey []byte) *gin.Engine {
 	router := gin.Default()
 
 	// register validators
@@ -36,7 +36,7 @@ func initHTTPRouter() *gin.Engine {
 	}
 
 	// define and initialize middlewares
-	authHandler := middlewares.NewAuthHandler([]byte("test 123"))
+	authHandler := middlewares.NewAuthHandler(jwtSecretKey)
 	authMiddleware := authHandler.MiddlewareFunc()
 
 	// authorization & authentication
@@ -48,10 +48,10 @@ func initHTTPRouter() *gin.Engine {
 	// user
 	user := router.Group("/user")
 	//user.Use(authHandler.MiddlewareFunc())
-	user.POST("/", handlers.UserCreate) // create new user
-	user.GET("/", authMiddleware)       // read current user
-	user.PUT("/", authMiddleware)       // update current user
-	user.DELETE("/", authMiddleware)    // delete current user
+	user.POST("/", handlers.UserCreate)                // create new user
+	user.GET("/", authMiddleware, handlers.UserRead)   // read current user
+	user.PUT("/", authMiddleware, handlers.UserUpdate) // update current user
+	user.DELETE("/", authMiddleware)                   // delete current user
 
 	// transactions
 	transactions := router.Group("/transactions")
@@ -102,7 +102,7 @@ func main() {
 		loggers.Error.Fatal(err)
 	}
 
-	router := initHTTPRouter()
+	router := initHTTPRouter(cfg.JWTSecretKey)
 	address := fmt.Sprintf("%v:%v", cfg.Host, cfg.Port)
 
 	loggers.Info.Printf("running HTTP server on %v", address)

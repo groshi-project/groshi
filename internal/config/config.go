@@ -10,12 +10,12 @@ import (
 )
 
 type Config struct {
-	// server settings:
+	// server settings
 	Host         string `env:"GROSHI_HOST" $default:"0.0.0.0"`
 	Port         int    `env:"GROSHI_PORT" $default:"8080"`
 	JWTSecretKey []byte `env:"GROSHI_JWT_SECRET_KEY" $default:"secret-key"`
 
-	// postgresql settings:
+	// postgresql settings
 	PostgresHost     string `env:"GROSHI_POSTGRES_HOST" $default:"localhost"`
 	PostgresPort     int    `env:"GROSHI_POSTGRES_PORT" $default:"5432"`
 	PostgresUser     string `env:"GROSHI_POSTGRES_USER" $default:"jieggii"`
@@ -36,7 +36,7 @@ func ReadFromEnv() *Config {
 			envVarNames = append(envVarNames, field.SourceName)
 		}
 		loggers.Error.Printf(
-			"missing the following necessary environ variables: %v\n",
+			"missing the following necessary environmental variables: %v\n",
 			strings.Join(envVarNames, ", "),
 		)
 	}
@@ -56,7 +56,7 @@ func ReadFromEnv() *Config {
 			)
 		}
 		loggers.Error.Printf(
-			"incorrect values of environmental variables: %v\n",
+			"incorrect values of the following environmental variables: %v\n",
 			strings.Join(incorrectTypeFieldsFmt, ", "),
 		)
 	}
