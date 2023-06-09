@@ -1,1 +1,5 @@
+# IDE
 .idea
+
+# postgres data mountpoint
+.postgres-data
