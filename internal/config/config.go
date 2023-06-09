@@ -11,16 +11,16 @@ import (
 
 type Config struct {
 	// server settings
-	Host         string `env:"GROSHI_HOST" $default:"0.0.0.0"`
-	Port         int    `env:"GROSHI_PORT" $default:"8080"`
-	JWTSecretKey []byte `env:"GROSHI_JWT_SECRET_KEY" $default:"secret-key"`
+	Host         string `env:"GROSHI_HOST"`
+	Port         int    `env:"GROSHI_PORT"`
+	JWTSecretKey []byte `env:"GROSHI_JWT_SECRET_KEY"`
 
 	// postgresql settings
-	PostgresHost     string `env:"GROSHI_POSTGRES_HOST" $default:"localhost"`
-	PostgresPort     int    `env:"GROSHI_POSTGRES_PORT" $default:"5432"`
-	PostgresUser     string `env:"GROSHI_POSTGRES_USER" $default:"jieggii"`
-	PostgresPassword string `env:"GROSHI_POSTGRES_PASSWORD" $default:""`
-	PostgresDatabase string `env:"GROSHI_POSTGRES_DATABASE" $default:"groshi"`
+	PostgresHost     string `env:"GROSHI_POSTGRES_HOST"`
+	PostgresPort     int    `env:"GROSHI_POSTGRES_PORT"`
+	PostgresUser     string `env:"GROSHI_POSTGRES_USER"`
+	PostgresPassword string `env:"GROSHI_POSTGRES_PASSWORD"`
+	PostgresDatabase string `env:"GROSHI_POSTGRES_DATABASE"`
 }
 
 func ReadFromEnv() *Config {

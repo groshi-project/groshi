@@ -16,6 +16,9 @@ import (
 func initHTTPRouter(jwtSecretKey []byte) *gin.Engine {
 	router := gin.Default()
 
+	// allow all CORS origins
+	//router.Use(cors.Default())
+
 	// register validators
 	validatorConfig, ok := binding.Validator.Engine().(*validator.Validate)
 	if !ok {
