@@ -1,15 +1,15 @@
-FROM golang:1.20
+FROM golang:1.20 as builder
 
-WORKDIR /app
+WORKDIR /groshi-build
 
 COPY go.mod go.sum ./
-RUN go mod download
-
-COPY  groshi.go ./
+COPY groshi.go ./
 COPY ./internal ./internal
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o /usr/bin/groshi
+RUN go mod download
+RUN CGO_ENABLED=0 GOOS=linux go build -o ./groshi
 
+FROM alpine:latest as runner
+COPY --from=builder /groshi-build/groshi /usr/bin/groshi
 EXPOSE 8080
-
 ENTRYPOINT ["/usr/bin/groshi"]

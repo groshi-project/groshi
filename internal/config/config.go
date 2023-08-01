@@ -1,67 +1,64 @@
 package config
 
 import (
-	"fmt"
-	"os"
-	"strings"
-
 	"github.com/jieggii/groshi/internal/loggers"
 	"github.com/jieggii/lookupcfg"
+	"os"
+	"strings"
 )
 
-type Config struct {
+// EnvVars TODO
+type EnvVars struct {
 	// server settings
-	Host         string `env:"GROSHI_HOST"`
-	Port         int    `env:"GROSHI_PORT"`
-	JWTSecretKey []byte `env:"GROSHI_JWT_SECRET_KEY"`
+	Host             string `env:"GROSHI_HOST"`
+	Port             int    `env:"GROSHI_PORT"`
+	JWTSecretKeyFile string `env:"GROSHI_JWT_SECRET_KEY_FILE"`
 
-	// postgresql settings
-	PostgresHost     string `env:"GROSHI_POSTGRES_HOST"`
-	PostgresPort     int    `env:"GROSHI_POSTGRES_PORT"`
-	PostgresUser     string `env:"GROSHI_POSTGRES_USER"`
-	PostgresPassword string `env:"GROSHI_POSTGRES_PASSWORD"`
-	PostgresDatabase string `env:"GROSHI_POSTGRES_DATABASE"`
+	// MongoDB settings
+	MongoHost string `env:"GROSHI_MONGO_HOST"`
+	MongoPort int    `env:"GROSHI_MONGO_PORT"`
+
+	MongoUsernameFiles string `env:"GROSHI_MONGO_USERNAME_FILE"`
+	MongoPasswordFile  string `env:"GROSHI_MONGO_PASSWORD_FILE"`
+	MongoDatabaseFile  string `env:"GROSHI_MONGO_DATABASE_FILE"`
 }
 
-func ReadFromEnv() *Config {
-	config := &Config{}
-	result := lookupcfg.PopulateConfig("env", os.LookupEnv, config)
-	success := true
-
+// handleConfigPopulationError TODO
+func catchConfigPopulationError(result *lookupcfg.ConfigPopulationResult) {
+	die := false
 	if len(result.MissingFields) != 0 {
-		success = false
-
-		var envVarNames []string
-		for _, field := range result.MissingFields {
-			envVarNames = append(envVarNames, field.SourceName)
-		}
-		loggers.Error.Printf(
-			"missing the following necessary environmental variables: %v\n",
-			strings.Join(envVarNames, ", "),
-		)
+		// ...
+		loggers.Error.Print("missing fields (TODO)")
+		die = true
 	}
 	if len(result.IncorrectTypeFields) != 0 {
-		success = false
+		// ...
+		loggers.Error.Print("incorrect type fields (TODO)")
+		die = true
+	}
+	if die {
+		loggers.Error.Fatal("exiting due to previous errors")
+	}
+}
 
-		var incorrectTypeFieldsFmt []string
-		for _, field := range result.IncorrectTypeFields {
-			incorrectTypeFieldsFmt = append(
-				incorrectTypeFieldsFmt,
-				fmt.Sprintf(
-					"%v (got `%v`, but expected value type: %v)",
-					field.SourceName,
-					field.RawValue,
-					field.ExpectedValueType.String(),
-				),
-			)
-		}
-		loggers.Error.Printf(
-			"incorrect values of the following environmental variables: %v\n",
-			strings.Join(incorrectTypeFieldsFmt, ", "),
-		)
+// ReadEnvVars TODO
+func ReadEnvVars() *EnvVars {
+	config := EnvVars{}
+	result := lookupcfg.PopulateConfig("env", os.LookupEnv, &config)
+	catchConfigPopulationError(result)
+	return &config
+}
+
+// ReadDockerSecret TODO
+func ReadDockerSecret(filePath string) string {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		loggers.Error.Fatalf("error reading docker secret file: %v", err)
 	}
-	if !success {
-		loggers.Error.Fatalln("exiting due to previous errors")
+	content := string(data)
+	if len(content) == 0 {
+		loggers.Error.Fatalf("empty docker secret file %v", filePath)
 	}
-	return config
+	content = strings.TrimRight(content, "\n")
+	return content
 }

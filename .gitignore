@@ -1,5 +1,11 @@
 # IDE
-.idea
+.idea/
 
 # postgres data mountpoint
-.postgres-data
+.postgres-data/
+
+# docker secrets
+secrets/
+
+# env file
+.env

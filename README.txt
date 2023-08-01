@@ -14,10 +14,8 @@ HTTP API methods:
 * PUT /user/                     update the current user
 * DELETE /user/                  delete the current user
 
-* POST /transactions/            create a new transaction
-* GET /transactions/:uuid        retrieve a transaction with the specified UUID
-* GET /transactions/             retrieve all transactions for a given period
-* PUT /transactions/:uuid        update a transaction with the specified UUID
-* DELETE /transactions/:uuid     delete a transaction with the specified UUID
-
-[detailed API docs can be found here: https://github.com/jieggii/groshi/blob/master/docs/README.md]
+* POST /transaction/            create a new transaction
+* GET /transaction/:uuid        retrieve a transaction with the specified UUID
+* GET /transaction/             retrieve all transactions for a given period
+* PUT /transaction/:uuid        update a transaction with the specified UUID
+* DELETE /transaction/:uuid     delete a transaction with the specified UUID

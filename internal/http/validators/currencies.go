@@ -1,7 +1,8 @@
 package validators
 
-var currencies = []string{
-	"EUR",
-	"USD",
-	"RUB",
-}
+//
+//var currencies = []string{
+//	"EUR",
+//	"USD",
+//	"RUB",
+//}

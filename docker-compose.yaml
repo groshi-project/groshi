@@ -3,35 +3,51 @@ services:
     container_name: groshi-app
     build:
       context: ./
+
     environment:
-      # todo: use docker secret instead of some env vars!
       GROSHI_HOST: 0.0.0.0
       GROSHI_PORT: 8080
-      GROSHI_JWT_SECRET_KEY: secret123
-
-      GROSHI_POSTGRES_HOST: groshi-postgres
-      GROSHI_POSTGRES_PORT: 5432
-      GROSHI_POSTGRES_USER: groshi
-      GROSHI_POSTGRES_PASSWORD: password123
-      GROSHI_POSTGRES_DATABASE: groshi
-
       GIN_MODE: debug
 
+      GROSHI_JWT_SECRET_KEY_FILE: /run/secrets/app/jwt_secret_key
+
+      GROSHI_MONGO_HOST: groshi-mongo
+      GROSHI_MONGO_PORT: 5432
+      GROSHI_MONGO_USERNAME_FILE: /run/secrets/mongo/username
+      GROSHI_MONGO_PASSWORD_FILE: /run/secrets/mongo/password
+      GROSHI_MONGO_DATABASE_FILE: /run/secrets/mongo/database
+
+
     depends_on:
-      - groshi-postgres
+      - groshi-mongo
 
     ports:
       - "80:8080"
 
-  groshi-postgres:
-    container_name: groshi-postgres
-    image: postgres:15.3
+    secrets:
+      - app
+      - mongo
+  groshi-mongo:
+    container_name: wg-node-mongo
+    image: mongo
     restart: always
     environment:
-      POSTGRES_USER: groshi
-      POSTGRES_PASSWORD: password123
-      POSTGRES_DB: groshi
+      MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/mongo/username
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo/password
+      MONGO_INITDB_DATABASE_FILE: /run/secrets/mongo/database
+
     volumes:
-      - ./.postgres-data:/var/lib/postgresql
-    ports:
-      - "5432:5432"
+      - ./.mongo-data:/data/db
+
+    secrets:
+      - mongo
+
+    #    ports:
+    #      - "27017:27017"
+
+secrets:
+  app:
+    file: ./secrets/app
+
+  postgres:
+    file: ./secrets/mongo
