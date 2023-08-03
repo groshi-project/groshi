@@ -3,7 +3,7 @@ FROM golang:1.20 as builder
 WORKDIR /groshi-build
 
 COPY go.mod go.sum ./
-COPY groshi.go ./
+COPY main.go ./
 COPY ./internal ./internal
 
 RUN go mod download
