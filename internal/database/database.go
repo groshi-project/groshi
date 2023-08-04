@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/jieggii/groshi/internal/loggers"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -12,6 +11,8 @@ import (
 
 var Context = context.TODO()
 
+var Client *mongo.Client
+
 var Users *mongo.Collection
 var Transactions *mongo.Collection
 
@@ -19,22 +20,16 @@ func InitDatabase(host string, port int, username string, password string, datab
 	clientOptions := options.Client().ApplyURI(
 		fmt.Sprintf("mongodb://%v:%v@%v:%v/", username, password, host, port),
 	)
-	client, err := mongo.Connect(Context, clientOptions)
+	var err error
+	Client, err = mongo.Connect(Context, clientOptions)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		err := client.Disconnect(Context)
-		if err != nil {
-			loggers.Error.Fatal(err)
-		}
-	}()
-
-	err = client.Ping(Context, nil)
+	err = Client.Ping(Context, nil)
 	if err != nil {
 		return err
 	}
-	database := client.Database(databaseName)
+	database := Client.Database(databaseName)
 
 	Users = database.Collection("users")
 	Transactions = database.Collection("transactions")

@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http/error_messages"
+	"github.com/jieggii/groshi/internal/http/password_hashing"
+	"github.com/jieggii/groshi/internal/loggers"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"golang.org/x/crypto/bcrypt"
 	"time"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
@@ -53,7 +54,7 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 		Authenticator: func(c *gin.Context) (interface{}, error) {
 			credentials := jwtCredentials{}
 			if err := c.ShouldBind(&credentials); err != nil {
-				return nil, errors.Join(errors.New(error_messages.ErrorInvalidRequestParams), jwt.ErrMissingLoginValues)
+				return nil, error_messages.ErrorInvalidRequestParams
 			}
 
 			user := database.User{}
@@ -62,18 +63,15 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 			).Decode(&user)
 			if err != nil {
 				if errors.Is(err, mongo.ErrNoDocuments) {
-					return nil, errors.Join(errors.New("incorrect username or password"), jwt.ErrFailedAuthentication)
+					return nil, errors.New("user with such username was not found")
 				}
-				return nil, errors.Join(errors.New(error_messages.ErrorInternalServerError), jwt.ErrFailedAuthentication)
+				loggers.Error.Printf("unexpected error: %v", err)
+				return nil, errors.New("internal server error")
 			}
 
-			err = bcrypt.CompareHashAndPassword(
-				[]byte(user.Password), []byte(credentials.Password),
-			)
-			if err != nil {
-				return nil, errors.Join(errors.New("incorrect username or password"), jwt.ErrFailedAuthentication)
+			if ok := password_hashing.ValidatePassword(credentials.Password, user.Password); !ok {
+				return nil, errors.New("incorrect password")
 			}
-
 			return &jwtClaims{
 				UserUUID: user.UUID,
 			}, nil
@@ -89,10 +87,10 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 					if errors.Is(err, mongo.ErrNoDocuments) {
 						return false
 					}
-					// todo: log unexpected error
+					loggers.Error.Printf("unexpected error: %v", err)
 					return false
 				}
-				c.Set("currentUser", &user)
+				c.Set("current_user", &user)
 				return true
 			} else {
 				return false

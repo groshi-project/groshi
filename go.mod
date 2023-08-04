@@ -1,7 +1,6 @@
 module github.com/jieggii/groshi
 
 go 1.19
-
 require (
 	github.com/appleboy/gin-jwt/v2 v2.9.1
 	github.com/gin-contrib/cors v1.4.0

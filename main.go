@@ -29,6 +29,7 @@ func createHTTPRouter(jwtSecretKey string) *gin.Engine {
 
 	// user routes:
 	user := router.Group("/user")
+
 	user.POST("/", handlers.UserCreateHandler)                  // create new user
 	user.GET("/", jwtMiddleware, handlers.UserReadHandler)      // read current user
 	user.PUT("/", jwtMiddleware, handlers.UserUpdateHandler)    // update current user
@@ -58,6 +59,11 @@ func main() {
 	); err != nil {
 		loggers.Error.Fatal(err)
 	}
+	defer func() {
+		if err := database.Client.Disconnect(database.Context); err != nil {
+			loggers.Error.Fatal(err)
+		}
+	}()
 
 	router := createHTTPRouter(config.ReadDockerSecret(env.JWTSecretKeyFile))
 	socket := fmt.Sprintf("%v:%v", env.Host, env.Port)
