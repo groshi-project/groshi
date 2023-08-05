@@ -17,17 +17,21 @@ import (
 
 const jwtTimeout = time.Hour
 const jwtMaxRefresh = time.Hour
+
 const jwtIdentityKey = "user_uuid"
 
+// jwtCredentials TODO
 type jwtCredentials struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
+// jwtClaims TODO
 type jwtClaims struct {
 	UserUUID string `json:"user_uuid"`
 }
 
+// NewJWTMiddleware TODO
 func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 	jwtMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:       "groshi",

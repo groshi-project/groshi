@@ -132,7 +132,6 @@ func UserUpdateHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{})
-	return
 }
 
 func UserDeleteHandler(c *gin.Context) {
