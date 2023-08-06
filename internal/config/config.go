@@ -27,13 +27,11 @@ type EnvVars struct {
 func catchConfigPopulationError(result *lookupcfg.ConfigPopulationResult) {
 	die := false
 	if len(result.MissingFields) != 0 {
-		// ...
-		loggers.Error.Print("missing fields (TODO)")
+		loggers.Error.Printf("missing fields environmental variables: %v", result.MissingFields)
 		die = true
 	}
 	if len(result.IncorrectTypeFields) != 0 {
-		// ...
-		loggers.Error.Print("incorrect type fields (TODO)")
+		loggers.Error.Printf("incorrect values of environmental variables: %v", result.IncorrectTypeFields)
 		die = true
 	}
 	if die {
