@@ -66,21 +66,14 @@ func TransactionCreateHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"uuid": transaction.UUID})
 }
 
-type transactionReadParams struct {
-	UUID string `json:"uuid" bind:"required"`
-}
-
 func TransactionReadHandler(c *gin.Context) {
-	params := transactionReadParams{}
-	if ok := util.BindParams(c, &params); !ok {
-		return
-	}
-
+	transactionUUID := c.Param("uuid")
+	
 	currentUser := c.MustGet("current_user").(*database.User)
 
 	transaction := database.Transaction{}
 	if err := database.Transactions.FindOne(
-		database.Context, bson.D{{"uuid", params.UUID}},
+		database.Context, bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			util.AbortWithErrorMessage(c, http.StatusNotFound, error_messages.TransactionNotFound.Error())
@@ -99,17 +92,19 @@ func TransactionReadHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"uuid":        transaction.UUID,
+		"uuid": transaction.UUID,
+
 		"amount":      transaction.Amount,
 		"currency":    transaction.Currency,
 		"description": transaction.Description,
 		"date":        transaction.Date,
+
+		"created_at": transaction.CreatedAt,
+		"updated_at": transaction.UpdatedAt,
 	})
 }
 
 type transactionUpdateParams struct {
-	UUID string `json:"uuid" binding:"required"`
-
 	NewAmount   *int    `json:"new_amount"`
 	NewCurrency *string `json:"new_currency"`
 
@@ -122,6 +117,8 @@ func TransactionUpdateHandler(c *gin.Context) {
 	if ok := util.BindParams(c, &params); !ok {
 		return
 	}
+
+	transactionUUID := c.Param("uuid")
 
 	if params.NewAmount == nil &&
 		params.NewCurrency == nil &&
@@ -137,7 +134,7 @@ func TransactionUpdateHandler(c *gin.Context) {
 
 	transaction := database.Transaction{}
 	if err := database.Transactions.FindOne(
-		database.Context, bson.D{{"uuid", params.UUID}},
+		database.Context, bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			util.AbortWithErrorMessage(
@@ -193,22 +190,16 @@ func TransactionUpdateHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"uuid": transaction.UUID})
 }
 
-type transactionDeleteParams struct {
-	UUID string `json:"uuid" binding:"required"`
-}
-
 func TransactionDeleteHandler(c *gin.Context) {
-	params := transactionDeleteParams{}
-	if ok := util.BindParams(c, &params); !ok {
-		return
-	}
+	transactionUUID := c.Param("uuid")
+
 	currentUser := c.MustGet("current_user").(*database.User)
 
 	// fetch transaction:
 	transaction := database.Transaction{}
 	if err := database.Transactions.FindOne(
 		database.Context,
-		bson.D{{"uuid", params.UUID}},
+		bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			util.AbortWithErrorMessage(
