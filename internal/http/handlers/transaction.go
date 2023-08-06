@@ -76,7 +76,7 @@ func TransactionReadHandler(c *gin.Context) {
 		return
 	}
 
-	currentUser := c.MustGet("currentUser").(*database.User)
+	currentUser := c.MustGet("current_user").(*database.User)
 
 	transaction := database.Transaction{}
 	if err := database.Transactions.FindOne(
@@ -133,7 +133,7 @@ func TransactionUpdateHandler(c *gin.Context) {
 		return
 	}
 
-	currentUser := c.MustGet("currentUser").(*database.User)
+	currentUser := c.MustGet("current_user").(*database.User)
 
 	transaction := database.Transaction{}
 	if err := database.Transactions.FindOne(
@@ -202,7 +202,7 @@ func TransactionDeleteHandler(c *gin.Context) {
 	if ok := util.BindParams(c, &params); !ok {
 		return
 	}
-	currentUser := c.MustGet("currentUser").(*database.User)
+	currentUser := c.MustGet("current_user").(*database.User)
 
 	// fetch transaction:
 	transaction := database.Transaction{}

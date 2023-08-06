@@ -8,6 +8,7 @@ import (
 	"github.com/jieggii/groshi/internal/http/password_hashing"
 	"github.com/jieggii/groshi/internal/loggers"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"time"
 
@@ -18,20 +19,20 @@ import (
 const jwtTimeout = time.Hour
 const jwtMaxRefresh = time.Hour
 
-const jwtIdentityKey = "user_uuid"
+const jwtIdentityKey = "_id"
 
-// jwtCredentials TODO
+// jwtCredentials represents credentials that are used to generate JWT.
 type jwtCredentials struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
-// jwtClaims TODO
+// jwtClaims represents information which will be included in JWT.
 type jwtClaims struct {
-	UserUUID string `json:"user_uuid"`
+	UserID string `json:"_id"`
 }
 
-// NewJWTMiddleware TODO
+// NewJWTMiddleware returns pointer to a new instance of jwt.GinJWTMiddleware.
 func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 	jwtMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
 		Realm:       "groshi",
@@ -42,7 +43,7 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
 			if v, ok := data.(*jwtClaims); ok {
 				return jwt.MapClaims{
-					jwtIdentityKey: v.UserUUID,
+					jwtIdentityKey: v.UserID,
 				}
 			}
 			return jwt.MapClaims{}
@@ -51,7 +52,7 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 		IdentityHandler: func(c *gin.Context) interface{} {
 			claims := jwt.ExtractClaims(c)
 			return &jwtClaims{
-				UserUUID: claims[jwtIdentityKey].(string),
+				UserID: claims[jwtIdentityKey].(string),
 			}
 		},
 
@@ -77,21 +78,27 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 				return nil, errors.New("incorrect password")
 			}
 			return &jwtClaims{
-				UserUUID: user.UUID,
+				UserID: user.ID.Hex(),
 			}, nil
+
 		},
 
 		Authorizator: func(data interface{}, c *gin.Context) bool {
 			if v, ok := data.(*jwtClaims); ok {
 				user := database.User{}
-				err := database.Users.FindOne(
-					database.Context, bson.D{{"uuid", v.UserUUID}},
-				).Decode(&user)
+
+				userID, err := primitive.ObjectIDFromHex(v.UserID)
 				if err != nil {
-					if errors.Is(err, mongo.ErrNoDocuments) {
-						return false
+					loggers.Error.Printf("unexpected error when parsing user ObjectID: %v", err)
+					return false
+				}
+
+				if err := database.Users.FindOne(
+					database.Context, bson.D{{"_id", userID}},
+				).Decode(&user); err != nil {
+					if !errors.Is(err, mongo.ErrNoDocuments) {
+						loggers.Error.Printf("unexpected error: %v", err)
 					}
-					loggers.Error.Printf("unexpected error: %v", err)
 					return false
 				}
 				c.Set("current_user", &user)
@@ -114,8 +121,6 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 		panic(fmt.Errorf("could not create jwt middleware instance: %v", err))
 	}
 
-	// When you use jwt.New(), the function is already automatically called for checking,
-	// which means you don't need to call it again.
 	if err := jwtMiddleware.MiddlewareInit(); err != nil {
 		panic(fmt.Errorf("could not initialize the jwt middleware: %v", err))
 	}
