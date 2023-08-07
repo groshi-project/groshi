@@ -26,6 +26,11 @@ func AbortWithInternalServerError(c *gin.Context, err error) {
 	AbortWithErrorMessage(c, http.StatusInternalServerError, err.Error())
 }
 
+// ReturnSuccessfulResponse TODO
+func ReturnSuccessfulResponse(c *gin.Context, response interface{}) {
+	c.JSON(http.StatusOK, response)
+}
+
 // BindBody is an alias function for gin.Context.ShouldBind to be used inside handlers.
 func BindBody(c *gin.Context, v interface{}) (ok bool) {
 	if err := c.ShouldBind(v); err != nil {

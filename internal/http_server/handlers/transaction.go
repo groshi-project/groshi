@@ -65,7 +65,7 @@ func TransactionCreateHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"uuid": transaction.UUID})
+	util.ReturnSuccessfulResponse(c, gin.H{"uuid": transaction.UUID})
 }
 
 func TransactionReadOneHandler(c *gin.Context) {
@@ -93,7 +93,7 @@ func TransactionReadOneHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	util.ReturnSuccessfulResponse(c, gin.H{
 		"uuid": transaction.UUID,
 
 		"amount":      transaction.Amount,
@@ -123,7 +123,6 @@ func TransactionReadManyHandler(c *gin.Context) {
 
 	currentUser := c.MustGet("current_user").(*database.User)
 
-	var transactions []*database.Transaction
 	cursor, err := database.TransactionsCol.Find(
 		database.Context,
 		bson.D{
@@ -147,14 +146,27 @@ func TransactionReadManyHandler(c *gin.Context) {
 		util.AbortWithInternalServerError(c, err)
 		return
 	}
-	if err := cursor.All(database.Context, &transactions); err != nil {
-		util.AbortWithInternalServerError(c, err)
-		return
+
+	var transactions []gin.H
+	for cursor.Next(database.Context) {
+		transaction := database.Transaction{}
+		if err := cursor.Decode(&transaction); err != nil {
+			util.AbortWithInternalServerError(c, err)
+		}
+		transactions = append(transactions, gin.H{
+			"uuid": transaction.UUID,
+
+			"amount":      transaction.Amount,
+			"currency":    transaction.Currency,
+			"description": transaction.Description,
+			"date":        transaction.Date,
+
+			"created_at": transaction.CreatedAt,
+			"updated_at": transaction.UpdatedAt,
+		})
 	}
 
-	c.JSON(http.StatusOK, []gin.H{
-		{},
-	})
+	util.ReturnSuccessfulResponse(c, transactions)
 }
 
 //type transactionReadSummaryParams struct {
@@ -223,7 +235,6 @@ func TransactionUpdateHandler(c *gin.Context) {
 		return
 	}
 
-	// todo: update transaction using only one query to the database
 	var updateQueries bson.D
 
 	if params.NewAmount != nil {
@@ -255,7 +266,7 @@ func TransactionUpdateHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"uuid": transaction.UUID})
+	util.ReturnSuccessfulResponse(c, gin.H{"uuid": transaction.UUID})
 }
 
 func TransactionDeleteHandler(c *gin.Context) {
@@ -296,7 +307,5 @@ func TransactionDeleteHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(
-		http.StatusOK, gin.H{"uuid": transaction.UUID},
-	)
+	util.ReturnSuccessfulResponse(c, gin.H{"uuid": transaction.UUID})
 }

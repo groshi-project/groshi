@@ -59,14 +59,12 @@ func UserCreateHandler(c *gin.Context) {
 		util.AbortWithInternalServerError(c, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"username": user.Username})
+	util.ReturnSuccessfulResponse(c, gin.H{"username": user.Username})
 }
 
 func UserReadHandler(c *gin.Context) {
 	currentUser := c.MustGet("current_user").(*database.User)
-	c.JSON(
-		http.StatusOK, gin.H{"username": currentUser.Username},
-	)
+	util.ReturnSuccessfulResponse(c, gin.H{"username": currentUser.Username})
 }
 
 type userUpdateParams struct {
@@ -125,8 +123,7 @@ func UserUpdateHandler(c *gin.Context) {
 		util.AbortWithInternalServerError(c, err)
 		return
 	}
-
-	c.JSON(http.StatusOK, gin.H{})
+	util.ReturnSuccessfulResponse(c, gin.H{})
 }
 
 func UserDeleteHandler(c *gin.Context) {
@@ -139,7 +136,5 @@ func UserDeleteHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(
-		http.StatusOK, gin.H{"username": currentUser.Username},
-	)
+	util.ReturnSuccessfulResponse(c, gin.H{"username": currentUser.Username})
 }
