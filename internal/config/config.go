@@ -10,9 +10,10 @@ import (
 // EnvVars TODO
 type EnvVars struct {
 	// server settings
-	Host             string `env:"GROSHI_HOST"`
-	Port             int    `env:"GROSHI_PORT"`
-	JWTSecretKeyFile string `env:"GROSHI_JWT_SECRET_KEY_FILE"`
+	Host                string `env:"GROSHI_HOST"`
+	Port                int    `env:"GROSHI_PORT"`
+	JWTSecretKeyFile    string `env:"GROSHI_JWT_SECRET_KEY_FILE"`
+	ExchangeRatesAPIKey string `env:"GROSHI_EXCHANGERATES_API_KEY"`
 
 	// MongoDB settings
 	MongoHost string `env:"GROSHI_MONGO_HOST"`

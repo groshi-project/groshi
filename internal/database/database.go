@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -14,8 +13,9 @@ var Context = context.TODO()
 
 var Client *mongo.Client
 
-var Users *mongo.Collection
-var Transactions *mongo.Collection
+var UsersCol *mongo.Collection
+var TransactionsCol *mongo.Collection
+var CurrencyRatesCol *mongo.Collection
 
 func InitDatabase(host string, port int, username string, password string, databaseName string) error {
 	clientOptions := options.Client().ApplyURI(
@@ -32,17 +32,14 @@ func InitDatabase(host string, port int, username string, password string, datab
 	}
 	database := Client.Database(databaseName)
 
-	Users = database.Collection("users")
-	Transactions = database.Collection("transactions")
+	UsersCol = database.Collection("users")
+	TransactionsCol = database.Collection("transactions")
+	CurrencyRatesCol = database.Collection("currency-rates")
 
 	return nil
 }
 
-// GenerateUUID generates new UUID v4.
-func GenerateUUID() string {
-	return uuid.New().String()
-}
-
+// User represents service user.
 type User struct {
 	ID primitive.ObjectID `bson:"_id"`
 	//UUID string             `bson:"uuid"`
@@ -54,6 +51,7 @@ type User struct {
 	UpdatedAt time.Time `bson:"updated_at"`
 }
 
+// Transaction represents financial transaction created by User.
 type Transaction struct {
 	ID   primitive.ObjectID `bson:"_id"`
 	UUID string             `bson:"uuid"`
@@ -66,5 +64,15 @@ type Transaction struct {
 	Date        time.Time `bson:"date"`
 
 	CreatedAt time.Time `bson:"created_at"`
+	UpdatedAt time.Time `bson:"updated_at"`
+}
+
+// CurrencyRates represents information about currency rate.
+type CurrencyRates struct {
+	ID primitive.ObjectID `bson:"_id"`
+
+	BaseCurrency string                 `bson:"base_currency"`
+	Rates        map[string]interface{} `bson:"rates"`
+
 	UpdatedAt time.Time `bson:"updated_at"`
 }
