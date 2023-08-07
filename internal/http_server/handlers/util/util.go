@@ -2,7 +2,7 @@ package util
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/jieggii/groshi/internal/http/error_messages"
+	"github.com/jieggii/groshi/internal/http_server/error_messages"
 	"github.com/jieggii/groshi/internal/loggers"
 	"net/http"
 )
@@ -26,9 +26,19 @@ func AbortWithInternalServerError(c *gin.Context, err error) {
 	AbortWithErrorMessage(c, http.StatusInternalServerError, err.Error())
 }
 
-// BindParams is an alias function for gin.Context.ShouldBind to be used inside handlers.
-func BindParams(c *gin.Context, v interface{}) (ok bool) {
+// BindBody is an alias function for gin.Context.ShouldBind to be used inside handlers.
+func BindBody(c *gin.Context, v interface{}) (ok bool) {
 	if err := c.ShouldBind(v); err != nil {
+		AbortWithErrorMessage(
+			c, http.StatusBadRequest, error_messages.ErrorInvalidRequestParams.Error(),
+		)
+		return false
+	}
+	return true
+}
+
+func BindQuery(c *gin.Context, v interface{}) (ok bool) {
+	if err := c.ShouldBindQuery(v); err != nil {
 		AbortWithErrorMessage(
 			c, http.StatusBadRequest, error_messages.ErrorInvalidRequestParams.Error(),
 		)

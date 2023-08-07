@@ -63,7 +63,7 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 			}
 
 			user := database.User{}
-			err := database.Users.FindOne(
+			err := database.UsersCol.FindOne(
 				database.Context, bson.D{{"username", credentials.Username}},
 			).Decode(&user)
 			if err != nil {
@@ -93,7 +93,7 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 					return false
 				}
 
-				if err := database.Users.FindOne(
+				if err := database.UsersCol.FindOne(
 					database.Context, bson.D{{"_id", userID}},
 				).Decode(&user); err != nil {
 					if !errors.Is(err, mongo.ErrNoDocuments) {

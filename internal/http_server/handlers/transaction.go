@@ -3,9 +3,11 @@ package handlers
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/jieggii/groshi/internal/database"
-	"github.com/jieggii/groshi/internal/http/error_messages"
-	"github.com/jieggii/groshi/internal/http/handlers/util"
+	"github.com/jieggii/groshi/internal/http_server/error_messages"
+	"github.com/jieggii/groshi/internal/http_server/handlers/util"
+	"github.com/jieggii/groshi/internal/loggers"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -24,7 +26,7 @@ type transactionCreateParams struct {
 
 func TransactionCreateHandler(c *gin.Context) {
 	params := transactionCreateParams{}
-	if ok := util.BindParams(c, &params); !ok {
+	if ok := util.BindBody(c, &params); !ok {
 		return
 	}
 
@@ -44,7 +46,7 @@ func TransactionCreateHandler(c *gin.Context) {
 
 	transaction := database.Transaction{
 		ID:   primitive.NewObjectID(),
-		UUID: database.GenerateUUID(),
+		UUID: uuid.New().String(),
 
 		OwnerID: currentUser.ID,
 
@@ -58,7 +60,7 @@ func TransactionCreateHandler(c *gin.Context) {
 		UpdatedAt: time.Now(),
 	}
 
-	if _, err := database.Transactions.InsertOne(database.Context, &transaction); err != nil {
+	if _, err := database.TransactionsCol.InsertOne(database.Context, &transaction); err != nil {
 		util.AbortWithInternalServerError(c, err)
 		return
 	}
@@ -66,13 +68,13 @@ func TransactionCreateHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"uuid": transaction.UUID})
 }
 
-func TransactionReadHandler(c *gin.Context) {
+func TransactionReadOneHandler(c *gin.Context) {
 	transactionUUID := c.Param("uuid")
-	
+
 	currentUser := c.MustGet("current_user").(*database.User)
 
 	transaction := database.Transaction{}
-	if err := database.Transactions.FindOne(
+	if err := database.TransactionsCol.FindOne(
 		database.Context, bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -104,6 +106,72 @@ func TransactionReadHandler(c *gin.Context) {
 	})
 }
 
+type transactionReadManyParams struct {
+	StartDate time.Time  `json:"start_date"`
+	EndDate   *time.Time `json:"end_date"`
+}
+
+func TransactionReadManyHandler(c *gin.Context) {
+	params := transactionReadManyParams{}
+	if ok := util.BindQuery(c, params); !ok {
+		return
+	}
+	if params.EndDate == nil {
+		currentDate := time.Now()
+		params.EndDate = &currentDate
+	}
+
+	currentUser := c.MustGet("current_user").(*database.User)
+
+	var transactions []*database.Transaction
+	cursor, err := database.TransactionsCol.Find(
+		database.Context,
+		bson.D{
+			{
+				"owner_id", currentUser.ID,
+			},
+			{
+				"created_at",
+				bson.D{
+					{"$gte", params.StartDate},
+					{"$lt", *params.EndDate},
+				},
+			}},
+	)
+	defer func() {
+		if err := cursor.Close(database.Context); err != nil {
+			loggers.Error.Printf("could not close cursor: %v", err)
+		}
+	}()
+	if err != nil {
+		util.AbortWithInternalServerError(c, err)
+		return
+	}
+	if err := cursor.All(database.Context, &transactions); err != nil {
+		util.AbortWithInternalServerError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, []gin.H{
+		{},
+	})
+}
+
+//type transactionReadSummaryParams struct {
+//	StartDate time.Time  `form:"start_date"`
+//	EndDate   *time.Time `form:"end_date"`
+//	Currency  string     `form:"currency"`
+//}
+//
+//func TransactionReadSummary(c *gin.Context) {
+//	params := transactionReadSummaryParams{}
+//	if ok := util.BindQuery(c, &params); !ok {
+//		return
+//	}
+//	currentUser := c.MustGet("current_user").(*database.User)
+//
+//}
+
 type transactionUpdateParams struct {
 	NewAmount   *int    `json:"new_amount"`
 	NewCurrency *string `json:"new_currency"`
@@ -114,7 +182,7 @@ type transactionUpdateParams struct {
 
 func TransactionUpdateHandler(c *gin.Context) {
 	params := transactionUpdateParams{}
-	if ok := util.BindParams(c, &params); !ok {
+	if ok := util.BindBody(c, &params); !ok {
 		return
 	}
 
@@ -133,7 +201,7 @@ func TransactionUpdateHandler(c *gin.Context) {
 	currentUser := c.MustGet("current_user").(*database.User)
 
 	transaction := database.Transaction{}
-	if err := database.Transactions.FindOne(
+	if err := database.TransactionsCol.FindOne(
 		database.Context, bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
@@ -178,7 +246,7 @@ func TransactionUpdateHandler(c *gin.Context) {
 
 	updateQueries = append(updateQueries, bson.E{Key: "updated_at", Value: time.Now()})
 
-	if _, err := database.Transactions.UpdateOne(
+	if _, err := database.TransactionsCol.UpdateOne(
 		database.Context,
 		bson.D{{"uuid", transaction.UUID}},
 		bson.D{{"$set", updateQueries}},
@@ -197,7 +265,7 @@ func TransactionDeleteHandler(c *gin.Context) {
 
 	// fetch transaction:
 	transaction := database.Transaction{}
-	if err := database.Transactions.FindOne(
+	if err := database.TransactionsCol.FindOne(
 		database.Context,
 		bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
@@ -220,7 +288,7 @@ func TransactionDeleteHandler(c *gin.Context) {
 	}
 
 	// delete transaction:
-	if _, err := database.Transactions.DeleteOne(
+	if _, err := database.TransactionsCol.DeleteOne(
 		database.Context,
 		bson.D{{"uuid", transaction.UUID}},
 	); err != nil {

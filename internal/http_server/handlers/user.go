@@ -4,9 +4,9 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/jieggii/groshi/internal/database"
-	"github.com/jieggii/groshi/internal/http/error_messages"
-	"github.com/jieggii/groshi/internal/http/handlers/util"
-	"github.com/jieggii/groshi/internal/http/password_hashing"
+	"github.com/jieggii/groshi/internal/http_server/error_messages"
+	"github.com/jieggii/groshi/internal/http_server/handlers/util"
+	"github.com/jieggii/groshi/internal/http_server/password_hashing"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -21,12 +21,12 @@ type userCreateParams struct {
 
 func UserCreateHandler(c *gin.Context) {
 	params := userCreateParams{}
-	if ok := util.BindParams(c, &params); !ok {
+	if ok := util.BindBody(c, &params); !ok {
 		return
 	}
 
 	// check if user already exists:
-	err := database.Users.FindOne(database.Context, bson.D{{"username", params.Username}}).Err()
+	err := database.UsersCol.FindOne(database.Context, bson.D{{"username", params.Username}}).Err()
 	if err == nil {
 		util.AbortWithErrorMessage(c, http.StatusConflict, "user with such username already exists")
 		return
@@ -54,7 +54,7 @@ func UserCreateHandler(c *gin.Context) {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	_, err = database.Users.InsertOne(database.Context, user)
+	_, err = database.UsersCol.InsertOne(database.Context, user)
 	if err != nil {
 		util.AbortWithInternalServerError(c, err)
 		return
@@ -76,7 +76,7 @@ type userUpdateParams struct {
 
 func UserUpdateHandler(c *gin.Context) {
 	params := userUpdateParams{}
-	if ok := util.BindParams(c, &params); !ok {
+	if ok := util.BindBody(c, &params); !ok {
 		return
 	}
 
@@ -95,7 +95,7 @@ func UserUpdateHandler(c *gin.Context) {
 		newUsername := *params.NewUsername
 
 		// check if user already exists:
-		err := database.Users.FindOne(database.Context, bson.D{{"username", newUsername}}).Err()
+		err := database.UsersCol.FindOne(database.Context, bson.D{{"username", newUsername}}).Err()
 		if err == nil {
 			util.AbortWithErrorMessage(c, http.StatusConflict, "user with such username already exists")
 			return
@@ -117,7 +117,7 @@ func UserUpdateHandler(c *gin.Context) {
 		updateQueries = append(updateQueries, bson.E{Key: "password", Value: newPasswordHash})
 	}
 
-	if _, err := database.Users.UpdateOne(
+	if _, err := database.UsersCol.UpdateOne(
 		database.Context,
 		bson.D{{"_id", currentUser.ID}},
 		bson.D{{"$set", updateQueries}},
@@ -131,7 +131,7 @@ func UserUpdateHandler(c *gin.Context) {
 
 func UserDeleteHandler(c *gin.Context) {
 	currentUser := c.MustGet("current_user").(*database.User)
-	if _, err := database.Users.DeleteOne(
+	if _, err := database.UsersCol.DeleteOne(
 		database.Context,
 		bson.D{{"_id", currentUser.ID}},
 	); err != nil {
