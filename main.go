@@ -41,6 +41,7 @@ func createHTTPRouter(jwtSecretKey string) *gin.Engine {
 	transaction.POST("/", handlers.TransactionCreateHandler)        // create new transaction
 	transaction.GET("/:uuid", handlers.TransactionReadOneHandler)   // read one transaction
 	transaction.GET("/", handlers.TransactionReadManyHandler)       // read multiple transactions for given period
+	transaction.GET("/summary", handlers.TransactionReadSummary)    // read summary about transactions for given period
 	transaction.PUT("/:uuid", handlers.TransactionUpdateHandler)    // update transaction
 	transaction.DELETE("/:uuid", handlers.TransactionDeleteHandler) // delete transaction
 
