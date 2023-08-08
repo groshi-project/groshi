@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/jieggii/groshi/internal/currency/currency_rates"
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http_server/error_messages"
 	"github.com/jieggii/groshi/internal/http_server/handlers/util"
@@ -11,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"math"
 	"net/http"
 	"time"
 )
@@ -93,22 +95,13 @@ func TransactionReadOneHandler(c *gin.Context) {
 		return
 	}
 
-	util.ReturnSuccessfulResponse(c, gin.H{
-		"uuid": transaction.UUID,
-
-		"amount":      transaction.Amount,
-		"currency":    transaction.Currency,
-		"description": transaction.Description,
-		"date":        transaction.Date,
-
-		"created_at": transaction.CreatedAt,
-		"updated_at": transaction.UpdatedAt,
-	})
+	util.ReturnSuccessfulResponse(c, transaction.JSON())
 }
 
 type transactionReadManyParams struct {
-	StartDate time.Time  `json:"start_date"`
-	EndDate   *time.Time `json:"end_date"`
+	StartDate time.Time `json:"start_date"`
+
+	EndDate *time.Time `json:"end_date"`
 }
 
 func TransactionReadManyHandler(c *gin.Context) {
@@ -137,15 +130,16 @@ func TransactionReadManyHandler(c *gin.Context) {
 				},
 			}},
 	)
+	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) { // unexpected error happened
+		util.AbortWithInternalServerError(c, err)
+		return
+	}
+
 	defer func() {
 		if err := cursor.Close(database.Context); err != nil {
 			loggers.Error.Printf("could not close cursor: %v", err)
 		}
 	}()
-	if err != nil {
-		util.AbortWithInternalServerError(c, err)
-		return
-	}
 
 	var transactions []gin.H
 	for cursor.Next(database.Context) {
@@ -153,41 +147,99 @@ func TransactionReadManyHandler(c *gin.Context) {
 		if err := cursor.Decode(&transaction); err != nil {
 			util.AbortWithInternalServerError(c, err)
 		}
-		transactions = append(transactions, gin.H{
-			"uuid": transaction.UUID,
-
-			"amount":      transaction.Amount,
-			"currency":    transaction.Currency,
-			"description": transaction.Description,
-			"date":        transaction.Date,
-
-			"created_at": transaction.CreatedAt,
-			"updated_at": transaction.UpdatedAt,
-		})
+		transactions = append(transactions, transaction.JSON())
 	}
 
 	util.ReturnSuccessfulResponse(c, transactions)
 }
 
-//type transactionReadSummaryParams struct {
-//	StartDate time.Time  `form:"start_date"`
-//	EndDate   *time.Time `form:"end_date"`
-//	Currency  string     `form:"currency"`
-//}
-//
-//func TransactionReadSummary(c *gin.Context) {
-//	params := transactionReadSummaryParams{}
-//	if ok := util.BindQuery(c, &params); !ok {
-//		return
-//	}
-//	currentUser := c.MustGet("current_user").(*database.User)
-//
-//}
+type transactionReadSummaryParams struct {
+	StartDate time.Time `form:"start_date"`
+	Currency  string    `form:"currency"`
+
+	EndDate *time.Time `form:"end_date"`
+}
+
+func TransactionReadSummary(c *gin.Context) {
+	params := transactionReadSummaryParams{}
+	if ok := util.BindQuery(c, &params); !ok {
+		return
+	}
+	currentUser := c.MustGet("current_user").(*database.User)
+
+	if params.EndDate == nil { // set current date as end date if end date was not provided
+		currentDate := time.Now()
+		params.EndDate = &currentDate
+	}
+
+	cursor, err := database.TransactionsCol.Find(
+		database.Context,
+		bson.D{
+			{
+				"owner_id", currentUser.ID,
+			},
+			{
+				"created_at",
+				bson.D{
+					{"$gte", params.StartDate},
+					{"$lte", *params.EndDate},
+				},
+			},
+		},
+	)
+	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) { // if unexpected error happened
+		util.AbortWithInternalServerError(c, err)
+		return
+	}
+
+	defer func() {
+		if err := cursor.Close(database.Context); err != nil {
+			loggers.Error.Printf("could not close cursor: %v", err)
+		}
+	}()
+
+	var transactions []*database.Transaction
+	for cursor.Next(database.Context) {
+		transaction := database.Transaction{}
+		if err := cursor.Decode(&transaction); err != nil {
+			util.AbortWithInternalServerError(c, err)
+			return
+		}
+		transactions = append(transactions, &transaction)
+	}
+
+	// sum of all transaction amounts (in the same `params.Currency` units)
+	//
+	// important notice: only final sum must be rounded,
+	// not intermediate amounts.
+	sum := 0.0
+
+	for _, transaction := range transactions {
+		transactionAmount := float64(transaction.Amount)
+
+		if transaction.Currency == params.Currency {
+			sum += transactionAmount
+		} else {
+			rate, err := currency_rates.FetchRate(transaction.Currency, params.Currency)
+			if err != nil {
+				util.AbortWithInternalServerError(c, err)
+				return
+			}
+			sum += rate * transactionAmount
+		}
+	}
+	intSum := int(math.Round(sum))
+
+	util.ReturnSuccessfulResponse(c, gin.H{
+		"currency":           params.Currency,
+		"total":              intSum,
+		"transactions_count": len(transactions),
+	})
+}
 
 type transactionUpdateParams struct {
-	NewAmount   *int    `json:"new_amount"`
-	NewCurrency *string `json:"new_currency"`
-
+	NewAmount      *int       `json:"new_amount"`
+	NewCurrency    *string    `json:"new_currency"`
 	NewDescription *string    `json:"new_description"`
 	NewDate        *time.Time `json:"new_date"`
 }
