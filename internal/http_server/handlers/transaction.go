@@ -100,9 +100,9 @@ func TransactionReadOneHandler(c *gin.Context) {
 }
 
 type transactionReadManyParams struct {
-	StartDate time.Time `json:"start_date"`
+	StartDate time.Time `form:"start_date" binding:"required"`
 
-	EndDate *time.Time `json:"end_date"`
+	EndDate *time.Time `form:"end_date"`
 }
 
 // TransactionReadManyHandler returns all transactions for given period.
@@ -156,8 +156,8 @@ func TransactionReadManyHandler(c *gin.Context) {
 }
 
 type transactionReadSummaryParams struct {
-	StartDate time.Time `form:"start_date"`
-	Currency  string    `form:"currency"`
+	StartDate time.Time `form:"start_date" binding:"required"`
+	Currency  string    `form:"currency" binding:"required"`
 
 	EndDate *time.Time `form:"end_date"`
 }
