@@ -17,7 +17,7 @@ import (
 	"time"
 )
 
-// https://stackoverflow.com/questions/66432222/gin-validation-for-optional-pointer-to-be-uuid
+// May be useful: https://stackoverflow.com/questions/66432222/gin-validation-for-optional-pointer-to-be-uuid
 type transactionCreateParams struct {
 	Amount   int    `json:"amount" binding:"required"`
 	Currency string `json:"currency" binding:"required"`
@@ -70,6 +70,7 @@ func TransactionCreateHandler(c *gin.Context) {
 	util.ReturnSuccessfulResponse(c, gin.H{"uuid": transaction.UUID})
 }
 
+// TransactionReadOneHandler returns information about single transaction.
 func TransactionReadOneHandler(c *gin.Context) {
 	transactionUUID := c.Param("uuid")
 
@@ -104,6 +105,7 @@ type transactionReadManyParams struct {
 	EndDate *time.Time `json:"end_date"`
 }
 
+// TransactionReadManyHandler returns all transactions for given period.
 func TransactionReadManyHandler(c *gin.Context) {
 	params := transactionReadManyParams{}
 	if ok := util.BindQuery(c, params); !ok {
@@ -160,6 +162,8 @@ type transactionReadSummaryParams struct {
 	EndDate *time.Time `form:"end_date"`
 }
 
+// TransactionReadSummary returns summary (count and sum of transaction)
+// for given period in desired currency units.
 func TransactionReadSummary(c *gin.Context) {
 	params := transactionReadSummaryParams{}
 	if ok := util.BindQuery(c, &params); !ok {
@@ -244,6 +248,7 @@ type transactionUpdateParams struct {
 	NewDate        *time.Time `json:"new_date"`
 }
 
+// TransactionUpdateHandler updates transaction.
 func TransactionUpdateHandler(c *gin.Context) {
 	params := transactionUpdateParams{}
 	if ok := util.BindBody(c, &params); !ok {
@@ -321,6 +326,7 @@ func TransactionUpdateHandler(c *gin.Context) {
 	util.ReturnSuccessfulResponse(c, gin.H{"uuid": transaction.UUID})
 }
 
+// TransactionDeleteHandler deletes transaction.
 func TransactionDeleteHandler(c *gin.Context) {
 	transactionUUID := c.Param("uuid")
 

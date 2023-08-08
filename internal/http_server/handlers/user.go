@@ -19,6 +19,7 @@ type userCreateParams struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// UserCreateHandler creates new user.
 func UserCreateHandler(c *gin.Context) {
 	params := userCreateParams{}
 	if ok := util.BindBody(c, &params); !ok {
@@ -62,6 +63,7 @@ func UserCreateHandler(c *gin.Context) {
 	util.ReturnSuccessfulResponse(c, gin.H{"username": user.Username})
 }
 
+// UserReadHandler returns information about current user.
 func UserReadHandler(c *gin.Context) {
 	currentUser := c.MustGet("current_user").(*database.User)
 	util.ReturnSuccessfulResponse(c, gin.H{"username": currentUser.Username})
@@ -72,6 +74,7 @@ type userUpdateParams struct {
 	NewPassword *string `json:"new_password" binding:"omitempty"`
 }
 
+// UserUpdateHandler updates current user credentials.
 func UserUpdateHandler(c *gin.Context) {
 	params := userUpdateParams{}
 	if ok := util.BindBody(c, &params); !ok {
@@ -126,6 +129,7 @@ func UserUpdateHandler(c *gin.Context) {
 	util.ReturnSuccessfulResponse(c, gin.H{})
 }
 
+// UserDeleteHandler deletes current user.
 func UserDeleteHandler(c *gin.Context) {
 	currentUser := c.MustGet("current_user").(*database.User)
 	if _, err := database.UsersCol.DeleteOne(
