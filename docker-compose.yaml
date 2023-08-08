@@ -10,6 +10,7 @@ services:
       GIN_MODE: debug
 
       GROSHI_JWT_SECRET_KEY_FILE: /run/secrets/app/jwt_secret_key
+      GROSHI_EXCHANGERATES_API_KEY: /run/secrets/app/exchangerates_api_key
 
       GROSHI_MONGO_HOST: groshi-mongo
       GROSHI_MONGO_PORT: 27017
@@ -26,6 +27,7 @@ services:
     secrets:
       - app
       - mongo
+
   groshi-mongo:
     container_name: groshi-mongo
     image: mongo
@@ -41,8 +43,8 @@ services:
     secrets:
       - mongo
 
-    #    ports:
-    #      - "27017:27017"
+    ports:
+      - "27017:27017"
 
 secrets:
   app:

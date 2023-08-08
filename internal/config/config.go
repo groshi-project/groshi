@@ -9,7 +9,7 @@ import (
 
 // EnvVars TODO
 type EnvVars struct {
-	// server settings
+	// application settings
 	Host                string `env:"GROSHI_HOST"`
 	Port                int    `env:"GROSHI_PORT"`
 	JWTSecretKeyFile    string `env:"GROSHI_JWT_SECRET_KEY_FILE"`

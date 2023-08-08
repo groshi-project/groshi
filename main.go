@@ -70,7 +70,7 @@ func main() {
 	}()
 
 	// initialize exchangeratesapi.io client:
-	exchangeratesio.Client.Init(
+	exchangerates.Client.Init(
 		config.ReadDockerSecret(env.ExchangeRatesAPIKey),
 	)
 
