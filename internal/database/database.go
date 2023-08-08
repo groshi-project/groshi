@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -51,6 +52,12 @@ type User struct {
 	UpdatedAt time.Time `bson:"updated_at"`
 }
 
+func (u *User) JSON() gin.H {
+	return gin.H{
+		"username": u.Username,
+	}
+}
+
 // Transaction represents financial transaction created by User.
 type Transaction struct {
 	ID   primitive.ObjectID `bson:"_id"`
@@ -67,7 +74,21 @@ type Transaction struct {
 	UpdatedAt time.Time `bson:"updated_at"`
 }
 
-// CurrencyRates represents information about currency rate.
+func (t *Transaction) JSON() gin.H {
+	return gin.H{
+		"uuid": t.UUID,
+
+		"amount":      t.Amount,
+		"currency":    t.Currency,
+		"description": t.Description,
+		"date":        t.Date,
+
+		"created_at": t.CreatedAt,
+		"updated_at": t.UpdatedAt,
+	}
+}
+
+// CurrencyRates represents information about currency rates.
 type CurrencyRates struct {
 	ID primitive.ObjectID `bson:"_id"`
 
