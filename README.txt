@@ -1,3 +1,9 @@
+                 _   _
+ ___ ___ ___ ___| |_|_|
+| . |  _| . |_ -|   | |
+|_  |_| |___|___|_|_|_|
+|___|
+
 groshi - goddamn simple tool to keep track of your finances
 
 Using groshi you can store, read and delete basic financial transactions.
