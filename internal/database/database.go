@@ -88,12 +88,12 @@ func (t *Transaction) JSON() gin.H {
 	}
 }
 
-// CurrencyRates represents information about currency rates.
+// CurrencyRates TODO
 type CurrencyRates struct {
 	ID primitive.ObjectID `bson:"_id"`
 
-	BaseCurrency string                 `bson:"base_currency"`
-	Rates        map[string]interface{} `bson:"rates"`
+	BaseCurrency string                 `bson:"currency"`
+	Rates        map[string]interface{} `bson:"rate"`
 
 	UpdatedAt time.Time `bson:"updated_at"`
 }
