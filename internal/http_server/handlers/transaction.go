@@ -143,7 +143,7 @@ func TransactionReadManyHandler(c *gin.Context) {
 		}
 	}()
 
-	var transactions []gin.H
+	transactions := []gin.H{}
 	for cursor.Next(database.Context) {
 		transaction := database.Transaction{}
 		if err := cursor.Decode(&transaction); err != nil {
