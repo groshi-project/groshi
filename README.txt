@@ -17,5 +17,6 @@ HTTP API methods:
 * POST /transaction/            create a new transaction
 * GET /transaction/:uuid        retrieve a transaction with the specified UUID
 * GET /transaction/             retrieve all transactions for a given period
+* GET /transaction/summary      retrieve sum of all transactions for a given period in desired currency
 * PUT /transaction/:uuid        update a transaction with the specified UUID
 * DELETE /transaction/:uuid     delete a transaction with the specified UUID
