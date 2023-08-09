@@ -31,7 +31,7 @@ services:
   groshi-mongo:
     container_name: groshi-mongo
     image: mongo
-    restart: always
+    restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/mongo/username
       MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo/password
