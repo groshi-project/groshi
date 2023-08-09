@@ -100,20 +100,20 @@ func TransactionReadOneHandler(c *gin.Context) {
 }
 
 type transactionReadManyParams struct {
-	StartDate time.Time `form:"start_date" binding:"required"`
+	Since time.Time `form:"start_date" binding:"required"`
 
-	EndDate *time.Time `form:"end_date"`
+	Before *time.Time `form:"end_date"`
 }
 
 // TransactionReadManyHandler returns all transactions for given period.
 func TransactionReadManyHandler(c *gin.Context) {
 	params := transactionReadManyParams{}
-	if ok := util.BindQuery(c, params); !ok {
+	if ok := util.BindQuery(c, &params); !ok {
 		return
 	}
-	if params.EndDate == nil {
+	if params.Before == nil {
 		currentDate := time.Now()
-		params.EndDate = &currentDate
+		params.Before = &currentDate
 	}
 
 	currentUser := c.MustGet("current_user").(*database.User)
@@ -127,8 +127,8 @@ func TransactionReadManyHandler(c *gin.Context) {
 			{
 				"created_at",
 				bson.D{
-					{"$gte", params.StartDate},
-					{"$lt", *params.EndDate},
+					{"$gte", params.Since},
+					{"$lt", *params.Before},
 				},
 			}},
 	)
@@ -156,10 +156,10 @@ func TransactionReadManyHandler(c *gin.Context) {
 }
 
 type transactionReadSummaryParams struct {
-	StartDate time.Time `form:"start_date" binding:"required"`
-	Currency  string    `form:"currency" binding:"required"`
+	Since    time.Time `form:"start_date" binding:"required"`
+	Currency string    `form:"currency" binding:"required"`
 
-	EndDate *time.Time `form:"end_date"`
+	Before *time.Time `form:"end_date"`
 }
 
 // TransactionReadSummary returns summary (count and sum of transaction)
@@ -171,9 +171,9 @@ func TransactionReadSummary(c *gin.Context) {
 	}
 	currentUser := c.MustGet("current_user").(*database.User)
 
-	if params.EndDate == nil { // set current date as end date if end date was not provided
+	if params.Before == nil { // set current date as end date if end date was not provided
 		currentDate := time.Now()
-		params.EndDate = &currentDate
+		params.Before = &currentDate
 	}
 
 	cursor, err := database.TransactionsCol.Find(
@@ -185,8 +185,8 @@ func TransactionReadSummary(c *gin.Context) {
 			{
 				"created_at",
 				bson.D{
-					{"$gte", params.StartDate},
-					{"$lte", *params.EndDate},
+					{"$gte", params.Since},
+					{"$lte", *params.Before},
 				},
 			},
 		},
@@ -219,18 +219,21 @@ func TransactionReadSummary(c *gin.Context) {
 	sum := 0.0
 
 	for _, transaction := range transactions {
-		transactionAmount := float64(transaction.Amount)
+		var transactionAmountInSameUnits float64         // transaction amount in the `params.Currency` units
+		transactionAmount := float64(transaction.Amount) // transaction amount in the original currency units
 
 		if transaction.Currency == params.Currency {
-			sum += transactionAmount
+			transactionAmountInSameUnits = transactionAmount
 		} else {
-			rate, err := currency_rates.FetchRate(transaction.Currency, params.Currency)
+			transactionAmountInSameUnits, err = currency_rates.Convert(
+				transaction.Currency, params.Currency, transactionAmount,
+			)
 			if err != nil {
 				util.AbortWithInternalServerError(c, err)
 				return
 			}
-			sum += rate * transactionAmount
 		}
+		sum += transactionAmountInSameUnits
 	}
 	intSum := int(math.Round(sum))
 
