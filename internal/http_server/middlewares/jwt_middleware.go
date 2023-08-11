@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jieggii/groshi/internal/database"
-	"github.com/jieggii/groshi/internal/http_server/error_messages"
 	"github.com/jieggii/groshi/internal/http_server/password_hashing"
 	"github.com/jieggii/groshi/internal/loggers"
 	"go.mongodb.org/mongo-driver/bson"
@@ -59,7 +58,7 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 		Authenticator: func(c *gin.Context) (interface{}, error) {
 			credentials := jwtCredentials{}
 			if err := c.ShouldBind(&credentials); err != nil {
-				return nil, error_messages.ErrorInvalidRequestParams
+				return nil, errors.New("invalid params")
 			}
 
 			user := database.User{}

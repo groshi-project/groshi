@@ -6,14 +6,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/jieggii/groshi/internal/currency/currency_rates"
 	"github.com/jieggii/groshi/internal/database"
-	"github.com/jieggii/groshi/internal/http_server/error_messages"
+	"github.com/jieggii/groshi/internal/http_server/api_errors"
 	"github.com/jieggii/groshi/internal/http_server/handlers/util"
 	"github.com/jieggii/groshi/internal/loggers"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"math"
-	"net/http"
 	"time"
 )
 
@@ -81,18 +80,14 @@ func TransactionReadOneHandler(c *gin.Context) {
 		database.Context, bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithErrorMessage(c, http.StatusNotFound, error_messages.TransactionNotFound.Error())
+			util.AbortWithNotFoundError(c, api_errors.ErrorDescriptionTransactionNotFound)
 		} else {
 			util.AbortWithInternalServerError(c, err)
 		}
 		return
 	}
 	if transaction.OwnerID != currentUser.ID {
-		util.AbortWithErrorMessage(
-			c,
-			http.StatusForbidden,
-			error_messages.TransactionDoesNotBelongToYou.Error(),
-		)
+		util.AbortWithForbiddenError(c, api_errors.ErrorDescriptionTransactionDoesNotBelongToYou)
 		return
 	}
 
@@ -216,7 +211,8 @@ func TransactionReadSummary(c *gin.Context) {
 	//
 	// important notice: only final sum must be rounded,
 	// not intermediate amounts.
-	sum := 0.0
+	income := 0.0
+	outcome := 0.0
 
 	for _, transaction := range transactions {
 		var transactionAmountInSameUnits float64         // transaction amount in the `params.Currency` units
@@ -233,13 +229,22 @@ func TransactionReadSummary(c *gin.Context) {
 				return
 			}
 		}
-		sum += transactionAmountInSameUnits
+		if transactionAmountInSameUnits >= 0 {
+			income += transactionAmountInSameUnits
+		} else {
+			outcome += -transactionAmountInSameUnits
+		}
 	}
-	intSum := int(math.Round(sum))
+
+	intTotal := int(math.Round(income - outcome))
+	intIncome := int(math.Round(income))
+	intOutcome := int(math.Round(outcome))
 
 	util.ReturnSuccessfulResponse(c, gin.H{
 		"currency":           params.Currency,
-		"total":              intSum,
+		"income":             intIncome,
+		"outcome":            intOutcome,
+		"total":              intTotal,
 		"transactions_count": len(transactions),
 	})
 }
@@ -264,8 +269,9 @@ func TransactionUpdateHandler(c *gin.Context) {
 		params.NewCurrency == nil &&
 		params.NewDescription == nil &&
 		params.NewDate == nil {
-		util.AbortWithErrorMessage(
-			c, http.StatusBadRequest, error_messages.ErrorInvalidRequestParams.Error(),
+		util.AbortWithBadRequest(
+			c,
+			"at least one of the following params is required: `new_amount`, `new_currency`, `new_description` or `new_date`",
 		)
 		return
 	}
@@ -277,9 +283,7 @@ func TransactionUpdateHandler(c *gin.Context) {
 		database.Context, bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithErrorMessage(
-				c, http.StatusNotFound, error_messages.TransactionNotFound.Error(),
-			)
+			util.AbortWithNotFoundError(c, api_errors.ErrorDescriptionTransactionNotFound)
 		} else {
 			util.AbortWithInternalServerError(c, err)
 		}
@@ -287,11 +291,7 @@ func TransactionUpdateHandler(c *gin.Context) {
 	}
 
 	if transaction.OwnerID != currentUser.ID {
-		util.AbortWithErrorMessage(
-			c,
-			http.StatusForbidden,
-			error_messages.TransactionDoesNotBelongToYou.Error(),
-		)
+		util.AbortWithForbiddenError(c, api_errors.ErrorDescriptionTransactionDoesNotBelongToYou)
 		return
 	}
 
@@ -342,9 +342,7 @@ func TransactionDeleteHandler(c *gin.Context) {
 		bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithErrorMessage(
-				c, http.StatusNotFound, error_messages.TransactionNotFound.Error(),
-			)
+			util.AbortWithNotFoundError(c, api_errors.ErrorDescriptionTransactionNotFound)
 		} else {
 			util.AbortWithInternalServerError(c, err)
 		}
@@ -353,9 +351,7 @@ func TransactionDeleteHandler(c *gin.Context) {
 
 	// check if the current user owns transaction:
 	if transaction.OwnerID != currentUser.ID {
-		util.AbortWithErrorMessage(
-			c, http.StatusNotFound, error_messages.TransactionDoesNotBelongToYou.Error(),
-		)
+		util.AbortWithForbiddenError(c, api_errors.ErrorDescriptionTransactionDoesNotBelongToYou)
 		return
 	}
 

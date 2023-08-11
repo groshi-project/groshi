@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/jieggii/groshi/internal/database"
-	"github.com/jieggii/groshi/internal/http_server/error_messages"
 	"github.com/jieggii/groshi/internal/http_server/handlers/util"
 	"github.com/jieggii/groshi/internal/http_server/password_hashing"
 	"go.mongodb.org/mongo-driver/bson"
@@ -29,7 +28,7 @@ func UserCreateHandler(c *gin.Context) {
 	// check if user already exists:
 	err := database.UsersCol.FindOne(database.Context, bson.D{{"username", params.Username}}).Err()
 	if err == nil {
-		util.AbortWithErrorMessage(c, http.StatusConflict, "user with such username already exists")
+		util.AbortWithConflictError(c, "user with such username already exists")
 		return
 	}
 	if !errors.Is(err, mongo.ErrNoDocuments) {
@@ -85,7 +84,9 @@ func UserUpdateHandler(c *gin.Context) {
 
 	// check if no update params were provided:
 	if params.NewUsername == nil && params.NewPassword == nil {
-		util.AbortWithErrorMessage(c, http.StatusBadRequest, error_messages.ErrorInvalidRequestParams.Error())
+		util.AbortWithBadRequest(
+			c, "at least one of the following params is required: `new_username` or `new_password`",
+		)
 		return
 	}
 
