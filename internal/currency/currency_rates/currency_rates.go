@@ -75,53 +75,62 @@ func replaceCachedRates(v *database.CurrencyRates) error {
 	return err
 }
 
-// fetchRate fetches up-to-date currency rates either from the database or third-part API,
+// fetchRates fetches up-to-date currency rates either from the database or third-part API,
 // according to the cacheTTL. Also updates cache if needed.
-func fetchRate(currency string) (float64, error) {
-	rates := database.CurrencyRates{BaseCurrency: baseCurrency}
-	err := readRatesFromCache(&rates)
+func fetchRates() (map[string]interface{}, error) {
+	ratesDocument := database.CurrencyRates{BaseCurrency: baseCurrency}
+	err := readRatesFromCache(&ratesDocument)
 
 	if err != nil {
 		if errors.Is(err, errRatesAreNotCached) { // if cache is not stored
 			// then fetch it using API and store
 
-			if err := updateRatesFromAPI(&rates); err != nil {
-				return 0, err
+			if err := updateRatesFromAPI(&ratesDocument); err != nil {
+				return nil, err
 			}
 
 			// generate object id for the new document and set UpdatedAt field
-			rates.ID = primitive.NewObjectID()
-			rates.UpdatedAt = time.Now()
+			ratesDocument.ID = primitive.NewObjectID()
+			ratesDocument.UpdatedAt = time.Now()
 
-			if err := cacheRates(&rates); err != nil {
-				return 0, err
+			if err := cacheRates(&ratesDocument); err != nil {
+				return nil, err
 			}
 		} else { // if unexpected error happened when fetching rates from cache
-			return 0, err
+			return nil, err
 		}
 
 	} else { // if successfully fetched rates from cache
 		// then check if cache is expired
 
-		if time.Now().Sub(rates.UpdatedAt).Hours() > cacheTTL.Hours() { // if cache is expired
+		if time.Now().Sub(ratesDocument.UpdatedAt).Hours() > cacheTTL.Hours() { // if cache is expired
 			// then fetch new rates using API and update cache
 
 			loggers.Info.Println("currency rates cache is expired, updating it")
-			if err := updateRatesFromAPI(&rates); err != nil {
-				return 0, err
+			if err := updateRatesFromAPI(&ratesDocument); err != nil {
+				return nil, err
 			}
 
-			rates.UpdatedAt = time.Now()
+			ratesDocument.UpdatedAt = time.Now()
 
-			if err := replaceCachedRates(&rates); err != nil {
-				return 0, err
+			if err := replaceCachedRates(&ratesDocument); err != nil {
+				return nil, err
 			}
-
 		}
 	}
 
-	// finally we have relevant rates in `rates`! It's time to return the desired rate:
-	rate, found := rates.Rates[currency]
+	// finally we have relevant rates! It's time to return them:
+	return ratesDocument.Rates, nil
+}
+
+// fetchRate returns rate for desired currency.
+func fetchRate(currency string) (float64, error) {
+	rates, err := fetchRates()
+	if err != nil {
+		return 0, err
+	}
+
+	rate, found := rates[currency]
 	if !found {
 		return 0, errors.New("unknown currency")
 	}
@@ -129,6 +138,21 @@ func fetchRate(currency string) (float64, error) {
 	return rate.(float64), nil
 }
 
+// FetchCurrencies returns slice of available ISO-4217 currency codes.
+func FetchCurrencies() ([]string, error) {
+	currencies := make([]string, 0)
+
+	rates, err := fetchRates()
+	if err != nil {
+		return currencies, err
+	}
+	for currency, _ := range rates {
+		currencies = append(currencies, currency)
+	}
+	return currencies, nil
+}
+
+// Convert converts amount from one currency units to another.
 func Convert(fromCurrency string, toCurrency string, amount float64) (float64, error) {
 	if amount == 0 { // small optimization: if amount is 0, it will be 0 in any currency :)
 		return 0, nil
