@@ -7,18 +7,15 @@ import (
 )
 
 func abortWithErrorMessage(c *gin.Context, statusCode int, errorDetail string) {
-	if statusCode == http.StatusInternalServerError {
-		loggers.Error.Printf("internal server error: %v", errorDetail)
-		errorDetail = "internal server error" // todo
-	}
 	c.AbortWithStatusJSON(statusCode, gin.H{
 		"error_detail": errorDetail,
 	})
 }
 
 func AbortWithStatusInternalServerError(c *gin.Context, err error) {
+	loggers.Error.Printf("aborted with internal server error: %v", err)
 	abortWithErrorMessage(
-		c, http.StatusInternalServerError, err.Error(),
+		c, http.StatusInternalServerError, "internal server error",
 	)
 }
 
