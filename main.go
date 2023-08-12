@@ -4,16 +4,37 @@ import (
 	"fmt"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/validator/v10"
 	"github.com/jieggii/groshi/internal/config"
 	"github.com/jieggii/groshi/internal/currency/exchangerates"
 	"github.com/jieggii/groshi/internal/database"
 	"github.com/jieggii/groshi/internal/http_server/handlers"
 	"github.com/jieggii/groshi/internal/http_server/middlewares"
+	"github.com/jieggii/groshi/internal/http_server/validators"
 	"github.com/jieggii/groshi/internal/loggers"
 )
 
 func createHTTPRouter(jwtSecretKey string) *gin.Engine {
 	router := gin.Default()
+
+	// register validators:
+	validatorEngine, ok := binding.Validator.Engine().(validator.Validate)
+	if !ok {
+		loggers.Error.Fatalf("could not initialize validator engine")
+	}
+
+	validatorsMap := map[string]validator.Func{ // this map contains all validators
+		"currencies": validators.GetCurrenciesValidator(),
+		"username":   validators.UsernameValidator,
+		"password":   validators.PasswordValidator,
+	}
+	for validatorTag, validatorFunc := range validatorsMap {
+		err := validatorEngine.RegisterValidation(validatorTag, validatorFunc)
+		if err != nil {
+			loggers.Error.Fatalf("could not register validator %v: %v", validatorTag, err)
+		}
+	}
 
 	// allow all origins
 	router.Use(cors.Default())
@@ -22,20 +43,20 @@ func createHTTPRouter(jwtSecretKey string) *gin.Engine {
 	jwtHandlers := middlewares.NewJWTMiddleware(jwtSecretKey)
 	jwtMiddleware := jwtHandlers.MiddlewareFunc()
 
-	// authorization & authentication routes:
+	// register authorization & authentication routes:
 	auth := router.Group("/auth")
 	auth.POST("/login", jwtHandlers.LoginHandler)
 	auth.POST("/logout", jwtHandlers.LogoutHandler)
 	auth.POST("/refresh", jwtHandlers.RefreshHandler)
 
-	// user routes:
+	// register user routes:
 	user := router.Group("/user")
 	user.POST("/", handlers.UserCreateHandler)                  // create new user
 	user.GET("/", jwtMiddleware, handlers.UserReadHandler)      // read current user
 	user.PUT("/", jwtMiddleware, handlers.UserUpdateHandler)    // update current user
 	user.DELETE("/", jwtMiddleware, handlers.UserDeleteHandler) // delete current user
 
-	// transaction routes:
+	// register transaction routes:
 	transaction := router.Group("/transaction")
 	transaction.Use(jwtMiddleware)
 	transaction.POST("/", handlers.TransactionCreateHandler)        // create new transaction
