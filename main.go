@@ -19,7 +19,7 @@ func createHTTPRouter(jwtSecretKey string) *gin.Engine {
 	router := gin.Default()
 
 	// register validators:
-	validatorEngine, ok := binding.Validator.Engine().(validator.Validate)
+	validatorEngine, ok := binding.Validator.Engine().(*validator.Validate)
 	if !ok {
 		loggers.Error.Fatalf("could not initialize validator engine")
 	}
