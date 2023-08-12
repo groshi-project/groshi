@@ -6,8 +6,7 @@ import (
 	"net/http"
 )
 
-// AbortWithErrorMessage TODO
-func AbortWithErrorMessage(c *gin.Context, statusCode int, errorDetail string) {
+func abortWithErrorMessage(c *gin.Context, statusCode int, errorDetail string) {
 	if statusCode == http.StatusInternalServerError {
 		loggers.Error.Printf("internal server error: %v", errorDetail)
 		errorDetail = "internal server error" // todo
@@ -17,33 +16,32 @@ func AbortWithErrorMessage(c *gin.Context, statusCode int, errorDetail string) {
 	})
 }
 
-// AbortWithInternalServerError aborts with internal server error.
-func AbortWithInternalServerError(c *gin.Context, err error) {
-	AbortWithErrorMessage(
+func AbortWithStatusInternalServerError(c *gin.Context, err error) {
+	abortWithErrorMessage(
 		c, http.StatusInternalServerError, err.Error(),
 	)
 }
 
-func AbortWithNotFoundError(c *gin.Context, errorDetail string) {
-	AbortWithErrorMessage(
+func AbortWithStatusNotFound(c *gin.Context, errorDetail string) {
+	abortWithErrorMessage(
 		c, http.StatusNotFound, errorDetail,
 	)
 }
 
-func AbortWithForbiddenError(c *gin.Context, errorDetail string) {
-	AbortWithErrorMessage(
+func AbortWithStatusForbidden(c *gin.Context, errorDetail string) {
+	abortWithErrorMessage(
 		c, http.StatusForbidden, errorDetail,
 	)
 }
 
-func AbortWithBadRequest(c *gin.Context, errorDetail string) {
-	AbortWithErrorMessage(
-		c, http.StatusBadRequest, errorDetail, // todo
+func AbortWithStatusBadRequest(c *gin.Context, errorDetail string) {
+	abortWithErrorMessage(
+		c, http.StatusBadRequest, errorDetail,
 	)
 }
 
-func AbortWithConflictError(c *gin.Context, errorDetail string) {
-	AbortWithErrorMessage(
+func AbortWithStatusConflict(c *gin.Context, errorDetail string) {
+	abortWithErrorMessage(
 		c, http.StatusConflict, errorDetail,
 	)
 }

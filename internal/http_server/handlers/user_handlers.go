@@ -9,7 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"net/http"
 	"time"
 )
 
@@ -28,18 +27,18 @@ func UserCreateHandler(c *gin.Context) {
 	// check if user already exists:
 	err := database.UsersCol.FindOne(database.Context, bson.D{{"username", params.Username}}).Err()
 	if err == nil {
-		util.AbortWithConflictError(c, "user with such username already exists")
+		util.AbortWithStatusConflict(c, "user with such username already exists")
 		return
 	}
 	if !errors.Is(err, mongo.ErrNoDocuments) {
-		util.AbortWithInternalServerError(c, err)
+		util.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
 	// hash user password:
 	passwordHash, err := password_hashing.HashPassword(params.Password)
 	if err != nil {
-		util.AbortWithInternalServerError(c, err)
+		util.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
@@ -56,7 +55,7 @@ func UserCreateHandler(c *gin.Context) {
 	}
 	_, err = database.UsersCol.InsertOne(database.Context, user)
 	if err != nil {
-		util.AbortWithInternalServerError(c, err)
+		util.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 	util.ReturnSuccessfulResponse(c, gin.H{"username": user.Username})
@@ -84,7 +83,7 @@ func UserUpdateHandler(c *gin.Context) {
 
 	// check if no update params were provided:
 	if params.NewUsername == nil && params.NewPassword == nil {
-		util.AbortWithBadRequest(
+		util.AbortWithStatusBadRequest(
 			c, "at least one of the following params is required: `new_username` or `new_password`",
 		)
 		return
@@ -99,11 +98,11 @@ func UserUpdateHandler(c *gin.Context) {
 		// check if user already exists:
 		err := database.UsersCol.FindOne(database.Context, bson.D{{"username", newUsername}}).Err()
 		if err == nil {
-			util.AbortWithErrorMessage(c, http.StatusConflict, "user with such username already exists")
+			util.AbortWithStatusConflict(c, "user with such username already exists")
 			return
 		}
 		if !errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithInternalServerError(c, err)
+			util.AbortWithStatusInternalServerError(c, err)
 			return
 		}
 		updateQueries = append(updateQueries, bson.E{Key: "username", Value: newUsername})
@@ -113,7 +112,7 @@ func UserUpdateHandler(c *gin.Context) {
 		newPassword := *params.NewPassword
 		newPasswordHash, err := password_hashing.HashPassword(newPassword)
 		if err != nil {
-			util.AbortWithInternalServerError(c, err)
+			util.AbortWithStatusInternalServerError(c, err)
 			return
 		}
 		updateQueries = append(updateQueries, bson.E{Key: "password", Value: newPasswordHash})
@@ -124,7 +123,7 @@ func UserUpdateHandler(c *gin.Context) {
 		bson.D{{"_id", currentUser.ID}},
 		bson.D{{"$set", updateQueries}},
 	); err != nil {
-		util.AbortWithInternalServerError(c, err)
+		util.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 	util.ReturnSuccessfulResponse(c, gin.H{})
@@ -137,7 +136,7 @@ func UserDeleteHandler(c *gin.Context) {
 		database.Context,
 		bson.D{{"_id", currentUser.ID}},
 	); err != nil {
-		util.AbortWithInternalServerError(c, err)
+		util.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 

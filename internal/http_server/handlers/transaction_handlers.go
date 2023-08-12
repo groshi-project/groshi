@@ -61,7 +61,7 @@ func TransactionCreateHandler(c *gin.Context) {
 	}
 
 	if _, err := database.TransactionsCol.InsertOne(database.Context, &transaction); err != nil {
-		util.AbortWithInternalServerError(c, err)
+		util.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
@@ -79,14 +79,14 @@ func TransactionReadOneHandler(c *gin.Context) {
 		database.Context, bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithNotFoundError(c, APIErrorDetailTransactionNotFound)
+			util.AbortWithStatusNotFound(c, APIErrorDetailTransactionNotFound)
 		} else {
-			util.AbortWithInternalServerError(c, err)
+			util.AbortWithStatusInternalServerError(c, err)
 		}
 		return
 	}
 	if transaction.OwnerID != currentUser.ID {
-		util.AbortWithForbiddenError(c, APIErrorDetailTransactionDoesNotBelongToYou)
+		util.AbortWithStatusForbidden(c, APIErrorDetailTransactionDoesNotBelongToYou)
 		return
 	}
 
@@ -127,7 +127,7 @@ func TransactionReadManyHandler(c *gin.Context) {
 			}},
 	)
 	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) { // unexpected error happened
-		util.AbortWithInternalServerError(c, err)
+		util.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
@@ -141,7 +141,7 @@ func TransactionReadManyHandler(c *gin.Context) {
 	for cursor.Next(database.Context) {
 		transaction := database.Transaction{}
 		if err := cursor.Decode(&transaction); err != nil {
-			util.AbortWithInternalServerError(c, err)
+			util.AbortWithStatusInternalServerError(c, err)
 		}
 		transactions = append(transactions, transaction.JSON())
 	}
@@ -186,7 +186,7 @@ func TransactionReadSummary(c *gin.Context) {
 		},
 	)
 	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) { // if unexpected error happened
-		util.AbortWithInternalServerError(c, err)
+		util.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
@@ -200,7 +200,7 @@ func TransactionReadSummary(c *gin.Context) {
 	for cursor.Next(database.Context) {
 		transaction := database.Transaction{}
 		if err := cursor.Decode(&transaction); err != nil {
-			util.AbortWithInternalServerError(c, err)
+			util.AbortWithStatusInternalServerError(c, err)
 			return
 		}
 		transactions = append(transactions, &transaction)
@@ -224,7 +224,7 @@ func TransactionReadSummary(c *gin.Context) {
 				transaction.Currency, params.Currency, transactionAmount,
 			)
 			if err != nil {
-				util.AbortWithInternalServerError(c, err)
+				util.AbortWithStatusInternalServerError(c, err)
 				return
 			}
 		}
@@ -268,7 +268,7 @@ func TransactionUpdateHandler(c *gin.Context) {
 		params.NewCurrency == nil &&
 		params.NewDescription == nil &&
 		params.NewDate == nil {
-		util.AbortWithBadRequest(
+		util.AbortWithStatusBadRequest(
 			c,
 			"at least one of the following params is required: `new_amount`, `new_currency`, `new_description` or `new_date`",
 		)
@@ -282,15 +282,15 @@ func TransactionUpdateHandler(c *gin.Context) {
 		database.Context, bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithNotFoundError(c, APIErrorDetailTransactionNotFound)
+			util.AbortWithStatusNotFound(c, APIErrorDetailTransactionNotFound)
 		} else {
-			util.AbortWithInternalServerError(c, err)
+			util.AbortWithStatusInternalServerError(c, err)
 		}
 		return
 	}
 
 	if transaction.OwnerID != currentUser.ID {
-		util.AbortWithForbiddenError(c, APIErrorDetailTransactionDoesNotBelongToYou)
+		util.AbortWithStatusForbidden(c, APIErrorDetailTransactionDoesNotBelongToYou)
 		return
 	}
 
@@ -321,7 +321,7 @@ func TransactionUpdateHandler(c *gin.Context) {
 		bson.D{{"uuid", transaction.UUID}},
 		bson.D{{"$set", updateQueries}},
 	); err != nil {
-		util.AbortWithInternalServerError(c, err)
+		util.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
@@ -341,16 +341,16 @@ func TransactionDeleteHandler(c *gin.Context) {
 		bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithNotFoundError(c, APIErrorDetailTransactionNotFound)
+			util.AbortWithStatusNotFound(c, APIErrorDetailTransactionNotFound)
 		} else {
-			util.AbortWithInternalServerError(c, err)
+			util.AbortWithStatusInternalServerError(c, err)
 		}
 		return
 	}
 
 	// check if the current user owns transaction:
 	if transaction.OwnerID != currentUser.ID {
-		util.AbortWithForbiddenError(c, APIErrorDetailTransactionDoesNotBelongToYou)
+		util.AbortWithStatusForbidden(c, APIErrorDetailTransactionDoesNotBelongToYou)
 		return
 	}
 
@@ -359,7 +359,7 @@ func TransactionDeleteHandler(c *gin.Context) {
 		database.Context,
 		bson.D{{"uuid", transaction.UUID}},
 	); err != nil {
-		util.AbortWithInternalServerError(c, err)
+		util.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
