@@ -46,14 +46,12 @@ func readRatesFromCache(v *database.CurrencyRates) error {
 
 // readRatesFromAPI fetches latest currency rates and updates fields of v with new data
 // (also updates UpdatedAt field).
-func readRatesFromAPI(v *database.CurrencyRates) error {
+func updateRatesFromAPI(v *database.CurrencyRates) error {
 	rates, err := exchangerates.Client.GetRates(baseCurrency)
 	if err != nil {
 		return err
 	}
-
 	v.Rates = rates
-	v.UpdatedAt = time.Now()
 
 	return nil
 }
@@ -68,10 +66,10 @@ func cacheRates(v *database.CurrencyRates) error {
 }
 
 // updateCachedRates updates cached currency rates in the database.
-func updateCachedRates(v *database.CurrencyRates) error {
+func replaceCachedRates(v *database.CurrencyRates) error {
 	_, err := database.CurrencyRatesCol.ReplaceOne(
 		database.Context,
-		bson.D{{"id", v.ID}},
+		bson.D{{"_id", v.ID}},
 		v,
 	)
 	return err
@@ -87,10 +85,14 @@ func fetchRate(currency string) (float64, error) {
 		if errors.Is(err, errRatesAreNotCached) { // if cache is not stored
 			// then fetch it using API and store
 
-			rates.ID = primitive.NewObjectID()
-			if err := readRatesFromAPI(&rates); err != nil {
+			if err := updateRatesFromAPI(&rates); err != nil {
 				return 0, err
 			}
+
+			// generate object id for the new document and set UpdatedAt field
+			rates.ID = primitive.NewObjectID()
+			rates.UpdatedAt = time.Now()
+
 			if err := cacheRates(&rates); err != nil {
 				return 0, err
 			}
@@ -104,14 +106,17 @@ func fetchRate(currency string) (float64, error) {
 		if time.Now().Sub(rates.UpdatedAt).Hours() > cacheTTL.Hours() { // if cache is expired
 			// then fetch new rates using API and update cache
 
-			loggers.Info.Println("! cache is expired")
-			rates.ID = primitive.NewObjectID()
-			if err := readRatesFromAPI(&rates); err != nil {
+			loggers.Info.Println("currency rates cache is expired, updating it")
+			if err := updateRatesFromAPI(&rates); err != nil {
 				return 0, err
 			}
-			if err := updateCachedRates(&rates); err != nil {
+
+			rates.UpdatedAt = time.Now()
+
+			if err := replaceCachedRates(&rates); err != nil {
 				return 0, err
 			}
+
 		}
 	}
 
