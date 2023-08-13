@@ -1,9 +1,9 @@
 # groshi
-groshi - goddamn simple tool to keep track of your finances.
+**groshi** - goddamn simple tool to keep track of your finances.
 
 ## Features
-Using **groshi** you can do all basic operations with transactions: create, read and update them, 
-besides you can also get useful summary of all transactions for given period.
+Using groshi you can perform all basic operations with transactions in different currencies: 
+create, read and update them, besides you can also get useful summary of all transactions for given period.
 Multiple number of users is also supported (each user owns its own transactions).
 
 ## HTTP API methods overview
