@@ -93,7 +93,7 @@ type CurrencyRates struct {
 	ID primitive.ObjectID `bson:"_id"`
 
 	BaseCurrency string                 `bson:"currency"`
-	Rates        map[string]interface{} `bson:"rate"`
+	Rates        map[string]interface{} `bson:"rates"`
 
 	UpdatedAt time.Time `bson:"updated_at"`
 }
