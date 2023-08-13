@@ -1,8 +1,10 @@
 # groshi
 groshi - goddamn simple tool to keep track of your finances.
 
-Using groshi you can store, read and delete financial transactions.
-
+## Features
+Using **groshi** you can do all basic operations with transactions: create, read and update them, 
+besides you can also get useful summary of all transactions for given period.
+Multiple number of users is also supported (each user owns its own transactions).
 
 ## HTTP API methods overview
 These tables will give you some basic overview of the groshi API.
