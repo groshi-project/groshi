@@ -6,40 +6,45 @@ import (
 	"net/http"
 )
 
-func abortWithErrorMessage(c *gin.Context, statusCode int, errorDetail string) {
+// emptyErrorDetails is used when aborting with error
+// without error details not to create multiple empty slices.
+var emptyErrorDetails = make([]string, 0)
+
+func abortWithErrorMessage(c *gin.Context, statusCode int, errorDescription string, errorDetails []string) {
 	c.AbortWithStatusJSON(statusCode, gin.H{
-		"error_detail": errorDetail,
+		"error_description": errorDescription,
+		"error_details":     errorDetails,
 	})
 }
 
 func AbortWithStatusInternalServerError(c *gin.Context, err error) {
 	loggers.Error.Printf("aborted with internal server error: %v", err)
 	abortWithErrorMessage(
-		c, http.StatusInternalServerError, "internal server error",
+		c, http.StatusInternalServerError, "internal server error", emptyErrorDetails,
 	)
 }
 
-func AbortWithStatusNotFound(c *gin.Context, errorDetail string) {
+func AbortWithStatusNotFound(c *gin.Context, errorDescription string) {
 	abortWithErrorMessage(
-		c, http.StatusNotFound, errorDetail,
+		c, http.StatusNotFound, errorDescription, emptyErrorDetails,
 	)
 }
 
-func AbortWithStatusForbidden(c *gin.Context, errorDetail string) {
+func AbortWithStatusForbidden(c *gin.Context, errorDescription string) {
 	abortWithErrorMessage(
-		c, http.StatusForbidden, errorDetail,
+		c, http.StatusForbidden, errorDescription, emptyErrorDetails,
 	)
 }
 
-func AbortWithStatusBadRequest(c *gin.Context, errorDetail string) {
+func AbortWithStatusBadRequest(c *gin.Context, errorDescription string, errorDetails []string) {
 	abortWithErrorMessage(
-		c, http.StatusBadRequest, errorDetail,
+		c, http.StatusBadRequest, errorDescription, errorDetails,
 	)
 }
 
-func AbortWithStatusConflict(c *gin.Context, errorDetail string) {
+func AbortWithStatusConflict(c *gin.Context, errorDescription string) {
 	abortWithErrorMessage(
-		c, http.StatusConflict, errorDetail,
+		c, http.StatusConflict, errorDescription, emptyErrorDetails,
 	)
 }
 

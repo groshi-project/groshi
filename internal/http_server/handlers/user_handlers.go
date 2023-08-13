@@ -13,8 +13,8 @@ import (
 )
 
 type userCreateParams struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username string `json:"username" binding:"required,username"`
+	Password string `json:"password" binding:"required,password"`
 }
 
 // UserCreateHandler creates new user.
@@ -45,7 +45,6 @@ func UserCreateHandler(c *gin.Context) {
 	// create and insert user:
 	user := &database.User{
 		ID: primitive.NewObjectID(),
-		//UUID: database.GenerateUUID(),
 
 		Username: params.Username,
 		Password: passwordHash,
@@ -68,8 +67,8 @@ func UserReadHandler(c *gin.Context) {
 }
 
 type userUpdateParams struct {
-	NewUsername *string `json:"new_username" binding:"omitempty"`
-	NewPassword *string `json:"new_password" binding:"omitempty"`
+	NewUsername *string `json:"new_username" binding:"required_without=NewPassword,omitempty"`
+	NewPassword *string `json:"new_password" binding:"required_without=NewUsername,omitempty"`
 }
 
 // UserUpdateHandler updates current user credentials.
@@ -81,17 +80,7 @@ func UserUpdateHandler(c *gin.Context) {
 
 	currentUser := c.MustGet("current_user").(*database.User)
 
-	// check if no update params were provided:
-	if params.NewUsername == nil && params.NewPassword == nil {
-		util.AbortWithStatusBadRequest(
-			c, "at least one of the following params is required: `new_username` or `new_password`",
-		)
-		return
-	}
-
-	// todo: update user using only one query to the database
 	var updateQueries bson.D
-
 	if params.NewUsername != nil {
 		newUsername := *params.NewUsername
 

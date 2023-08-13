@@ -15,12 +15,11 @@ import (
 	"time"
 )
 
-// May be useful: https://stackoverflow.com/questions/66432222/gin-validation-for-optional-pointer-to-be-uuid
 type transactionCreateParams struct {
 	Amount   int    `json:"amount" binding:"required"`
-	Currency string `json:"currency" binding:"required"`
+	Currency string `json:"currency" binding:"required,currency"`
 
-	Description *string    `json:"description"`
+	Description *string    `json:"description" binding:"omitempty,description"`
 	Date        *time.Time `json:"date"`
 }
 
@@ -151,7 +150,7 @@ func TransactionReadManyHandler(c *gin.Context) {
 
 type transactionReadSummaryParams struct {
 	Since    time.Time `form:"since" binding:"required"`
-	Currency string    `form:"currency" binding:"required"`
+	Currency string    `form:"currency" binding:"required,currency"`
 
 	Before *time.Time `form:"before"`
 }
@@ -249,10 +248,10 @@ func TransactionReadSummary(c *gin.Context) {
 }
 
 type transactionUpdateParams struct {
-	NewAmount      *int       `json:"new_amount"`
-	NewCurrency    *string    `json:"new_currency"`
-	NewDescription *string    `json:"new_description"`
-	NewDate        *time.Time `json:"new_date"`
+	NewAmount      *int       `json:"new_amount" binding:"omitempty,required_without:NewCurrency,NewDescription,NewDate"`
+	NewCurrency    *string    `json:"new_currency" binding:"omitempty,currency,required_without:NewAmount,NewDate"`
+	NewDescription *string    `json:"new_description" binding:"omitempty,description,required_without:NewAmount,NewCurrency,NewDate"`
+	NewDate        *time.Time `json:"new_date" binding:"omitempty,required_without:NewAmount,NewCurrency,NewDescription"`
 }
 
 // TransactionUpdateHandler updates transaction.
@@ -263,17 +262,6 @@ func TransactionUpdateHandler(c *gin.Context) {
 	}
 
 	transactionUUID := c.Param("uuid")
-
-	if params.NewAmount == nil &&
-		params.NewCurrency == nil &&
-		params.NewDescription == nil &&
-		params.NewDate == nil {
-		util.AbortWithStatusBadRequest(
-			c,
-			"at least one of the following params is required: `new_amount`, `new_currency`, `new_description` or `new_date`",
-		)
-		return
-	}
 
 	currentUser := c.MustGet("current_user").(*database.User)
 
@@ -295,18 +283,15 @@ func TransactionUpdateHandler(c *gin.Context) {
 	}
 
 	var updateQueries bson.D
-
 	if params.NewAmount != nil {
 		updateQueries = append(updateQueries, bson.E{Key: "amount", Value: *params.NewAmount})
 	}
 
 	if params.NewCurrency != nil {
-		// todo: validate currency code
 		updateQueries = append(updateQueries, bson.E{Key: "currency", Value: *params.NewCurrency})
 	}
 
 	if params.NewDescription != nil {
-		// todo: validate description
 		updateQueries = append(updateQueries, bson.E{Key: "description", Value: *params.NewDescription})
 	}
 
