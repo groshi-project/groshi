@@ -7,11 +7,8 @@ import (
 	"regexp"
 )
 
-var UsernameValidator = getRegexValidator(regexp.MustCompile(".{2,40}"))
-var PasswordValidator = getRegexValidator(regexp.MustCompile(".{2,250}"))
-
-// GetCurrenciesValidator returns validator function for currencies.
-func GetCurrenciesValidator() validator.Func {
+// GetCurrencyValidator returns validator function for currencies.
+func GetCurrencyValidator() validator.Func {
 	currencies, err := currency_rates.FetchCurrencies()
 	if err != nil {
 		loggers.Error.Fatalf("could not fetch available currencies: %v", err)
@@ -32,8 +29,8 @@ func GetCurrenciesValidator() validator.Func {
 	}
 }
 
-// getRegexValidator returns validator function which checks if string matches regex pattern.
-func getRegexValidator(pattern *regexp.Regexp) validator.Func {
+// GetRegexValidator returns validator function which checks if string matches regex pattern.
+func GetRegexValidator(pattern *regexp.Regexp) validator.Func {
 	return func(fl validator.FieldLevel) bool {
 		value, ok := fl.Field().Interface().(string)
 		if !ok {

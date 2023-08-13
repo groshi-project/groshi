@@ -13,6 +13,7 @@ import (
 	"github.com/jieggii/groshi/internal/http_server/middlewares"
 	"github.com/jieggii/groshi/internal/http_server/validators"
 	"github.com/jieggii/groshi/internal/loggers"
+	"regexp"
 )
 
 func createHTTPRouter(jwtSecretKey string) *gin.Engine {
@@ -24,11 +25,15 @@ func createHTTPRouter(jwtSecretKey string) *gin.Engine {
 		loggers.Error.Fatalf("could not initialize validator engine")
 	}
 
-	validatorsMap := map[string]validator.Func{ // this map contains all validators
-		"currencies": validators.GetCurrenciesValidator(),
-		"username":   validators.UsernameValidator,
-		"password":   validators.PasswordValidator,
+	// validatorsMap contains all validators and their tags
+	validatorsMap := map[string]validator.Func{
+		"username": validators.GetRegexValidator(regexp.MustCompile(".{2,}")),
+		"password": validators.GetRegexValidator(regexp.MustCompile(".{8,}")),
+
+		"description": validators.GetRegexValidator(regexp.MustCompile(".*")),
+		"currency":    validators.GetCurrencyValidator(),
 	}
+
 	for validatorTag, validatorFunc := range validatorsMap {
 		err := validatorEngine.RegisterValidation(validatorTag, validatorFunc)
 		if err != nil {
@@ -91,11 +96,10 @@ func main() {
 		}
 	}()
 
-	// initialize exchangeratesapi.io client:
+	// initialize exchangerates API client:
 	exchangerates.Client.Init(
 		config.ReadDockerSecret(env.ExchangeRatesAPIKey),
 	)
-
 	router := createHTTPRouter(config.ReadDockerSecret(env.JWTSecretKeyFile))
 	socket := fmt.Sprintf("%v:%v", env.Host, env.Port)
 
