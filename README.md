@@ -1,15 +1,8 @@
-```
-                 _   _
-___ ___ ___ ___| |_|_|
-| . |  _| . |_ -|   | |
-|_  |_| |___|___|_|_|_|
-|___|
-```
-
-goddamn simple tool to keep track of your finances
+# groshi
+groshi - goddamn simple tool to keep track of your finances.
 
 Using groshi you can store, read and delete financial transactions.
-Work is in progress, stand by!
+
 
 ## HTTP API methods overview
 These tables will give you some basic overview of the groshi API.
