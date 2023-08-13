@@ -12,19 +12,31 @@ Using groshi you can store, read and delete financial transactions.
 Work is in progress, stand by!
 
 ## HTTP API methods overview
-This table will give you some basic overview on the groshi API.
+These tables will give you some basic overview of the groshi API.
+
+API methods related to **authorization**:
 
 |        **HTTP method**         |        **Path**        | **Description**                                   |
 |:------------------------------:|:----------------------:|---------------------------------------------------|
 |             `POST`             |     `/auth/login `     | Log in and obtain an authentication token         |
 |             `POST`             |     `/auth/logout`     | Log out and invalidate the authentication token   |
 |             `POST`             |    `/auth/refresh`     | Refresh the authentication token                  |
-|                                |                        |                                                   |
+
+
+API methods related to **users**:
+
+|        **HTTP method**         |        **Path**        | **Description**                                   |
+|:------------------------------:|:----------------------:|---------------------------------------------------|
 |             `POST`             |        `/user/`        | Create new user                                   |
 |             `GET`              |        `/user/`        | Get information about current user                |
 |             `PUT`              |        `/user/`        | Update current user                               |
 |            `DELETE`            |        `/user/`        | Delete current user                               |
-|                                |                        |                                                   |
+
+
+API methods related to **transactions**:
+
+|        **HTTP method**         |        **Path**        | **Description**                                   |
+|:------------------------------:|:----------------------:|---------------------------------------------------|
 |             `POST`             |    `/transaction/`     | Create new transaction                            |
 |             `GET`              |  `/transaction/:uuid`  | Retrieve a transaction with specified UUID        |
 |             `GET`              |    `/transaction/`     | Retrieve all transactions for given period        |
