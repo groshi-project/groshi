@@ -1,8 +1,10 @@
+```
                  _   _
 ___ ___ ___ ___| |_|_|
 | . |  _| . |_ -|   | |
 |_  |_| |___|___|_|_|_|
 |___|
+```
 
 goddamn simple tool to keep track of your finances
 
