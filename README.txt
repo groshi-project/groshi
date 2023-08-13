@@ -6,7 +6,7 @@
 
 groshi - goddamn simple tool to keep track of your finances
 
-Using groshi you can store, read and delete basic financial transactions.
+Using groshi you can store, read and delete financial transactions.
 Work is in progress, stand by!
 
 
