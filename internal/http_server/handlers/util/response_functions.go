@@ -48,6 +48,10 @@ func AbortWithStatusConflict(c *gin.Context, errorDescription string) {
 	)
 }
 
+func AbortWithStatusUnauthorized(c *gin.Context, errorDescription string) {
+	abortWithErrorMessage(c, http.StatusUnauthorized, errorDescription, emptyErrorDetails)
+}
+
 func ReturnSuccessfulResponse(c *gin.Context, response interface{}) {
 	c.JSON(http.StatusOK, response)
 }
