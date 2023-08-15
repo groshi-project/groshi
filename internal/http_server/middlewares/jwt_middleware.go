@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jieggii/groshi/internal/database"
+	"github.com/jieggii/groshi/internal/http_server/handlers/util"
 	"github.com/jieggii/groshi/internal/http_server/password_hashing"
 	"github.com/jieggii/groshi/internal/loggers"
 	"go.mongodb.org/mongo-driver/bson"
@@ -39,6 +40,7 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 		Timeout:     jwtTimeout,
 		MaxRefresh:  jwtMaxRefresh,
 		IdentityKey: jwtIdentityKey,
+
 		PayloadFunc: func(data interface{}) jwt.MapClaims {
 			if v, ok := data.(*jwtClaims); ok {
 				return jwt.MapClaims{
@@ -108,9 +110,7 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 		},
 
 		Unauthorized: func(c *gin.Context, code int, message string) {
-			c.JSON(code, gin.H{
-				"error_message": message,
-			})
+			util.AbortWithStatusUnauthorized(c, message)
 		},
 		TokenLookup:   "header:Authorization",
 		TokenHeadName: "Bearer",
