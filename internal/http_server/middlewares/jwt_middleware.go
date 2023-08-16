@@ -112,6 +112,20 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 		Unauthorized: func(c *gin.Context, code int, message string) {
 			util.AbortWithStatusUnauthorized(c, message)
 		},
+
+		// TODO: implement LoginResponse, LogoutResponse and RefreshResponse
+		//LoginResponse: func(c *gin.Context, code int, message string, time time.Time) {
+		//
+		//},
+		//
+		//LogoutResponse: func(c *gin.Context, code int) {
+		//
+		//},
+		//
+		//RefreshResponse: func(c *gin.Context, code int, message string, time time.Time) {
+		//
+		//},
+
 		TokenLookup:   "header:Authorization",
 		TokenHeadName: "Bearer",
 		TimeFunc:      time.Now,
