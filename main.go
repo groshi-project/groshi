@@ -41,8 +41,15 @@ func createHTTPRouter(jwtSecretKey string) *gin.Engine {
 		}
 	}
 
-	// allow all origins
-	router.Use(cors.Default())
+	// setup cross-origin resource sharing
+	corsConfig := cors.Config{
+		AllowAllOrigins: true,
+		AllowHeaders: []string{
+			"Authorization",
+			"Content-Type",
+		},
+	}
+	router.Use(cors.New(corsConfig))
 
 	// define and initialize middlewares:
 	jwtHandlers := middlewares.NewJWTMiddleware(jwtSecretKey)
