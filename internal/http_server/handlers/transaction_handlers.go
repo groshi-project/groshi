@@ -93,9 +93,9 @@ func TransactionReadOneHandler(c *gin.Context) {
 }
 
 type transactionReadManyParams struct {
-	Since time.Time `form:"since" binding:"required"`
+	StartTime time.Time `form:"start_time" binding:"required"`
 
-	Before *time.Time `form:"before"`
+	EndTime *time.Time `form:"end_time"`
 }
 
 // TransactionReadManyHandler returns all transactions for given period.
@@ -104,9 +104,9 @@ func TransactionReadManyHandler(c *gin.Context) {
 	if ok := util.BindQuery(c, &params); !ok {
 		return
 	}
-	if params.Before == nil {
+	if params.EndTime == nil {
 		currentDate := time.Now()
-		params.Before = &currentDate
+		params.EndTime = &currentDate
 	}
 
 	currentUser := c.MustGet("current_user").(*database.User)
@@ -120,8 +120,8 @@ func TransactionReadManyHandler(c *gin.Context) {
 			{
 				"created_at",
 				bson.D{
-					{"$gte", params.Since},
-					{"$lt", *params.Before},
+					{"$gte", params.StartTime},
+					{"$lt", *params.EndTime},
 				},
 			}},
 	)
@@ -149,10 +149,10 @@ func TransactionReadManyHandler(c *gin.Context) {
 }
 
 type transactionReadSummaryParams struct {
-	Since    time.Time `form:"since" binding:"required"`
-	Currency string    `form:"currency" binding:"required,currency"`
+	StartTime time.Time `form:"start_time" binding:"required"`
+	Currency  string    `form:"currency" binding:"required,currency"`
 
-	Before *time.Time `form:"before"`
+	EndTime *time.Time `form:"end_time"`
 }
 
 // TransactionReadSummary returns summary (count and sum of transaction)
@@ -164,9 +164,9 @@ func TransactionReadSummary(c *gin.Context) {
 	}
 	currentUser := c.MustGet("current_user").(*database.User)
 
-	if params.Before == nil { // set current date as end date if end date was not provided
+	if params.EndTime == nil { // set current date as end date if end date was not provided
 		currentDate := time.Now()
-		params.Before = &currentDate
+		params.EndTime = &currentDate
 	}
 
 	cursor, err := database.TransactionsCol.Find(
@@ -178,8 +178,8 @@ func TransactionReadSummary(c *gin.Context) {
 			{
 				"created_at",
 				bson.D{
-					{"$gte", params.Since},
-					{"$lte", *params.Before},
+					{"$gte", params.StartTime},
+					{"$lte", *params.EndTime},
 				},
 			},
 		},
