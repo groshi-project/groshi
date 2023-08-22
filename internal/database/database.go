@@ -81,10 +81,10 @@ func (t *Transaction) JSON() gin.H {
 		"amount":      t.Amount,
 		"currency":    t.Currency,
 		"description": t.Description,
-		"date":        t.Date,
+		"date":        t.Date.Format(time.RFC3339),
 
-		"created_at": t.CreatedAt,
-		"updated_at": t.UpdatedAt,
+		"created_at": t.CreatedAt.Format(time.RFC3339),
+		"updated_at": t.UpdatedAt.Format(time.RFC3339),
 	}
 }
 
