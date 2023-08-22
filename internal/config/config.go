@@ -19,9 +19,9 @@ type EnvVars struct {
 	MongoHost string `env:"GROSHI_MONGO_HOST"`
 	MongoPort int    `env:"GROSHI_MONGO_PORT"`
 
-	MongoUsernameFiles string `env:"GROSHI_MONGO_USERNAME_FILE"`
-	MongoPasswordFile  string `env:"GROSHI_MONGO_PASSWORD_FILE"`
-	MongoDatabaseFile  string `env:"GROSHI_MONGO_DATABASE_FILE"`
+	MongoUsernameFile string `env:"GROSHI_MONGO_USERNAME_FILE"`
+	MongoPasswordFile string `env:"GROSHI_MONGO_PASSWORD_FILE"`
+	MongoDatabaseFile string `env:"GROSHI_MONGO_DATABASE_FILE"`
 }
 
 // handleConfigPopulationError TODO

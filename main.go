@@ -91,7 +91,7 @@ func main() {
 	if err := database.InitDatabase(
 		env.MongoHost,
 		env.MongoPort,
-		config.ReadDockerSecret(env.MongoUsernameFiles),
+		config.ReadDockerSecret(env.MongoUsernameFile),
 		config.ReadDockerSecret(env.MongoPasswordFile),
 		config.ReadDockerSecret(env.MongoDatabaseFile),
 	); err != nil {
