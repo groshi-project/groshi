@@ -20,20 +20,20 @@ These tables will give you some basic overview of the groshi API.
 
 - API methods related to **users**:
     
-    |        **HTTP method**         |        **Path**        | **Description**                                   |
-    |:------------------------------:|:----------------------:|---------------------------------------------------|
-    |             `POST`             |        `/user/`        | Create new user                                   |
-    |             `GET`              |        `/user/`        | Get information about current user                |
-    |             `PUT`              |        `/user/`        | Update current user                               |
-    |            `DELETE`            |        `/user/`        | Delete current user                               |
+    |        **HTTP method**         |      **Path**      | **Description**                                   |
+    |:------------------------------:|:------------------:|---------------------------------------------------|
+    |             `POST`             |      `/user`       | Create new user                                   |
+    |             `GET`              |      `/user`       | Get information about current user                |
+    |             `PUT`              |      `/user`       | Update current user                               |
+    |            `DELETE`            |      `/user`       | Delete current user                               |
 
 - API methods related to **transactions**:
     
     |        **HTTP method**         |        **Path**        | **Description**                                   |
     |:------------------------------:|:----------------------:|---------------------------------------------------|
-    |             `POST`             |    `/transaction/`     | Create new transaction                            |
+    |             `POST`             |     `/transaction`     | Create new transaction                            |
+    |             `GET`              |     `/transaction`     | Retrieve all transactions for given period        |
     |             `GET`              |  `/transaction/:uuid`  | Retrieve a transaction with specified UUID        |
-    |             `GET`              |    `/transaction/`     | Retrieve all transactions for given period        |
-    |             `GET`              | `/transaction/summary` | Retrieve summary of transactions for given period |
     |             `PUT`              |  `/transaction/:uuid`  | Update transaction with specified UUID            |
     |            `DELETE`            |  `/transaction/:uuid`  | Delete transaction with specified UUID            |
+    |             `GET`              | `/transaction/summary` | Retrieve summary of transactions for given period |
