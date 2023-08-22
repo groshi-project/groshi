@@ -3,7 +3,8 @@
 
 ## Features
 Using groshi you can perform all basic operations with transactions in different currencies: 
-create, read and update them, besides you can also get useful summary of all transactions for given period.
+create, read and update them, besides you can also get useful summary of all transactions 
+in desired currency units for given period.
 Multiple number of users is also supported (each user owns its own transactions).
 
 ## HTTP API methods overview
