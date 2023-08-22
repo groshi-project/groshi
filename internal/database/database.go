@@ -43,7 +43,6 @@ func InitDatabase(host string, port int, username string, password string, datab
 // User represents service user.
 type User struct {
 	ID primitive.ObjectID `bson:"_id"`
-	//UUID string             `bson:"uuid"`
 
 	Username string `bson:"username"`
 	Password string `bson:"password"`
