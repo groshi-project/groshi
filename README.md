@@ -29,11 +29,11 @@ These tables will give you some basic overview of the groshi API.
 
 - API methods related to **transactions**:
     
-    |        **HTTP method**         |        **Path**        | **Description**                                   |
-    |:------------------------------:|:----------------------:|---------------------------------------------------|
-    |             `POST`             |     `/transaction`     | Create new transaction                            |
-    |             `GET`              |     `/transaction`     | Retrieve all transactions for given period        |
-    |             `GET`              |  `/transaction/:uuid`  | Retrieve a transaction with specified UUID        |
-    |             `PUT`              |  `/transaction/:uuid`  | Update transaction with specified UUID            |
-    |            `DELETE`            |  `/transaction/:uuid`  | Delete transaction with specified UUID            |
-    |             `GET`              | `/transaction/summary` | Retrieve summary of transactions for given period |
+    |        **HTTP method**         |        **Path**         | **Description**                                   |
+    |:------------------------------:|:-----------------------:|---------------------------------------------------|
+    |             `POST`             |     `/transactions`     | Create new transaction                            |
+    |             `GET`              |     `/transactions`     | Retrieve all transactions for given period        |
+    |             `GET`              |  `/transactions/:uuid`  | Retrieve a transaction with specified UUID        |
+    |             `PUT`              |  `/transactions/:uuid`  | Update transaction with specified UUID            |
+    |            `DELETE`            |  `/transactions/:uuid`  | Delete transaction with specified UUID            |
+    |             `GET`              | `/transactions/summary` | Retrieve summary of transactions for given period |
