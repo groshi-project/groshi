@@ -116,7 +116,7 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 		LoginResponse: func(c *gin.Context, code int, token string, expiresAt time.Time) {
 			util.ReturnSuccessfulResponse(c, gin.H{
 				"token":      token,
-				"expires_at": expiresAt,
+				"expires_at": expiresAt.Format(time.RFC3339),
 			})
 		},
 
@@ -127,7 +127,7 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 		RefreshResponse: func(c *gin.Context, code int, token string, expiresAt time.Time) {
 			util.ReturnSuccessfulResponse(c, gin.H{
 				"token":      token,
-				"expires_at": expiresAt,
+				"expires_at": expiresAt.Format(time.RFC3339),
 			})
 		},
 
