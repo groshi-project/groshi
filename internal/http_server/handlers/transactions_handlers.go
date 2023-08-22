@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-type transactionCreateParams struct {
+type transactionsCreateParams struct {
 	Amount   int    `json:"amount" binding:"required"`
 	Currency string `json:"currency" binding:"required,currency"`
 
@@ -23,8 +23,8 @@ type transactionCreateParams struct {
 	Date        *time.Time `json:"date"`
 }
 
-func TransactionCreateHandler(c *gin.Context) {
-	params := transactionCreateParams{}
+func TransactionsCreateHandler(c *gin.Context) {
+	params := transactionsCreateParams{}
 	if ok := util.BindBody(c, &params); !ok {
 		return
 	}
@@ -67,8 +67,8 @@ func TransactionCreateHandler(c *gin.Context) {
 	util.ReturnSuccessfulResponse(c, gin.H{"uuid": transaction.UUID})
 }
 
-// TransactionReadOneHandler returns information about single transaction.
-func TransactionReadOneHandler(c *gin.Context) {
+// TransactionsReadOneHandler returns information about single transaction.
+func TransactionsReadOneHandler(c *gin.Context) {
 	transactionUUID := c.Param("uuid")
 
 	currentUser := c.MustGet("current_user").(*database.User)
@@ -92,15 +92,15 @@ func TransactionReadOneHandler(c *gin.Context) {
 	util.ReturnSuccessfulResponse(c, transaction.JSON())
 }
 
-type transactionReadManyParams struct {
+type transactionsReadManyParams struct {
 	StartTime time.Time `form:"start_time" binding:"required"`
 
 	EndTime *time.Time `form:"end_time"`
 }
 
-// TransactionReadManyHandler returns all transactions for given period.
-func TransactionReadManyHandler(c *gin.Context) {
-	params := transactionReadManyParams{}
+// TransactionsReadManyHandler returns all transactions for given period.
+func TransactionsReadManyHandler(c *gin.Context) {
+	params := transactionsReadManyParams{}
 	if ok := util.BindQuery(c, &params); !ok {
 		return
 	}
@@ -148,17 +148,17 @@ func TransactionReadManyHandler(c *gin.Context) {
 	util.ReturnSuccessfulResponse(c, transactions)
 }
 
-type transactionReadSummaryParams struct {
+type transactionsReadSummaryParams struct {
 	StartTime time.Time `form:"start_time" binding:"required"`
 	Currency  string    `form:"currency" binding:"required,currency"`
 
 	EndTime *time.Time `form:"end_time"`
 }
 
-// TransactionReadSummary returns summary (count and sum of transaction)
+// TransactionsReadSummary returns summary (count and sum of transaction)
 // for given period in desired currency units.
-func TransactionReadSummary(c *gin.Context) {
-	params := transactionReadSummaryParams{}
+func TransactionsReadSummary(c *gin.Context) {
+	params := transactionsReadSummaryParams{}
 	if ok := util.BindQuery(c, &params); !ok {
 		return
 	}
@@ -247,16 +247,16 @@ func TransactionReadSummary(c *gin.Context) {
 	})
 }
 
-type transactionUpdateParams struct {
+type transactionsUpdateParams struct {
 	NewAmount      *int       `json:"new_amount" binding:"omitempty,required_without:NewCurrency,NewDescription,NewDate"`
 	NewCurrency    *string    `json:"new_currency" binding:"omitempty,currency,required_without:NewAmount,NewDate"`
 	NewDescription *string    `json:"new_description" binding:"omitempty,description,required_without:NewAmount,NewCurrency,NewDate"`
 	NewDate        *time.Time `json:"new_date" binding:"omitempty,required_without:NewAmount,NewCurrency,NewDescription"`
 }
 
-// TransactionUpdateHandler updates transaction.
-func TransactionUpdateHandler(c *gin.Context) {
-	params := transactionUpdateParams{}
+// TransactionsUpdateHandler updates transaction.
+func TransactionsUpdateHandler(c *gin.Context) {
+	params := transactionsUpdateParams{}
 	if ok := util.BindBody(c, &params); !ok {
 		return
 	}
@@ -313,8 +313,8 @@ func TransactionUpdateHandler(c *gin.Context) {
 	util.ReturnSuccessfulResponse(c, gin.H{"uuid": transaction.UUID})
 }
 
-// TransactionDeleteHandler deletes transaction.
-func TransactionDeleteHandler(c *gin.Context) {
+// TransactionsDeleteHandler deletes transaction.
+func TransactionsDeleteHandler(c *gin.Context) {
 	transactionUUID := c.Param("uuid")
 
 	currentUser := c.MustGet("current_user").(*database.User)

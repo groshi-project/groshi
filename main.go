@@ -68,15 +68,15 @@ func createHTTPRouter(jwtSecretKey string) *gin.Engine {
 	user.PUT("", jwtMiddleware, handlers.UserUpdateHandler)    // update current user
 	user.DELETE("", jwtMiddleware, handlers.UserDeleteHandler) // delete current user
 
-	// register transaction routes:
-	transaction := router.Group("/transaction")
-	transaction.Use(jwtMiddleware)
-	transaction.POST("", handlers.TransactionCreateHandler)         // create new transaction
-	transaction.GET("", handlers.TransactionReadManyHandler)        // read multiple transactions for given period
-	transaction.GET("/:uuid", handlers.TransactionReadOneHandler)   // read one transaction
-	transaction.PUT("/:uuid", handlers.TransactionUpdateHandler)    // update transaction
-	transaction.DELETE("/:uuid", handlers.TransactionDeleteHandler) // delete transaction
-	transaction.GET("/summary", handlers.TransactionReadSummary)    // read summary about transactions for given period
+	// register transactions routes:
+	transactions := router.Group("/transactions")
+	transactions.Use(jwtMiddleware)
+	transactions.POST("", handlers.TransactionsCreateHandler)         // create new transaction
+	transactions.GET("", handlers.TransactionsReadManyHandler)        // read multiple transactions for given period
+	transactions.GET("/:uuid", handlers.TransactionsReadOneHandler)   // read one transaction
+	transactions.PUT("/:uuid", handlers.TransactionsUpdateHandler)    // update transaction
+	transactions.DELETE("/:uuid", handlers.TransactionsDeleteHandler) // delete transaction
+	transactions.GET("/summary", handlers.TransactionsReadSummary)    // read summary about transactions for given period
 
 	return router
 }
