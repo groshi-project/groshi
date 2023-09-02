@@ -10,20 +10,20 @@ import (
 	"github.com/groshi-project/groshi/internal/config"
 	"github.com/groshi-project/groshi/internal/currency/exchangerates"
 	"github.com/groshi-project/groshi/internal/database"
-	"github.com/groshi-project/groshi/internal/http_server/handlers"
-	"github.com/groshi-project/groshi/internal/http_server/middlewares"
-	"github.com/groshi-project/groshi/internal/http_server/validators"
+	handlers2 "github.com/groshi-project/groshi/internal/handlers"
 	"github.com/groshi-project/groshi/internal/loggers"
+	"github.com/groshi-project/groshi/internal/middlewares"
+	"github.com/groshi-project/groshi/internal/validators"
 	swaggerfiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"regexp"
 )
 
-// @title           groshi HTTP API documentation
-// @version         0.1.0
-// @description     📉 groshi - goddamn simple tool to keep track of your finances.
-// @license.name  Licensed under MIT license.
-// @license.url   https://github.com/groshi-project/groshi/tree/master/LICENSE
+//	@title			groshi HTTP API documentation
+//	@version		0.1.0
+//	@description	📉 groshi - goddamn simple tool to keep track of your finances.
+//	@license.name	Licensed under MIT license.
+//	@license.url	https://github.com/groshi-project/groshi/tree/master/LICENSE
 
 func createHTTPRouter(jwtSecretKey string) *gin.Engine {
 	router := gin.Default()
@@ -72,20 +72,20 @@ func createHTTPRouter(jwtSecretKey string) *gin.Engine {
 
 	// register user routes:
 	user := router.Group("/user")
-	user.POST("", handlers.UserCreateHandler)                  // create new user
-	user.GET("", jwtMiddleware, handlers.UserReadHandler)      // read current user
-	user.PUT("", jwtMiddleware, handlers.UserUpdateHandler)    // update current user
-	user.DELETE("", jwtMiddleware, handlers.UserDeleteHandler) // delete current user
+	user.POST("", handlers2.UserCreateHandler)                  // create new user
+	user.GET("", jwtMiddleware, handlers2.UserReadHandler)      // read current user
+	user.PUT("", jwtMiddleware, handlers2.UserUpdateHandler)    // update current user
+	user.DELETE("", jwtMiddleware, handlers2.UserDeleteHandler) // delete current user
 
 	// register transactions routes:
 	transactions := router.Group("/transactions")
 	transactions.Use(jwtMiddleware)
-	transactions.POST("", handlers.TransactionsCreateHandler)         // create new transaction
-	transactions.GET("", handlers.TransactionsReadManyHandler)        // read multiple transactions for given period
-	transactions.GET("/:uuid", handlers.TransactionsReadOneHandler)   // read one transaction
-	transactions.PUT("/:uuid", handlers.TransactionsUpdateHandler)    // update transaction
-	transactions.DELETE("/:uuid", handlers.TransactionsDeleteHandler) // delete transaction
-	transactions.GET("/summary", handlers.TransactionsReadSummary)    // read summary about transactions for given period
+	transactions.POST("", handlers2.TransactionsCreateHandler)         // create new transaction
+	transactions.GET("", handlers2.TransactionsReadManyHandler)        // read multiple transactions for given period
+	transactions.GET("/:uuid", handlers2.TransactionsReadOneHandler)   // read one transaction
+	transactions.PUT("/:uuid", handlers2.TransactionsUpdateHandler)    // update transaction
+	transactions.DELETE("/:uuid", handlers2.TransactionsDeleteHandler) // delete transaction
+	transactions.GET("/summary", handlers2.TransactionsReadSummary)    // read summary about transactions for given period
 
 	// register swagger docs route:
 	docs.SwaggerInfo.BasePath = ""
@@ -120,6 +120,7 @@ func main() {
 	exchangerates.Client.Init(
 		config.ReadDockerSecret(env.ExchangeRatesAPIKey),
 	)
+
 	router := createHTTPRouter(config.ReadDockerSecret(env.JWTSecretKeyFile))
 	socket := fmt.Sprintf("%v:%v", env.Host, env.Port)
 

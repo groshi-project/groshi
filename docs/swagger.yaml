@@ -1,3 +1,44 @@
+definitions:
+  models.Error:
+    properties:
+      error_details:
+        items:
+          type: string
+        type: array
+      error_message:
+        example: example error message
+        type: string
+    type: object
+  models.Transaction:
+    properties:
+      amount:
+        example: -999
+        type: integer
+      created_at:
+        example: "2023-09-02T12:38:10+03:00"
+        type: string
+      currency:
+        example: USD
+        type: string
+      date:
+        example: "2023-09-02T12:38:10+03:00"
+        type: string
+      description:
+        example: Bought some donuts for $9.99...
+        type: string
+      updated_at:
+        example: "2023-09-02T12:38:10+03:00"
+        type: string
+      uuid:
+        example: c81ab774-3f96-40e8-9ebd-170e303a682e
+        type: string
+    type: object
+  models.User:
+    properties:
+      username:
+        example: pipka5000
+        type: string
+    type: object
 info:
   contact: {}
   description: "\U0001F4C9 groshi - goddamn simple tool to keep track of your finances."
@@ -6,5 +47,117 @@ info:
     url: https://github.com/groshi-project/groshi/tree/master/LICENSE
   title: groshi HTTP API documentation
   version: 0.1.0
-paths: {}
+paths:
+  /transaction:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new transaction owned by current user.
+      parameters:
+      - description: Negative or positive amount of transaction in minor units.
+        in: body
+        name: amount
+        required: true
+        schema:
+          type: integer
+      - description: Currency code of transaction in ISO-4217 format.
+        in: body
+        name: currency
+        required: true
+        schema:
+          type: string
+      - description: Description of transaction.
+        in: body
+        name: description
+        schema:
+          type: string
+      - description: Date of transaction in RFC-3339 format.
+        in: body
+        name: date
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Object of newly created transaction is returned.
+          schema:
+            $ref: '#/definitions/models.Transaction'
+      summary: create new transaction
+      tags:
+      - transaction
+  /user:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes current user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Object of deleted user is returned.
+          schema:
+            $ref: '#/definitions/models.User'
+      summary: delete current user
+      tags:
+      - user
+    get:
+      consumes:
+      - application/json
+      description: Returns information about current user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Information about current user is returned.
+          schema:
+            $ref: '#/definitions/models.User'
+      summary: get information about current user
+      tags:
+      - user
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user.
+      parameters:
+      - description: Username for new user.
+        in: body
+        name: username
+        required: true
+        schema:
+          type: string
+      - description: Password for new user.
+        in: body
+        name: password
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Username of the newly created user is returned.
+          schema:
+            $ref: '#/definitions/models.User'
+        "409":
+          description: User with such username already exists.
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: create new user
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      description: Updates username and/or password of current user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Information about current user is returned.
+          schema:
+            $ref: '#/definitions/models.User'
+      summary: update current user
+      tags:
+      - user
 swagger: "2.0"

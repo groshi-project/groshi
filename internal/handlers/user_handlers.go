@@ -4,8 +4,9 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/groshi-project/groshi/internal/database"
-	"github.com/groshi-project/groshi/internal/http_server/handlers/util"
-	"github.com/groshi-project/groshi/internal/http_server/password_hashing"
+	"github.com/groshi-project/groshi/internal/handlers/util"
+	"github.com/groshi-project/groshi/internal/models"
+	"github.com/groshi-project/groshi/internal/password_hashing"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,11 +14,22 @@ import (
 )
 
 type userCreateParams struct {
-	Username string `json:"username" binding:"required,username"`
+	Username string `json:"username" binding:"required,username" example:"pipka500"`
 	Password string `json:"password" binding:"required,password"`
 }
 
 // UserCreateHandler creates new user.
+//
+//	@summary		create new user
+//	@description	Creates a new user.
+//	@tags			user
+//	@accept			json
+//	@produce		json
+//	@param			username	body		string			true	"Username for new user."
+//	@param			password	body		string			true	"Password for new user."
+//	@success		200			{object}	models.User		"Username of the newly created user is returned."
+//	@failure		409			{object}	models.Error	"User with such username already exists."
+//	@router			/user [post]
 func UserCreateHandler(c *gin.Context) {
 	params := userCreateParams{}
 	if ok := util.BindBody(c, &params); !ok {
@@ -57,13 +69,25 @@ func UserCreateHandler(c *gin.Context) {
 		util.AbortWithStatusInternalServerError(c, err)
 		return
 	}
-	util.ReturnSuccessfulResponse(c, gin.H{"username": user.Username})
+	util.ReturnSuccessfulResponse(c, &models.User{
+		Username: user.Username,
+	})
 }
 
 // UserReadHandler returns information about current user.
+//
+//	@summary		get information about current user
+//	@description	Returns information about current user.
+//	@tags			user
+//	@accept			json
+//	@produce		json
+//	@success		200	{object}	models.User	"Information about current user is returned."
+//	@router			/user [get]
 func UserReadHandler(c *gin.Context) {
 	currentUser := c.MustGet("current_user").(*database.User)
-	util.ReturnSuccessfulResponse(c, gin.H{"username": currentUser.Username})
+	util.ReturnSuccessfulResponse(c, &models.User{
+		Username: currentUser.Username,
+	})
 }
 
 type userUpdateParams struct {
@@ -72,6 +96,14 @@ type userUpdateParams struct {
 }
 
 // UserUpdateHandler updates current user credentials.
+//
+//	@summary		update current user
+//	@description	Updates username and/or password of current user.
+//	@tags			user
+//	@accept			json
+//	@produce		json
+//	@success		200	{object}	models.User	"Information about current user is returned."
+//	@router			/user [put]
 func UserUpdateHandler(c *gin.Context) {
 	params := userUpdateParams{}
 	if ok := util.BindBody(c, &params); !ok {
@@ -115,10 +147,27 @@ func UserUpdateHandler(c *gin.Context) {
 		util.AbortWithStatusInternalServerError(c, err)
 		return
 	}
-	util.ReturnSuccessfulResponse(c, gin.H{})
+
+	var displayUsername string
+	if params.NewUsername != nil {
+		displayUsername = *params.NewUsername
+	} else {
+		displayUsername = currentUser.Username
+	}
+	util.ReturnSuccessfulResponse(c, &models.User{
+		Username: displayUsername,
+	})
 }
 
 // UserDeleteHandler deletes current user.
+//
+//	@summary		delete current user
+//	@description	Deletes current user.
+//	@tags			user
+//	@accept			json
+//	@produce		json
+//	@success		200	{object}	models.User	"Object of deleted user is returned."
+//	@router			/user [delete]
 func UserDeleteHandler(c *gin.Context) {
 	currentUser := c.MustGet("current_user").(*database.User)
 	if _, err := database.UsersCol.DeleteOne(
@@ -129,5 +178,7 @@ func UserDeleteHandler(c *gin.Context) {
 		return
 	}
 
-	util.ReturnSuccessfulResponse(c, gin.H{"username": currentUser.Username})
+	util.ReturnSuccessfulResponse(c, &models.User{
+		Username: currentUser.Username,
+	})
 }

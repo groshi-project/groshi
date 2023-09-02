@@ -6,14 +6,18 @@ import (
 	"github.com/google/uuid"
 	"github.com/groshi-project/groshi/internal/currency/currency_rates"
 	"github.com/groshi-project/groshi/internal/database"
-	"github.com/groshi-project/groshi/internal/http_server/handlers/util"
+	"github.com/groshi-project/groshi/internal/handlers/util"
 	"github.com/groshi-project/groshi/internal/loggers"
+	"github.com/groshi-project/groshi/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"math"
 	"time"
 )
+
+const errorDescriptionTransactionNotFound = "transaction was not found"
+const errorDescriptionTransactionForbidden = "you have no access to this transaction"
 
 type transactionsCreateParams struct {
 	Amount   int    `json:"amount" binding:"required"`
@@ -23,6 +27,19 @@ type transactionsCreateParams struct {
 	Date        *time.Time `json:"date"`
 }
 
+// TransactionsCreateHandler creates new transaction.
+//
+//	@summary		create new transaction
+//	@description	Creates a new transaction owned by current user.
+//	@tags			transaction
+//	@accept			json
+//	@produce		json
+//	@param			amount		body		integer				true	"Negative or positive amount of transaction in minor units."
+//	@param			currency	body		string				true	"Currency code of transaction in ISO-4217 format."
+//	@param			description	body		string				false	"Description of transaction."
+//	@param			date		body		string				false	"Date of transaction in RFC-3339 format."
+//	@success		200			{object}	models.Transaction	"Object of newly created transaction is returned."
+//	@router			/transaction [post]
 func TransactionsCreateHandler(c *gin.Context) {
 	params := transactionsCreateParams{}
 	if ok := util.BindBody(c, &params); !ok {
@@ -78,18 +95,18 @@ func TransactionsReadOneHandler(c *gin.Context) {
 		database.Context, bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithStatusNotFound(c, APIErrorDetailTransactionNotFound)
+			util.AbortWithStatusNotFound(c, errorDescriptionTransactionNotFound)
 		} else {
 			util.AbortWithStatusInternalServerError(c, err)
 		}
 		return
 	}
 	if transaction.OwnerID != currentUser.ID {
-		util.AbortWithStatusForbidden(c, APIErrorDetailTransactionDoesNotBelongToYou)
+		util.AbortWithStatusForbidden(c, errorDescriptionTransactionForbidden)
 		return
 	}
 
-	util.ReturnSuccessfulResponse(c, transaction.JSON())
+	util.ReturnSuccessfulResponse(c, transaction.APIModel())
 }
 
 type transactionsReadManyParams struct {
@@ -136,13 +153,13 @@ func TransactionsReadManyHandler(c *gin.Context) {
 		}
 	}()
 
-	transactions := make([]gin.H, 0)
+	transactions := make([]*models.Transaction, 0)
 	for cursor.Next(database.Context) {
 		transaction := database.Transaction{}
 		if err := cursor.Decode(&transaction); err != nil {
 			util.AbortWithStatusInternalServerError(c, err)
 		}
-		transactions = append(transactions, transaction.JSON())
+		transactions = append(transactions, transaction.APIModel())
 	}
 
 	util.ReturnSuccessfulResponse(c, transactions)
@@ -270,7 +287,7 @@ func TransactionsUpdateHandler(c *gin.Context) {
 		database.Context, bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithStatusNotFound(c, APIErrorDetailTransactionNotFound)
+			util.AbortWithStatusNotFound(c, errorDescriptionTransactionNotFound)
 		} else {
 			util.AbortWithStatusInternalServerError(c, err)
 		}
@@ -278,7 +295,7 @@ func TransactionsUpdateHandler(c *gin.Context) {
 	}
 
 	if transaction.OwnerID != currentUser.ID {
-		util.AbortWithStatusForbidden(c, APIErrorDetailTransactionDoesNotBelongToYou)
+		util.AbortWithStatusForbidden(c, errorDescriptionTransactionForbidden)
 		return
 	}
 
@@ -326,7 +343,7 @@ func TransactionsDeleteHandler(c *gin.Context) {
 		bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithStatusNotFound(c, APIErrorDetailTransactionNotFound)
+			util.AbortWithStatusNotFound(c, errorDescriptionTransactionNotFound)
 		} else {
 			util.AbortWithStatusInternalServerError(c, err)
 		}
@@ -335,7 +352,7 @@ func TransactionsDeleteHandler(c *gin.Context) {
 
 	// check if the current user owns transaction:
 	if transaction.OwnerID != currentUser.ID {
-		util.AbortWithStatusForbidden(c, APIErrorDetailTransactionDoesNotBelongToYou)
+		util.AbortWithStatusForbidden(c, errorDescriptionTransactionForbidden)
 		return
 	}
 

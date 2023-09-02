@@ -10,5 +10,236 @@
         },
         "version": "0.1.0"
     },
-    "paths": {}
+    "paths": {
+        "/transaction": {
+            "post": {
+                "description": "Creates a new transaction owned by current user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transaction"
+                ],
+                "summary": "create new transaction",
+                "parameters": [
+                    {
+                        "description": "Negative or positive amount of transaction in minor units.",
+                        "name": "amount",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "Currency code of transaction in ISO-4217 format.",
+                        "name": "currency",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Description of transaction.",
+                        "name": "description",
+                        "in": "body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Date of transaction in RFC-3339 format.",
+                        "name": "date",
+                        "in": "body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Object of newly created transaction is returned.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Transaction"
+                        }
+                    }
+                }
+            }
+        },
+        "/user": {
+            "get": {
+                "description": "Returns information about current user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "get information about current user",
+                "responses": {
+                    "200": {
+                        "description": "Information about current user is returned.",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates username and/or password of current user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "update current user",
+                "responses": {
+                    "200": {
+                        "description": "Information about current user is returned.",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "create new user",
+                "parameters": [
+                    {
+                        "description": "Username for new user.",
+                        "name": "username",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "Password for new user.",
+                        "name": "password",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Username of the newly created user is returned.",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    },
+                    "409": {
+                        "description": "User with such username already exists.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes current user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "delete current user",
+                "responses": {
+                    "200": {
+                        "description": "Object of deleted user is returned.",
+                        "schema": {
+                            "$ref": "#/definitions/models.User"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "models.Error": {
+            "type": "object",
+            "properties": {
+                "error_details": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "error_message": {
+                    "type": "string",
+                    "example": "example error message"
+                }
+            }
+        },
+        "models.Transaction": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "integer",
+                    "example": -999
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2023-09-02T12:38:10+03:00"
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "USD"
+                },
+                "date": {
+                    "type": "string",
+                    "example": "2023-09-02T12:38:10+03:00"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Bought some donuts for $9.99..."
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2023-09-02T12:38:10+03:00"
+                },
+                "uuid": {
+                    "type": "string",
+                    "example": "c81ab774-3f96-40e8-9ebd-170e303a682e"
+                }
+            }
+        },
+        "models.User": {
+            "type": "object",
+            "properties": {
+                "username": {
+                    "type": "string",
+                    "example": "pipka5000"
+                }
+            }
+        }
+    }
 }
