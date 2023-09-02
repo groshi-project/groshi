@@ -11,7 +11,46 @@
         "version": "0.1.0"
     },
     "paths": {
-        "/transaction": {
+        "/transactions": {
+            "get": {
+                "description": "Returns array of transactions for given time period.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "fetch many transactions",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Beginning of the time period in RFC-3339 format.",
+                        "name": "start_time",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "End of the time period in RFC-3339 format (current date is used by default if no value provided).",
+                        "name": "end_time",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of transaction objects is returned.",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Transaction"
+                            }
+                        }
+                    }
+                }
+            },
             "post": {
                 "description": "Creates a new transaction owned by current user.",
                 "consumes": [
@@ -21,7 +60,7 @@
                     "application/json"
                 ],
                 "tags": [
-                    "transaction"
+                    "transactions"
                 ],
                 "summary": "create new transaction",
                 "parameters": [
@@ -65,6 +104,211 @@
                         "description": "Object of newly created transaction is returned.",
                         "schema": {
                             "$ref": "#/definitions/models.Transaction"
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/summary": {
+            "get": {
+                "description": "Returns summary of transactions for given time period in desired currency units.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "fetch summary of transactions for given time period",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Beginning of the time period in RFC-3339 format.",
+                        "name": "start_time",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Desired currency of sum of transactions in ISO-4217 format.",
+                        "name": "currency",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "End of the time period in RFC-3339 format (current date is used by default if no value provided).",
+                        "name": "end_time",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Summary object is returned.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Summary"
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/{uuid}": {
+            "get": {
+                "description": "Returns information about one transaction.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "fetch one transaction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID of transaction.",
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaction object is returned.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Transaction"
+                        }
+                    },
+                    "403": {
+                        "description": "You have no right to read this transaction.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Transaction was not found.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates transaction.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "update transaction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID of transaction.",
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New negative or positive amount of transaction in minor units.",
+                        "name": "new_amount",
+                        "in": "body",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "description": "New currency of transaction in ISO-4217 format.",
+                        "name": "new_currency",
+                        "in": "body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "New description of transaction.",
+                        "name": "new_description",
+                        "in": "body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "New date of transaction in RFC-3339 format.",
+                        "name": "new_date",
+                        "in": "body",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated transaction object is returned.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Transaction"
+                        }
+                    },
+                    "403": {
+                        "description": "You have no right to update the transaction.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Transaction was not found.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes transaction.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "delete transaction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "UUID of transaction.",
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted transaction object is returned.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Transaction"
+                        }
+                    },
+                    "403": {
+                        "description": "You have no right to delete the transaction.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Transaction was not found.",
+                        "schema": {
+                            "$ref": "#/definitions/models.Error"
                         }
                     }
                 }
@@ -196,6 +440,31 @@
                 "error_message": {
                     "type": "string",
                     "example": "example error message"
+                }
+            }
+        },
+        "models.Summary": {
+            "type": "object",
+            "properties": {
+                "currency": {
+                    "type": "string",
+                    "example": "USD"
+                },
+                "income": {
+                    "type": "integer",
+                    "example": 5000
+                },
+                "outcome": {
+                    "type": "integer",
+                    "example": 1000
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 4000
+                },
+                "transactions_count": {
+                    "type": "integer",
+                    "example": 6
                 }
             }
         },

@@ -9,6 +9,24 @@ definitions:
         example: example error message
         type: string
     type: object
+  models.Summary:
+    properties:
+      currency:
+        example: USD
+        type: string
+      income:
+        example: 5000
+        type: integer
+      outcome:
+        example: 1000
+        type: integer
+      total:
+        example: 4000
+        type: integer
+      transactions_count:
+        example: 6
+        type: integer
+    type: object
   models.Transaction:
     properties:
       amount:
@@ -48,7 +66,34 @@ info:
   title: groshi HTTP API documentation
   version: 0.1.0
 paths:
-  /transaction:
+  /transactions:
+    get:
+      consumes:
+      - application/json
+      description: Returns array of transactions for given time period.
+      parameters:
+      - description: Beginning of the time period in RFC-3339 format.
+        in: query
+        name: start_time
+        required: true
+        type: string
+      - description: End of the time period in RFC-3339 format (current date is used
+          by default if no value provided).
+        in: query
+        name: end_time
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Array of transaction objects is returned.
+          schema:
+            items:
+              $ref: '#/definitions/models.Transaction'
+            type: array
+      summary: fetch many transactions
+      tags:
+      - transactions
     post:
       consumes:
       - application/json
@@ -85,7 +130,144 @@ paths:
             $ref: '#/definitions/models.Transaction'
       summary: create new transaction
       tags:
-      - transaction
+      - transactions
+  /transactions/{uuid}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes transaction.
+      parameters:
+      - description: UUID of transaction.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Deleted transaction object is returned.
+          schema:
+            $ref: '#/definitions/models.Transaction'
+        "403":
+          description: You have no right to delete the transaction.
+          schema:
+            $ref: '#/definitions/models.Error'
+        "404":
+          description: Transaction was not found.
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: delete transaction
+      tags:
+      - transactions
+    get:
+      consumes:
+      - application/json
+      description: Returns information about one transaction.
+      parameters:
+      - description: UUID of transaction.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transaction object is returned.
+          schema:
+            $ref: '#/definitions/models.Transaction'
+        "403":
+          description: You have no right to read this transaction.
+          schema:
+            $ref: '#/definitions/models.Error'
+        "404":
+          description: Transaction was not found.
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: fetch one transaction
+      tags:
+      - transactions
+    put:
+      consumes:
+      - application/json
+      description: Updates transaction.
+      parameters:
+      - description: UUID of transaction.
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: New negative or positive amount of transaction in minor units.
+        in: body
+        name: new_amount
+        schema:
+          type: integer
+      - description: New currency of transaction in ISO-4217 format.
+        in: body
+        name: new_currency
+        schema:
+          type: string
+      - description: New description of transaction.
+        in: body
+        name: new_description
+        schema:
+          type: string
+      - description: New date of transaction in RFC-3339 format.
+        in: body
+        name: new_date
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated transaction object is returned.
+          schema:
+            $ref: '#/definitions/models.Transaction'
+        "403":
+          description: You have no right to update the transaction.
+          schema:
+            $ref: '#/definitions/models.Error'
+        "404":
+          description: Transaction was not found.
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: update transaction
+      tags:
+      - transactions
+  /transactions/summary:
+    get:
+      consumes:
+      - application/json
+      description: Returns summary of transactions for given time period in desired
+        currency units.
+      parameters:
+      - description: Beginning of the time period in RFC-3339 format.
+        in: query
+        name: start_time
+        required: true
+        type: string
+      - description: Desired currency of sum of transactions in ISO-4217 format.
+        in: query
+        name: currency
+        required: true
+        type: string
+      - description: End of the time period in RFC-3339 format (current date is used
+          by default if no value provided).
+        in: query
+        name: end_time
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Summary object is returned.
+          schema:
+            $ref: '#/definitions/models.Summary'
+      summary: fetch summary of transactions for given time period
+      tags:
+      - transactions
   /user:
     delete:
       consumes:
