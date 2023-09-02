@@ -1,5 +1,5 @@
 # groshi
-**groshi** - goddamn simple tool to keep track of your finances.
+📉 **groshi** - goddamn simple tool to keep track of your finances.
 
 > Work on groshi is still in progress, but it is close to release.
 
