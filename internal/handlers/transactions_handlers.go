@@ -17,7 +17,7 @@ import (
 )
 
 const errorDescriptionTransactionNotFound = "transaction was not found"
-const errorDescriptionTransactionForbidden = "you have no access to this transaction"
+const errorDescriptionTransactionForbidden = "you have no right to access to this transaction"
 
 type transactionsCreateParams struct {
 	Amount   int    `json:"amount" binding:"required"`
@@ -31,7 +31,7 @@ type transactionsCreateParams struct {
 //
 //	@summary		create new transaction
 //	@description	Creates a new transaction owned by current user.
-//	@tags			transaction
+//	@tags			transactions
 //	@accept			json
 //	@produce		json
 //	@param			amount		body		integer				true	"Negative or positive amount of transaction in minor units."
@@ -39,7 +39,7 @@ type transactionsCreateParams struct {
 //	@param			description	body		string				false	"Description of transaction."
 //	@param			date		body		string				false	"Date of transaction in RFC-3339 format."
 //	@success		200			{object}	models.Transaction	"Object of newly created transaction is returned."
-//	@router			/transaction [post]
+//	@router			/transactions [post]
 func TransactionsCreateHandler(c *gin.Context) {
 	params := transactionsCreateParams{}
 	if ok := util.BindBody(c, &params); !ok {
@@ -81,10 +81,21 @@ func TransactionsCreateHandler(c *gin.Context) {
 		return
 	}
 
-	util.ReturnSuccessfulResponse(c, gin.H{"uuid": transaction.UUID})
+	util.ReturnSuccessfulResponse(c, transaction.APIModel())
 }
 
 // TransactionsReadOneHandler returns information about single transaction.
+//
+//	@summary		fetch one transaction
+//	@description	Returns information about one transaction.
+//	@tags			transactions
+//	@accept			json
+//	@produce		json
+//	@param			uuid	path		string				true	"UUID of transaction."
+//	@success		200		{object}	models.Transaction	"Transaction object is returned."
+//	@failure		404		{object}	models.Error		"Transaction was not found."
+//	@failure		403		{object}	models.Error		"You have no right to read this transaction."
+//	@router			/transactions/{uuid} [get]
 func TransactionsReadOneHandler(c *gin.Context) {
 	transactionUUID := c.Param("uuid")
 
@@ -115,7 +126,17 @@ type transactionsReadManyParams struct {
 	EndTime *time.Time `form:"end_time"`
 }
 
-// TransactionsReadManyHandler returns all transactions for given period.
+// TransactionsReadManyHandler returns all transactions for time given period.
+//
+//	@summary		fetch many transactions
+//	@description	Returns array of transactions for given time period.
+//	@tags			transactions
+//	@accept			json
+//	@produce		json
+//	@param			start_time	query		string					true	"Beginning of the time period in RFC-3339 format."
+//	@param			end_time	query		string					false	"End of the time period in RFC-3339 format (current date is used by default if no value provided)."
+//	@success		200			{object}	[]models.Transaction	"Array of transaction objects is returned."
+//	@router			/transactions [get]
 func TransactionsReadManyHandler(c *gin.Context) {
 	params := transactionsReadManyParams{}
 	if ok := util.BindQuery(c, &params); !ok {
@@ -173,7 +194,18 @@ type transactionsReadSummaryParams struct {
 }
 
 // TransactionsReadSummary returns summary (count and sum of transaction)
-// for given period in desired currency units.
+// for given time period in desired currency units.
+//
+//	@summary		fetch summary of transactions for given time period
+//	@description	Returns summary of transactions for given time period in desired currency units.
+//	@tags			transactions
+//	@accept			json
+//	@produce		json
+//	@param			start_time	query		string			true	"Beginning of the time period in RFC-3339 format."
+//	@param			currency	query		string			true	"Desired currency of sum of transactions in ISO-4217 format."
+//	@param			end_time	query		string			false	"End of the time period in RFC-3339 format (current date is used by default if no value provided)."
+//	@success		200			{object}	models.Summary	"Summary object is returned."
+//	@router			/transactions/summary [get]
 func TransactionsReadSummary(c *gin.Context) {
 	params := transactionsReadSummaryParams{}
 	if ok := util.BindQuery(c, &params); !ok {
@@ -226,6 +258,7 @@ func TransactionsReadSummary(c *gin.Context) {
 	//
 	// important notice: only final sum must be rounded,
 	// not intermediate amounts.
+	transactionsCount := 0
 	income := 0.0
 	outcome := 0.0
 
@@ -249,18 +282,19 @@ func TransactionsReadSummary(c *gin.Context) {
 		} else {
 			outcome += -transactionAmountInSameUnits
 		}
+		transactionsCount++
 	}
 
 	intTotal := int(math.Round(income - outcome))
 	intIncome := int(math.Round(income))
 	intOutcome := int(math.Round(outcome))
 
-	util.ReturnSuccessfulResponse(c, gin.H{
-		"currency":           params.Currency,
-		"income":             intIncome,
-		"outcome":            intOutcome,
-		"total":              intTotal,
-		"transactions_count": len(transactions),
+	util.ReturnSuccessfulResponse(c, &models.Summary{
+		Currency:          params.Currency,
+		Income:            intIncome,
+		Outcome:           intOutcome,
+		Total:             intTotal,
+		TransactionsCount: transactionsCount,
 	})
 }
 
@@ -272,6 +306,21 @@ type transactionsUpdateParams struct {
 }
 
 // TransactionsUpdateHandler updates transaction.
+//
+//	@summary		update transaction
+//	@description	Updates transaction.
+//	@tags			transactions
+//	@accept			json
+//	@produce		json
+//	@param			uuid			path		string				true	"UUID of transaction."
+//	@param			new_amount		body		integer				false	"New negative or positive amount of transaction in minor units."
+//	@param			new_currency	body		string				false	"New currency of transaction in ISO-4217 format."
+//	@param			new_description	body		string				false	"New description of transaction."
+//	@param			new_date		body		string				false	"New date of transaction in RFC-3339 format."
+//	@success		200				{object}	models.Transaction	"Updated transaction object is returned."
+//	@failure		404				{object}	models.Error		"Transaction was not found."
+//	@failure		403				{object}	models.Error		"You have no right to update the transaction."
+//	@router			/transactions/{uuid} [put]
 func TransactionsUpdateHandler(c *gin.Context) {
 	params := transactionsUpdateParams{}
 	if ok := util.BindBody(c, &params); !ok {
@@ -302,21 +351,27 @@ func TransactionsUpdateHandler(c *gin.Context) {
 	var updateQueries bson.D
 	if params.NewAmount != nil {
 		updateQueries = append(updateQueries, bson.E{Key: "amount", Value: *params.NewAmount})
+		transaction.Amount = *params.NewAmount
 	}
 
 	if params.NewCurrency != nil {
 		updateQueries = append(updateQueries, bson.E{Key: "currency", Value: *params.NewCurrency})
+		transaction.Currency = *params.NewCurrency
 	}
 
 	if params.NewDescription != nil {
 		updateQueries = append(updateQueries, bson.E{Key: "description", Value: *params.NewDescription})
+		transaction.Description = *params.NewDescription
 	}
 
 	if params.NewDate != nil {
 		updateQueries = append(updateQueries, bson.E{Key: "date", Value: *params.NewDate})
+		transaction.Date = *params.NewDate
 	}
 
-	updateQueries = append(updateQueries, bson.E{Key: "updated_at", Value: time.Now()})
+	currentTime := time.Now()
+	updateQueries = append(updateQueries, bson.E{Key: "updated_at", Value: currentTime})
+	transaction.UpdatedAt = currentTime
 
 	if _, err := database.TransactionsCol.UpdateOne(
 		database.Context,
@@ -327,10 +382,21 @@ func TransactionsUpdateHandler(c *gin.Context) {
 		return
 	}
 
-	util.ReturnSuccessfulResponse(c, gin.H{"uuid": transaction.UUID})
+	util.ReturnSuccessfulResponse(c, transaction.APIModel())
 }
 
 // TransactionsDeleteHandler deletes transaction.
+//
+//	@summary		delete transaction
+//	@description	Deletes transaction.
+//	@tags			transactions
+//	@accept			json
+//	@produce		json
+//	@param			uuid	path		string				true	"UUID of transaction."
+//	@success		200		{object}	models.Transaction	"Deleted transaction object is returned."
+//	@failure		404		{object}	models.Error		"Transaction was not found."
+//	@failure		403		{object}	models.Error		"You have no right to delete the transaction."
+//	@router			/transactions/{uuid} [delete]
 func TransactionsDeleteHandler(c *gin.Context) {
 	transactionUUID := c.Param("uuid")
 
@@ -365,5 +431,5 @@ func TransactionsDeleteHandler(c *gin.Context) {
 		return
 	}
 
-	util.ReturnSuccessfulResponse(c, gin.H{"uuid": transaction.UUID})
+	util.ReturnSuccessfulResponse(c, transaction.APIModel())
 }

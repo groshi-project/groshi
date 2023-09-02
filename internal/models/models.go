@@ -19,6 +19,17 @@ type Transaction struct {
 	UpdatedAt string `json:"updated_at" example:"2023-09-02T12:38:10+03:00"`
 }
 
+// Summary represents summary of transactions, returned by transactionsReadSummary handler.
+type Summary struct {
+	Currency string `json:"currency" example:"USD"`
+
+	Income  int `json:"income" example:"5000"`
+	Outcome int `json:"outcome" example:"1000"`
+	Total   int `json:"total" example:"4000"`
+
+	TransactionsCount int `json:"transactions_count" example:"6"`
+}
+
 // Error represents response containing information about API error.
 type Error struct {
 	ErrorMessage string   `json:"error_message" example:"example error message"`

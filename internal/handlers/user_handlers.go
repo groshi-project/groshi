@@ -114,10 +114,8 @@ func UserUpdateHandler(c *gin.Context) {
 
 	var updateQueries bson.D
 	if params.NewUsername != nil {
-		newUsername := *params.NewUsername
-
 		// check if user already exists:
-		err := database.UsersCol.FindOne(database.Context, bson.D{{"username", newUsername}}).Err()
+		err := database.UsersCol.FindOne(database.Context, bson.D{{"username", *params.NewUsername}}).Err()
 		if err == nil {
 			util.AbortWithStatusConflict(c, "user with such username already exists")
 			return
@@ -126,12 +124,12 @@ func UserUpdateHandler(c *gin.Context) {
 			util.AbortWithStatusInternalServerError(c, err)
 			return
 		}
-		updateQueries = append(updateQueries, bson.E{Key: "username", Value: newUsername})
+		updateQueries = append(updateQueries, bson.E{Key: "username", Value: *params.NewUsername})
+		currentUser.Username = *params.NewUsername
 	}
 
 	if params.NewPassword != nil {
-		newPassword := *params.NewPassword
-		newPasswordHash, err := password_hashing.HashPassword(newPassword)
+		newPasswordHash, err := password_hashing.HashPassword(*params.NewPassword)
 		if err != nil {
 			util.AbortWithStatusInternalServerError(c, err)
 			return
@@ -148,15 +146,7 @@ func UserUpdateHandler(c *gin.Context) {
 		return
 	}
 
-	var displayUsername string
-	if params.NewUsername != nil {
-		displayUsername = *params.NewUsername
-	} else {
-		displayUsername = currentUser.Username
-	}
-	util.ReturnSuccessfulResponse(c, &models.User{
-		Username: displayUsername,
-	})
+	util.ReturnSuccessfulResponse(c, currentUser.APIModel())
 }
 
 // UserDeleteHandler deletes current user.
