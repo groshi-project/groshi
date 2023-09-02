@@ -9,13 +9,15 @@ import (
 
 // EnvVars TODO
 type EnvVars struct {
-	// application settings
-	Host                string `env:"GROSHI_HOST"`
-	Port                int    `env:"GROSHI_PORT"`
-	JWTSecretKeyFile    string `env:"GROSHI_JWT_SECRET_KEY_FILE"`
-	ExchangeRatesAPIKey string `env:"GROSHI_EXCHANGERATES_API_KEY"`
+	// groshi settings:
+	Host          string `env:"GROSHI_HOST"`                           // host to be listened to
+	Port          int    `env:"GROSHI_PORT"`                           // port to be listened to
+	EnableSwagger bool   `env:"GROSHI_ENABLE_SWAGGER" $default:"true"` // enable/disable Swagger UI at `/docs/index.html` route
 
-	// MongoDB settings
+	JWTSecretKeyFile    string `env:"GROSHI_JWT_SECRET_KEY_FILE"`   // file containing secret key for generating JWTs
+	ExchangeRatesAPIKey string `env:"GROSHI_EXCHANGERATES_API_KEY"` // file containing API key for https://exchangeratesapi.io/
+
+	// MongoDB settings:
 	MongoHost string `env:"GROSHI_MONGO_HOST"`
 	MongoPort int    `env:"GROSHI_MONGO_PORT"`
 

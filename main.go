@@ -25,7 +25,7 @@ import (
 //	@license.name	Licensed under MIT license.
 //	@license.url	https://github.com/groshi-project/groshi/tree/master/LICENSE
 
-func createHTTPRouter(jwtSecretKey string) *gin.Engine {
+func createHTTPRouter(jwtSecretKey string, enableSwagger bool) *gin.Engine {
 	router := gin.Default()
 
 	// register validators:
@@ -87,9 +87,13 @@ func createHTTPRouter(jwtSecretKey string) *gin.Engine {
 	transactions.DELETE("/:uuid", handlers2.TransactionsDeleteHandler) // delete transaction
 	transactions.GET("/summary", handlers2.TransactionsReadSummary)    // read summary about transactions for given period
 
-	// register swagger docs route:
-	docs.SwaggerInfo.BasePath = ""
-	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	// register Swagger documentation route if needed:
+	if enableSwagger {
+		docs.SwaggerInfo.BasePath = ""
+		router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	} else {
+		loggers.Warning.Println("swagger UI feature is disabled, no documentation will be shown at `/docs/index.html` route")
+	}
 
 	return router
 }
@@ -121,7 +125,7 @@ func main() {
 		config.ReadDockerSecret(env.ExchangeRatesAPIKey),
 	)
 
-	router := createHTTPRouter(config.ReadDockerSecret(env.JWTSecretKeyFile))
+	router := createHTTPRouter(config.ReadDockerSecret(env.JWTSecretKeyFile), env.EnableSwagger)
 	socket := fmt.Sprintf("%v:%v", env.Host, env.Port)
 
 	loggers.Info.Printf("starting HTTP server on %v", socket)

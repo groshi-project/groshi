@@ -7,6 +7,7 @@ services:
     environment:
       GROSHI_HOST: 0.0.0.0
       GROSHI_PORT: 8080
+      GROSHI_ENABLE_SWAGGER: true
       GIN_MODE: debug
 
       GROSHI_JWT_SECRET_KEY_FILE: /run/secrets/app/jwt_secret_key
