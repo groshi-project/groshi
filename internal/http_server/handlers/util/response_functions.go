@@ -2,7 +2,7 @@ package util
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/jieggii/groshi/internal/loggers"
+	"github.com/groshi-project/groshi/internal/loggers"
 	"net/http"
 )
 

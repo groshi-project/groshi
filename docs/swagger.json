@@ -1,0 +1,14 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "📉 groshi - goddamn simple tool to keep track of your finances.",
+        "title": "groshi HTTP API documentation",
+        "contact": {},
+        "license": {
+            "name": "Licensed under MIT license.",
+            "url": "https://github.com/groshi-project/groshi/tree/master/LICENSE"
+        },
+        "version": "0.1.0"
+    },
+    "paths": {}
+}

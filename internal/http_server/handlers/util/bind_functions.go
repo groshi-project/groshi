@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
-	"github.com/jieggii/groshi/internal/loggers"
+	"github.com/groshi-project/groshi/internal/loggers"
 )
 
 func generateErrorDetails(err error) []string {

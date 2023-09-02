@@ -2,9 +2,9 @@ package currency_rates
 
 import (
 	"errors"
-	"github.com/jieggii/groshi/internal/currency/exchangerates"
-	"github.com/jieggii/groshi/internal/database"
-	"github.com/jieggii/groshi/internal/loggers"
+	"github.com/groshi-project/groshi/internal/currency/exchangerates"
+	"github.com/groshi-project/groshi/internal/database"
+	"github.com/groshi-project/groshi/internal/loggers"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"

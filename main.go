@@ -6,15 +6,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/validator/v10"
-	"github.com/jieggii/groshi/internal/config"
-	"github.com/jieggii/groshi/internal/currency/exchangerates"
-	"github.com/jieggii/groshi/internal/database"
-	"github.com/jieggii/groshi/internal/http_server/handlers"
-	"github.com/jieggii/groshi/internal/http_server/middlewares"
-	"github.com/jieggii/groshi/internal/http_server/validators"
-	"github.com/jieggii/groshi/internal/loggers"
+	"github.com/groshi-project/groshi/docs"
+	"github.com/groshi-project/groshi/internal/config"
+	"github.com/groshi-project/groshi/internal/currency/exchangerates"
+	"github.com/groshi-project/groshi/internal/database"
+	"github.com/groshi-project/groshi/internal/http_server/handlers"
+	"github.com/groshi-project/groshi/internal/http_server/middlewares"
+	"github.com/groshi-project/groshi/internal/http_server/validators"
+	"github.com/groshi-project/groshi/internal/loggers"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"regexp"
 )
+
+// @title           groshi HTTP API documentation
+// @version         0.1.0
+// @description     📉 groshi - goddamn simple tool to keep track of your finances.
+// @license.name  Licensed under MIT license.
+// @license.url   https://github.com/groshi-project/groshi/tree/master/LICENSE
 
 func createHTTPRouter(jwtSecretKey string) *gin.Engine {
 	router := gin.Default()
@@ -78,11 +87,15 @@ func createHTTPRouter(jwtSecretKey string) *gin.Engine {
 	transactions.DELETE("/:uuid", handlers.TransactionsDeleteHandler) // delete transaction
 	transactions.GET("/summary", handlers.TransactionsReadSummary)    // read summary about transactions for given period
 
+	// register swagger docs route:
+	docs.SwaggerInfo.BasePath = ""
+	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+
 	return router
 }
 
 func main() {
-	loggers.Info.Println("starting groshi")
+	loggers.Info.Printf("starting groshi")
 
 	// read configuration from environmental variables:
 	env := config.ReadEnvVars()

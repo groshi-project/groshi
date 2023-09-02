@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/jieggii/groshi/internal/loggers"
+	"github.com/groshi-project/groshi/internal/loggers"
 	"github.com/jieggii/lookupcfg"
 	"os"
 	"strings"

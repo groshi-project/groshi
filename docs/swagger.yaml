@@ -1,0 +1,10 @@
+info:
+  contact: {}
+  description: "\U0001F4C9 groshi - goddamn simple tool to keep track of your finances."
+  license:
+    name: Licensed under MIT license.
+    url: https://github.com/groshi-project/groshi/tree/master/LICENSE
+  title: groshi HTTP API documentation
+  version: 0.1.0
+paths: {}
+swagger: "2.0"

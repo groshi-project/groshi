@@ -2,8 +2,8 @@ package validators
 
 import (
 	"github.com/go-playground/validator/v10"
-	"github.com/jieggii/groshi/internal/currency/currency_rates"
-	"github.com/jieggii/groshi/internal/loggers"
+	"github.com/groshi-project/groshi/internal/currency/currency_rates"
+	"github.com/groshi-project/groshi/internal/loggers"
 	"regexp"
 )
 

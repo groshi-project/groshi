@@ -3,9 +3,9 @@ package handlers
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/jieggii/groshi/internal/database"
-	"github.com/jieggii/groshi/internal/http_server/handlers/util"
-	"github.com/jieggii/groshi/internal/http_server/password_hashing"
+	"github.com/groshi-project/groshi/internal/database"
+	"github.com/groshi-project/groshi/internal/http_server/handlers/util"
+	"github.com/groshi-project/groshi/internal/http_server/password_hashing"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"

@@ -3,7 +3,7 @@ package exchangerates
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/jieggii/groshi/internal/loggers"
+	"github.com/groshi-project/groshi/internal/loggers"
 	"io"
 	"net/http"
 )
