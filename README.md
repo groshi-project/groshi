@@ -35,7 +35,7 @@ and other directories and files inside it which will hold secrets:
 make secrets
 ```
 
-`secrets` directory tree:
+`./secrets` directory tree:
 ```
 secrets/
 ├── app
@@ -58,7 +58,7 @@ Then fill all the secrets:
 #### If you are going to run groshi using docker
 Simply open `docker-compose.yaml` using your favourite editor and
 edit environmental variables (it is optional, defaults are fine) in the `environment` section.
-Also remember to update `ports` section if you change `GROSHI_PORT` variables.
+Also remember to update `ports` section if you change `GROSHI_PORT` variable.
 
 #### If you are going to run groshi locally
 Create `.env` file containing all necessary environmental variables using `.env.example` as template:
@@ -68,9 +68,10 @@ cp .env.example .env
 
 Edit these variables as you wish. Again, defaults are fine, but you would probably like
 to edit a couple of them (e.g. `GROSHI_PORT`).
-> Please note, that **groshi** does not take into account the `.env` file.
-> You will have to somehow "export" these defined variables to the environment.
-> For example, you can use `source .env` command if you are using bash.
+
+Please note, that **groshi** does not take into account the `.env` file.
+You will have to somehow "export" these defined variables to the environment.
+For example, you can use `source .env` command if you are using bash.
 
 ### Step 3: finally run it
 Just build and bring up docker containers using docker-compose
