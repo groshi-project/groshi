@@ -1,15 +1,15 @@
 # groshi
 📉 **groshi** - goddamn simple tool to keep track of your finances.
 
-> Work on groshi is still in progress, but it is close to release.
+> Work on the project is still in progress, but it is close to release. Stay tuned!
 
 ## Features
-Using groshi you can perform all basic operations with transactions in different currencies: 
+Using **groshi** you can perform all basic operations with transactions in different currencies: 
 create, read and update them, besides you can also get useful summary of all transactions 
 in desired currency units for given period.
 Multiple number of users is also supported (each user owns its own transactions).
 
-## groshi clients
+## Clients
 ### Client libraries for different programming languages
 |                       **Library**                        | **Programming language** |
 |:--------------------------------------------------------:|:------------------------:|
@@ -17,11 +17,72 @@ Multiple number of users is also supported (each user owns its own transactions)
 
 ### Client applications
 
-|                 **Application**                  |  **Platform**   |
-|:------------------------------------------------:|:---------------:|
-| [grosh](https://github.com/groshi-project/grosh) | GNU/Linux (CLI) |
+|                 **Application**                  |          **Platform**           |
+|:------------------------------------------------:|:-------------------------------:|
+| [grosh](https://github.com/groshi-project/grosh) | GNU/Linux, Windows, MacOS (CLI) |
 
+## Running instructions
+Basically you have two ways to run **groshi**: locally and inside docker containers.
+Both of them are described in these instructions.
 
+First you will have set up some secrets and environmental variables in order to run the service.
+
+### Step 1: secrets
+Run the following command to create `secrets` directory
+and other directories and files inside it which will hold secrets:
+
+```shell
+make secrets
+```
+
+`secrets` directory tree:
+```
+secrets/
+├── app
+│   ├── exchangerates_api_key
+│   └── jwt_secret_key
+└── mongo
+    ├── database
+    ├── password
+    └── username
+```
+
+Then fill all the secrets:
+* Mind up yourself `mongo/username`, `mongo/password` and `mongo/database`
+  if you are going to run **groshi** inside docker container, otherwise set actual credentials of your MongoDB instance.
+  Also don't forget to bring it up!
+* Generate random string and fill `app/jwt_secret_key` with it.
+* Register at [exchangeratesapi.io](https://exchangeratesapi.io), obtain an API key and fill `app/exchangerates_api_key` secret with it.
+
+### Step 2: environmental variables
+#### If you are going to run groshi using docker
+Simply open `docker-compose.yaml` using your favourite editor and
+edit environmental variables (it is optional, defaults are fine) in the `environment` section.
+Also remember to update `ports` section if you change `GROSHI_PORT` variables.
+
+#### If you are going to run groshi locally
+Create `.env` file containing all necessary environmental variables using `.env.example` as template:
+```shell
+cp .env.example .env
+```
+
+Edit these variables as you wish. Again, defaults are fine, but you would probably like
+to edit a couple of them (e.g. `GROSHI_PORT`).
+> Please note, that **groshi** does not take into account the `.env` file.
+> You will have to somehow "export" these defined variables to the environment.
+> For example, you can use `source .env` command if you are using bash.
+
+### Step 3: finally run it
+Just build and bring up docker containers using docker-compose
+if you wish to run **groshi** in docker:
+```shell
+docker-compose up --build --attach groshi
+```
+
+Or run `main.go` file if you are going to run groshi locally:
+```shell
+go run main.go
+```
 
 ## HTTP API overview
 There are two essences in **groshi**: _users_ and _transactions_.
