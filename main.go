@@ -25,7 +25,14 @@ import (
 //	@license.name	Licensed under MIT license.
 //	@license.url	https://github.com/groshi-project/groshi/tree/master/LICENSE
 
-func createHTTPRouter(jwtSecretKey string, enableSwagger bool) *gin.Engine {
+func createHTTPRouter(jwtSecretKey string, enableDebug bool, enableSwagger bool) *gin.Engine {
+	// set appropriate gin mode
+	if enableDebug {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	router := gin.Default()
 
 	// register validators:
@@ -125,7 +132,7 @@ func main() {
 		config.ReadDockerSecret(env.ExchangeRatesAPIKey),
 	)
 
-	router := createHTTPRouter(config.ReadDockerSecret(env.JWTSecretKeyFile), env.EnableSwagger)
+	router := createHTTPRouter(config.ReadDockerSecret(env.JWTSecretKeyFile), env.Debug, env.Swagger)
 	socket := fmt.Sprintf("%v:%v", env.Host, env.Port)
 
 	loggers.Info.Printf("starting HTTP server on %v", socket)

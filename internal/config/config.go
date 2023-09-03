@@ -7,12 +7,13 @@ import (
 	"strings"
 )
 
-// EnvVars TODO
+// EnvVars represents environmental variables that are used to configure groshi.
 type EnvVars struct {
 	// groshi settings:
-	Host          string `env:"GROSHI_HOST"`                           // host to be listened to
-	Port          int    `env:"GROSHI_PORT"`                           // port to be listened to
-	EnableSwagger bool   `env:"GROSHI_ENABLE_SWAGGER" $default:"true"` // enable/disable Swagger UI at `/docs/index.html` route
+	Host    string `env:"GROSHI_HOST"`    // host to be listened to
+	Port    int    `env:"GROSHI_PORT"`    // port to be listened to
+	Swagger bool   `env:"GROSHI_SWAGGER"` // toggle Swagger API documentation at `/docs/index.html` route
+	Debug   bool   `env:"GROSHI_DEBUG"`   // toggle debug mode (influences on gin mode)
 
 	JWTSecretKeyFile    string `env:"GROSHI_JWT_SECRET_KEY_FILE"`   // file containing secret key for generating JWTs
 	ExchangeRatesAPIKey string `env:"GROSHI_EXCHANGERATES_API_KEY"` // file containing API key for https://exchangeratesapi.io/
