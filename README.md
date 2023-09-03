@@ -9,10 +9,35 @@ create, read and update them, besides you can also get useful summary of all tra
 in desired currency units for given period.
 Multiple number of users is also supported (each user owns its own transactions).
 
-## HTTP API methods overview
-These tables will give you some basic overview of the groshi API. 
+## groshi clients
+### Client libraries for different programming languages
+|                    **Client library**                    | **Programming language** |
+|:--------------------------------------------------------:|:------------------------:|
+| [go-groshi](https://github.com/groshi-project/go-groshi) |            Go            |
 
-- API methods related to **authorization**:
+### Client applications
+
+|              **Client application**              |  **Platform**   |
+|:------------------------------------------------:|:---------------:|
+| [grosh](https://github.com/groshi-project/grosh) | GNU/Linux (CLI) |
+
+
+
+## HTTP API overview
+There are two essences in **groshi**: _users_ and _transactions_.
+
+> **Users** are basically like usual users in any other system. 
+> They have username and password, can authorize, own and manage their own transactions.
+
+> **Transactions** are basically financial transactions! 
+> They have _amount_ (it can be either positive or negative), _date_, _description_ and some other less important properties.
+
+So, the logic is simple: _users_ create _transactions_ that are visible only to themselves, 
+can update, delete and fetch them, get useful summary of some _transactions_ for given period of time.
+
+These tables will give you some basic overview of the groshi API methods.
+
+- API methods related to **authorization** of _users_:
 
     |        **HTTP method**         |        **Path**        | **Description**                                   |
     |:------------------------------:|:----------------------:|---------------------------------------------------|
