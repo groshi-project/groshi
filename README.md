@@ -1,13 +1,13 @@
 # groshi
 📉 **groshi** - goddamn simple tool to keep track of your finances.
 
-> Work on the project is still in progress, but it is close to release. Stay tuned!
+> Work on this project is still in progress, but it is nearing release. Stay tuned!
 
 ## Features
-Using **groshi** you can perform all basic operations with transactions in different currencies: 
-create, read and update them, besides you can also get useful summary of all transactions 
-in desired currency units for given period.
-Multiple number of users is also supported (each user owns its own transactions).
+With **groshi**, you can effortlessly manage financial transactions in various currencies. 
+It allows you to create, read, and update transactions, 
+as well as generate a useful summary of all transactions in your preferred currency for a specified period. 
+Multiple users are supported, each with their own set of transactions.
 
 ## Clients
 ### Client libraries for different programming languages
@@ -22,7 +22,7 @@ Multiple number of users is also supported (each user owns its own transactions)
 | [grosh](https://github.com/groshi-project/grosh) | GNU/Linux, Windows, MacOS (CLI) |
 
 ## Running instructions
-Basically you have two ways to run **groshi**: locally and inside docker containers.
+To run **groshi**, you have two options: locally or inside Docker containers.
 Both of them are described in these instructions.
 
 First you will have set up some secrets and environmental variables in order to run the service.
@@ -66,38 +66,37 @@ Create `.env` file containing all necessary environmental variables using `.env.
 cp .env.example .env
 ```
 
-Edit these variables as you wish. Again, defaults are fine, but you would probably like
+Edit these variables as needed. Again, defaults are fine, but you would probably like
 to edit a couple of them (e.g. `GROSHI_PORT`).
 
-Please note, that **groshi** does not take into account the `.env` file.
-You will have to somehow "export" these defined variables to the environment.
-For example, you can use `source .env` command if you are using bash.
+Please note that **groshi** does not automatically read the .env file. 
+You'll need to export these defined variables to the environment, 
+for example, using source .env if you're using bash.
 
-### Step 3: finally run it
-Just build and bring up docker containers using docker-compose
-if you wish to run **groshi** in docker:
+### Step 3: finally, run it
+To run **groshi** in Docker, build and start the containers with:
 ```shell
 docker-compose up --build --attach groshi
 ```
 
-Or run `main.go` file if you are going to run groshi locally:
+For local execution, run the `main.go` file with:
 ```shell
 go run main.go
 ```
 
 ## HTTP API overview
-There are two essences in **groshi**: _users_ and _transactions_.
+groshi revolves around two main entities: _users_ and _transactions_.
 
-> **Users** are basically like usual users in any other system. 
-> They have _username_ and _password_, can authorize, own and manage their own _transactions_.
+> **Users** represent typical system users with a _username_ and _password_. 
+> They can authorize, own, and manage their own _transactions_.
 
-> **Transactions** are basically financial transactions! 
-> They have _amount_ (it can be either positive or negative), _date_, _description_ and some other less important properties.
+> **Transactions** are financial transactions with properties such as amount (positive or negative),
+> date, description, and more.
 
-So, the logic is simple: _users_ create _transactions_ that are visible only to themselves. 
-They can update, delete and fetch them, get useful summary of some _transactions_ for given period of time.
+The logic is straightforward: users create transactions that are private to them. 
+They can update, delete, fetch them, and obtain a useful summary of their transactions over a specified period.
 
-These tables will give you some basic overview of the groshi API methods.
+The following tables provide an overview of the groshi API methods:
 
 - API methods related to **authorization** of _users_:
 
@@ -110,20 +109,20 @@ These tables will give you some basic overview of the groshi API methods.
 
 - API methods related to **users**:
     
-    |        **HTTP method**         |      **Path**      | **Description**                                   |
-    |:------------------------------:|:------------------:|---------------------------------------------------|
-    |             `POST`             |      `/user`       | Create new user                                   |
-    |             `GET`              |      `/user`       | Get information about current user                |
-    |             `PUT`              |      `/user`       | Update current user                               |
-    |            `DELETE`            |      `/user`       | Delete current user                               |
+    | **HTTP method** | **Path** | **Description**                             |
+    |:---------------:|:--------:|---------------------------------------------|
+    |     `POST`      | `/user`  | Create a new user                           |
+    |      `GET`      | `/user`  | Retrieve information about the current user |
+    |      `PUT`      | `/user`  | Update the current user                     |
+    |    `DELETE`     | `/user`  | Delete the current user                     |
 
 - API methods related to **transactions**:
     
-    |        **HTTP method**         |        **Path**         | **Description**                                   |
-    |:------------------------------:|:-----------------------:|---------------------------------------------------|
-    |             `POST`             |     `/transactions`     | Create new transaction                            |
-    |             `GET`              |     `/transactions`     | Retrieve all transactions for given period        |
-    |             `GET`              |  `/transactions/:uuid`  | Retrieve a transaction with specified UUID        |
-    |             `PUT`              |  `/transactions/:uuid`  | Update transaction with specified UUID            |
-    |            `DELETE`            |  `/transactions/:uuid`  | Delete transaction with specified UUID            |
-    |             `GET`              | `/transactions/summary` | Retrieve summary of transactions for given period |
+    | **HTTP method** |        **Path**         | **Description**                                       |
+    |:---------------:|:-----------------------:|-------------------------------------------------------|
+    |     `POST`      |     `/transactions`     | Create a new transaction                              |
+    |      `GET`      |     `/transactions`     | Retrieve all transactions for a specified period      |
+    |      `GET`      |  `/transactions/:uuid`  | Retrieve a transaction with a specified UUID          |
+    |      `PUT`      |  `/transactions/:uuid`  | Update a transaction with a specified UUID            |
+    |    `DELETE`     |  `/transactions/:uuid`  | Delete a transaction with a specified UUID            |
+    |      `GET`      | `/transactions/summary` | Retrieve a summary of transactions for a given period |
