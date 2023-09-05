@@ -103,7 +103,6 @@ The following tables provide an overview of the groshi API methods:
     |        **HTTP method**         |        **Path**        | **Description**                                   |
     |:------------------------------:|:----------------------:|---------------------------------------------------|
     |             `POST`             |     `/auth/login `     | Log in and obtain an authentication token         |
-    |             `POST`             |     `/auth/logout`     | Log out and invalidate the authentication token   |
     |             `POST`             |    `/auth/refresh`     | Refresh the authentication token                  |
 
 

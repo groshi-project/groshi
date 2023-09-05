@@ -120,10 +120,6 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 			})
 		},
 
-		LogoutResponse: func(c *gin.Context, code int) {
-			util.ReturnSuccessfulResponse(c, gin.H{})
-		},
-
 		RefreshResponse: func(c *gin.Context, code int, token string, expiresAt time.Time) {
 			util.ReturnSuccessfulResponse(c, gin.H{
 				"token":      token,

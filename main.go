@@ -74,7 +74,6 @@ func createHTTPRouter(jwtSecretKey string, enableDebug bool, enableSwagger bool)
 	// register authorization & authentication routes:
 	auth := router.Group("/auth")
 	auth.POST("/login", jwtHandlers.LoginHandler)
-	auth.POST("/logout", jwtHandlers.LogoutHandler)
 	auth.POST("/refresh", jwtHandlers.RefreshHandler)
 
 	// register user routes:
