@@ -5,7 +5,7 @@
 
 ## Features
 With **groshi**, you can effortlessly manage financial transactions in various currencies. 
-It allows you to create, read, and update transactions, 
+It allows you to create, read, and update transactions,
 as well as generate a useful summary of all transactions in your preferred currency for a specified period. 
 Multiple users are supported, each with their own set of transactions.
 
@@ -22,7 +22,7 @@ Multiple users are supported, each with their own set of transactions.
 | [grosh](https://github.com/groshi-project/grosh) | GNU/Linux, Windows, MacOS (CLI) |
 
 ## Running instructions
-To run **groshi**, you have two options: locally or inside Docker containers.
+To run **groshi**, you have two options: locally or inside docker containers.
 Both of them are described in these instructions.
 
 First you will have set up some secrets and environmental variables in order to run the service.
