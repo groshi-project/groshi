@@ -38,18 +38,17 @@ type Transaction struct {
 }
 
 func (t *Transaction) APIModel() *models.Transaction {
-	return &models.Transaction{}
-	//return gin.H{
-	//	"uuid": t.UUID,
-	//
-	//	"amount":      t.Amount,
-	//	"currency":    t.Currency,
-	//	"description": t.Description,
-	//	"date":        t.Date.Format(time.RFC3339),
-	//
-	//	"created_at": t.CreatedAt.Format(time.RFC3339),
-	//	"updated_at": t.UpdatedAt.Format(time.RFC3339),
-	//}
+	return &models.Transaction{
+		UUID: t.UUID,
+
+		Amount:      t.Amount,
+		Currency:    t.Currency,
+		Description: t.Description,
+		Date:        t.Date.Format(time.RFC3339),
+
+		CreatedAt: t.CreatedAt.Format(time.RFC3339),
+		UpdatedAt: t.UpdatedAt.Format(time.RFC3339),
+	}
 }
 
 // CurrencyRates TODO
