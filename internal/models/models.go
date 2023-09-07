@@ -13,7 +13,7 @@ type Transaction struct {
 	Amount      int    `json:"amount" example:"-999"`
 	Currency    string `json:"currency" example:"USD"`
 	Description string `json:"description" example:"Bought some donuts for $9.99..."`
-	Time        string `json:"time" example:"2023-09-02T12:38:10Z"`
+	Timestamp   string `json:"timestamp" example:"2023-09-02T12:38:10Z"`
 
 	CreatedAt string `json:"created_at" example:"2023-09-02T12:38:10Z"`
 	UpdatedAt string `json:"updated_at" example:"2023-09-02T12:38:10Z"`

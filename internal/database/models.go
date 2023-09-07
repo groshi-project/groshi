@@ -32,7 +32,7 @@ type Transaction struct {
 	Currency    string `bson:"currency"` // currency code in ISO-4217 format
 	Description string `bson:"description"`
 
-	Time time.Time `bson:"time"` // transaction timestamp (when it happened)
+	Timestamp time.Time `bson:"time"` // transaction timestamp (when it happened)
 
 	CreatedAt time.Time `bson:"created_at"`
 	UpdatedAt time.Time `bson:"updated_at"`
@@ -46,7 +46,7 @@ func (t *Transaction) APIModel() *models.Transaction {
 		Amount:      t.Amount,
 		Currency:    t.Currency,
 		Description: t.Description,
-		Time:        t.Time.In(time.UTC).Format(time.RFC3339),
+		Timestamp:   t.Time.In(time.UTC).Format(time.RFC3339),
 
 		CreatedAt: t.CreatedAt.In(time.UTC).Format(time.RFC3339),
 		UpdatedAt: t.UpdatedAt.In(time.UTC).Format(time.RFC3339),

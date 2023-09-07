@@ -24,7 +24,7 @@ type transactionsCreateParams struct {
 	Currency string `json:"currency" binding:"required,currency"`
 
 	Description *string    `json:"description" binding:"omitempty,description"`
-	Time        *time.Time `json:"time"`
+	Timestamp   *time.Time `json:"timestamp"`
 }
 
 // TransactionsCreateHandler creates new transaction.
@@ -37,7 +37,7 @@ type transactionsCreateParams struct {
 //	@param			amount		body		integer				true	"Negative or positive amount of transaction in minor units."
 //	@param			currency	body		string				true	"Currency code of transaction in ISO-4217 format."
 //	@param			description	body		string				false	"Description of transaction."
-//	@param			time		body		string				false	"Timestamp of transaction in RFC-3339 format."
+//	@param			timestamp	body		string				false	"Timestamp of transaction in RFC-3339 format."
 //	@success		200			{object}	models.Transaction	"Object of newly created transaction is returned."
 //	@router			/transactions [post]
 func TransactionsCreateHandler(c *gin.Context) {
@@ -55,9 +55,9 @@ func TransactionsCreateHandler(c *gin.Context) {
 	}
 
 	// use the current time as transaction time if time was not provided:
-	if params.Time == nil {
+	if params.Timestamp == nil {
 		currentTime := time.Now()
-		params.Time = &currentTime
+		params.Timestamp = &currentTime
 	}
 
 	transaction := database.Transaction{
@@ -70,7 +70,7 @@ func TransactionsCreateHandler(c *gin.Context) {
 		Currency: params.Currency,
 
 		Description: *params.Description,
-		Time:        *params.Time,
+		Timestamp:   *params.Timestamp,
 
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -299,10 +299,10 @@ func TransactionsReadSummary(c *gin.Context) {
 }
 
 type transactionsUpdateParams struct {
-	NewAmount      *int       `json:"new_amount" binding:"omitempty,required_without:NewCurrency,NewDescription,NewTime"`
-	NewCurrency    *string    `json:"new_currency" binding:"omitempty,currency,required_without:NewAmount,NewTime"`
-	NewDescription *string    `json:"new_description" binding:"omitempty,description,required_without:NewAmount,NewCurrency,NewTime"`
-	NewTime        *time.Time `json:"new_time" binding:"omitempty,required_without:NewAmount,NewCurrency,NewDescription"`
+	NewAmount      *int       `json:"new_amount" binding:"omitempty,required_without:NewCurrency,NewDescription,NewTimestamp"`
+	NewCurrency    *string    `json:"new_currency" binding:"omitempty,currency,required_without:NewAmount,NewTimestamp"`
+	NewDescription *string    `json:"new_description" binding:"omitempty,description,required_without:NewAmount,NewCurrency,NewTimestamp"`
+	NewTimestamp   *time.Time `json:"new_timestamp" binding:"omitempty,required_without:NewAmount,NewCurrency,NewDescription"`
 }
 
 // TransactionsUpdateHandler updates transaction.
@@ -316,7 +316,7 @@ type transactionsUpdateParams struct {
 //	@param			new_amount		body		integer				false	"New negative or positive amount of transaction in minor units."
 //	@param			new_currency	body		string				false	"New currency of transaction in ISO-4217 format."
 //	@param			new_description	body		string				false	"New description of transaction."
-//	@param			new_time		body		string				false	"New timestamp of transaction in RFC-3339 format."
+//	@param			new_timestamp	body		string				false	"New timestamp of transaction in RFC-3339 format."
 //	@success		200				{object}	models.Transaction	"Updated transaction object is returned."
 //	@failure		404				{object}	models.Error		"Transaction was not found."
 //	@failure		403				{object}	models.Error		"You have no right to update the transaction."
@@ -364,9 +364,9 @@ func TransactionsUpdateHandler(c *gin.Context) {
 		transaction.Description = *params.NewDescription
 	}
 
-	if params.NewTime != nil {
-		updateQueries = append(updateQueries, bson.E{Key: "time", Value: *params.NewTime})
-		transaction.Time = *params.NewTime
+	if params.NewTimestamp != nil {
+		updateQueries = append(updateQueries, bson.E{Key: "timestamp", Value: *params.NewTimestamp})
+		transaction.Timestamp = *params.NewTimestamp
 	}
 
 	currentTime := time.Now()
