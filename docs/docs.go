@@ -42,7 +42,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "End of the time period in RFC-3339 format (current date is used by default if no value provided).",
+                        "description": "End of the time period in RFC-3339 format (current time is used by default if no value provided).",
                         "name": "end_time",
                         "in": "query"
                     }
@@ -99,8 +99,8 @@ const docTemplate = `{
                         }
                     },
                     {
-                        "description": "Date of transaction in RFC-3339 format.",
-                        "name": "date",
+                        "description": "Timestamp of transaction in RFC-3339 format.",
+                        "name": "timestamp",
                         "in": "body",
                         "schema": {
                             "type": "string"
@@ -147,7 +147,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "End of the time period in RFC-3339 format (current date is used by default if no value provided).",
+                        "description": "End of the time period in RFC-3339 format (current time is used by default if no value provided).",
                         "name": "end_time",
                         "in": "query"
                     }
@@ -250,8 +250,8 @@ const docTemplate = `{
                         }
                     },
                     {
-                        "description": "New date of transaction in RFC-3339 format.",
-                        "name": "new_date",
+                        "description": "New timestamp of transaction in RFC-3339 format.",
+                        "name": "new_timestamp",
                         "in": "body",
                         "schema": {
                             "type": "string"
@@ -485,23 +485,23 @@ const docTemplate = `{
                 },
                 "created_at": {
                     "type": "string",
-                    "example": "2023-09-02T12:38:10+03:00"
+                    "example": "2023-09-02T12:38:10Z"
                 },
                 "currency": {
                     "type": "string",
                     "example": "USD"
                 },
-                "date": {
-                    "type": "string",
-                    "example": "2023-09-02T12:38:10+03:00"
-                },
                 "description": {
                     "type": "string",
                     "example": "Bought some donuts for $9.99..."
                 },
+                "timestamp": {
+                    "type": "string",
+                    "example": "2023-09-02T12:38:10Z"
+                },
                 "updated_at": {
                     "type": "string",
-                    "example": "2023-09-02T12:38:10+03:00"
+                    "example": "2023-09-02T12:38:10Z"
                 },
                 "uuid": {
                     "type": "string",

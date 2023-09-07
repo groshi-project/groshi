@@ -33,19 +33,19 @@ definitions:
         example: -999
         type: integer
       created_at:
-        example: "2023-09-02T12:38:10+03:00"
+        example: "2023-09-02T12:38:10Z"
         type: string
       currency:
         example: USD
         type: string
-      date:
-        example: "2023-09-02T12:38:10+03:00"
-        type: string
       description:
         example: Bought some donuts for $9.99...
         type: string
+      timestamp:
+        example: "2023-09-02T12:38:10Z"
+        type: string
       updated_at:
-        example: "2023-09-02T12:38:10+03:00"
+        example: "2023-09-02T12:38:10Z"
         type: string
       uuid:
         example: c81ab774-3f96-40e8-9ebd-170e303a682e
@@ -77,7 +77,7 @@ paths:
         name: start_time
         required: true
         type: string
-      - description: End of the time period in RFC-3339 format (current date is used
+      - description: End of the time period in RFC-3339 format (current time is used
           by default if no value provided).
         in: query
         name: end_time
@@ -116,9 +116,9 @@ paths:
         name: description
         schema:
           type: string
-      - description: Date of transaction in RFC-3339 format.
+      - description: Timestamp of transaction in RFC-3339 format.
         in: body
-        name: date
+        name: timestamp
         schema:
           type: string
       produces:
@@ -213,9 +213,9 @@ paths:
         name: new_description
         schema:
           type: string
-      - description: New date of transaction in RFC-3339 format.
+      - description: New timestamp of transaction in RFC-3339 format.
         in: body
-        name: new_date
+        name: new_timestamp
         schema:
           type: string
       produces:
@@ -253,7 +253,7 @@ paths:
         name: currency
         required: true
         type: string
-      - description: End of the time period in RFC-3339 format (current date is used
+      - description: End of the time period in RFC-3339 format (current time is used
           by default if no value provided).
         in: query
         name: end_time
