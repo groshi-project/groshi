@@ -46,7 +46,7 @@ func (t *Transaction) APIModel() *models.Transaction {
 		Amount:      t.Amount,
 		Currency:    t.Currency,
 		Description: t.Description,
-		Timestamp:   t.Time.In(time.UTC).Format(time.RFC3339),
+		Timestamp:   t.Timestamp.In(time.UTC).Format(time.RFC3339),
 
 		CreatedAt: t.CreatedAt.In(time.UTC).Format(time.RFC3339),
 		UpdatedAt: t.UpdatedAt.In(time.UTC).Format(time.RFC3339),
