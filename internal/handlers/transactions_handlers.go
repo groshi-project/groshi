@@ -24,7 +24,7 @@ type transactionsCreateParams struct {
 	Currency string `json:"currency" binding:"required,currency"`
 
 	Description *string    `json:"description" binding:"omitempty,description"`
-	Date        *time.Time `json:"date"`
+	Time        *time.Time `json:"time"`
 }
 
 // TransactionsCreateHandler creates new transaction.
@@ -37,7 +37,7 @@ type transactionsCreateParams struct {
 //	@param			amount		body		integer				true	"Negative or positive amount of transaction in minor units."
 //	@param			currency	body		string				true	"Currency code of transaction in ISO-4217 format."
 //	@param			description	body		string				false	"Description of transaction."
-//	@param			date		body		string				false	"Date of transaction in RFC-3339 format."
+//	@param			time		body		string				false	"Timestamp of transaction in RFC-3339 format."
 //	@success		200			{object}	models.Transaction	"Object of newly created transaction is returned."
 //	@router			/transactions [post]
 func TransactionsCreateHandler(c *gin.Context) {
@@ -54,10 +54,10 @@ func TransactionsCreateHandler(c *gin.Context) {
 		params.Description = &emptyDescription
 	}
 
-	// use the current date as transaction date if date was not provided:
-	if params.Date == nil {
+	// use the current time as transaction time if time was not provided:
+	if params.Time == nil {
 		currentTime := time.Now()
-		params.Date = &currentTime
+		params.Time = &currentTime
 	}
 
 	transaction := database.Transaction{
@@ -70,7 +70,7 @@ func TransactionsCreateHandler(c *gin.Context) {
 		Currency: params.Currency,
 
 		Description: *params.Description,
-		Date:        *params.Date,
+		Time:        *params.Time,
 
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -134,7 +134,7 @@ type transactionsReadManyParams struct {
 //	@accept			json
 //	@produce		json
 //	@param			start_time	query		string					true	"Beginning of the time period in RFC-3339 format."
-//	@param			end_time	query		string					false	"End of the time period in RFC-3339 format (current date is used by default if no value provided)."
+//	@param			end_time	query		string					false	"End of the time period in RFC-3339 format (current time is used by default if no value provided)."
 //	@success		200			{object}	[]models.Transaction	"Array of transaction objects is returned."
 //	@router			/transactions [get]
 func TransactionsReadManyHandler(c *gin.Context) {
@@ -143,8 +143,8 @@ func TransactionsReadManyHandler(c *gin.Context) {
 		return
 	}
 	if params.EndTime == nil {
-		currentDate := time.Now()
-		params.EndTime = &currentDate
+		currentTime := time.Now()
+		params.EndTime = &currentTime
 	}
 
 	currentUser := c.MustGet("current_user").(*database.User)
@@ -203,7 +203,7 @@ type transactionsReadSummaryParams struct {
 //	@produce		json
 //	@param			start_time	query		string			true	"Beginning of the time period in RFC-3339 format."
 //	@param			currency	query		string			true	"Desired currency of sum of transactions in ISO-4217 format."
-//	@param			end_time	query		string			false	"End of the time period in RFC-3339 format (current date is used by default if no value provided)."
+//	@param			end_time	query		string			false	"End of the time period in RFC-3339 format (current time is used by default if no value provided)."
 //	@success		200			{object}	models.Summary	"Summary object is returned."
 //	@router			/transactions/summary [get]
 func TransactionsReadSummary(c *gin.Context) {
@@ -213,9 +213,9 @@ func TransactionsReadSummary(c *gin.Context) {
 	}
 	currentUser := c.MustGet("current_user").(*database.User)
 
-	if params.EndTime == nil { // set current date as end date if end date was not provided
-		currentDate := time.Now()
-		params.EndTime = &currentDate
+	if params.EndTime == nil { // set current time as end time if end time was not provided
+		currentTime := time.Now()
+		params.EndTime = &currentTime
 	}
 
 	cursor, err := database.TransactionsCol.Find(
@@ -299,10 +299,10 @@ func TransactionsReadSummary(c *gin.Context) {
 }
 
 type transactionsUpdateParams struct {
-	NewAmount      *int       `json:"new_amount" binding:"omitempty,required_without:NewCurrency,NewDescription,NewDate"`
-	NewCurrency    *string    `json:"new_currency" binding:"omitempty,currency,required_without:NewAmount,NewDate"`
-	NewDescription *string    `json:"new_description" binding:"omitempty,description,required_without:NewAmount,NewCurrency,NewDate"`
-	NewDate        *time.Time `json:"new_date" binding:"omitempty,required_without:NewAmount,NewCurrency,NewDescription"`
+	NewAmount      *int       `json:"new_amount" binding:"omitempty,required_without:NewCurrency,NewDescription,NewTime"`
+	NewCurrency    *string    `json:"new_currency" binding:"omitempty,currency,required_without:NewAmount,NewTime"`
+	NewDescription *string    `json:"new_description" binding:"omitempty,description,required_without:NewAmount,NewCurrency,NewTime"`
+	NewTime        *time.Time `json:"new_time" binding:"omitempty,required_without:NewAmount,NewCurrency,NewDescription"`
 }
 
 // TransactionsUpdateHandler updates transaction.
@@ -316,7 +316,7 @@ type transactionsUpdateParams struct {
 //	@param			new_amount		body		integer				false	"New negative or positive amount of transaction in minor units."
 //	@param			new_currency	body		string				false	"New currency of transaction in ISO-4217 format."
 //	@param			new_description	body		string				false	"New description of transaction."
-//	@param			new_date		body		string				false	"New date of transaction in RFC-3339 format."
+//	@param			new_time		body		string				false	"New timestamp of transaction in RFC-3339 format."
 //	@success		200				{object}	models.Transaction	"Updated transaction object is returned."
 //	@failure		404				{object}	models.Error		"Transaction was not found."
 //	@failure		403				{object}	models.Error		"You have no right to update the transaction."
@@ -364,9 +364,9 @@ func TransactionsUpdateHandler(c *gin.Context) {
 		transaction.Description = *params.NewDescription
 	}
 
-	if params.NewDate != nil {
-		updateQueries = append(updateQueries, bson.E{Key: "date", Value: *params.NewDate})
-		transaction.Date = *params.NewDate
+	if params.NewTime != nil {
+		updateQueries = append(updateQueries, bson.E{Key: "time", Value: *params.NewTime})
+		transaction.Time = *params.NewTime
 	}
 
 	currentTime := time.Now()

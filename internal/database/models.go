@@ -28,26 +28,28 @@ type Transaction struct {
 
 	OwnerID primitive.ObjectID `bson:"owner_id"`
 
-	Amount      int       `bson:"amount"`   // amount of transaction in MINOR units
-	Currency    string    `bson:"currency"` // currency code in ISO-4217 format
-	Description string    `bson:"description"`
-	Date        time.Time `bson:"date"`
+	Amount      int    `bson:"amount"`   // amount of transaction in MINOR units
+	Currency    string `bson:"currency"` // currency code in ISO-4217 format
+	Description string `bson:"description"`
+
+	Time time.Time `bson:"time"` // transaction timestamp (when it happened)
 
 	CreatedAt time.Time `bson:"created_at"`
 	UpdatedAt time.Time `bson:"updated_at"`
 }
 
 func (t *Transaction) APIModel() *models.Transaction {
+	// please note: all time.Time values are returned relative to the UTC timezone!
 	return &models.Transaction{
 		UUID: t.UUID,
 
 		Amount:      t.Amount,
 		Currency:    t.Currency,
 		Description: t.Description,
-		Date:        t.Date.Format(time.RFC3339),
+		Time:        t.Time.In(time.UTC).Format(time.RFC3339),
 
-		CreatedAt: t.CreatedAt.Format(time.RFC3339),
-		UpdatedAt: t.UpdatedAt.Format(time.RFC3339),
+		CreatedAt: t.CreatedAt.In(time.UTC).Format(time.RFC3339),
+		UpdatedAt: t.UpdatedAt.In(time.UTC).Format(time.RFC3339),
 	}
 }
 

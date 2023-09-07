@@ -13,10 +13,10 @@ type Transaction struct {
 	Amount      int    `json:"amount" example:"-999"`
 	Currency    string `json:"currency" example:"USD"`
 	Description string `json:"description" example:"Bought some donuts for $9.99..."`
-	Date        string `json:"date" example:"2023-09-02T12:38:10+03:00"`
+	Time        string `json:"time" example:"2023-09-02T12:38:10Z"`
 
-	CreatedAt string `json:"created_at" example:"2023-09-02T12:38:10+03:00"`
-	UpdatedAt string `json:"updated_at" example:"2023-09-02T12:38:10+03:00"`
+	CreatedAt string `json:"created_at" example:"2023-09-02T12:38:10Z"`
+	UpdatedAt string `json:"updated_at" example:"2023-09-02T12:38:10Z"`
 }
 
 // Summary represents summary of transactions, returned by transactionsReadSummary handler.
