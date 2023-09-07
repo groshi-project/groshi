@@ -16,8 +16,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const jwtTimeout = time.Hour * 24 * 30    // todo: set convenient
-const jwtMaxRefresh = time.Hour * 24 * 30 // todo: set convenient
+const jwtTimeout = time.Hour * 24 * 30
+const jwtMaxRefresh = time.Hour * 24 * 15
 
 const jwtIdentityKey = "_id"
 
