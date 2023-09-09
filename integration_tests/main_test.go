@@ -42,16 +42,16 @@ func TestUserCreate(t *testing.T) {
 			assert.Equal(t, http.StatusConflict, err.(groshi.GroshiAPIError).HTTPStatusCode)
 		}
 	}
-	assert.Empty(t, user.Username)
+	assert.Nil(t, user)
 
-	// try to create user with empty username and password
+	// try to create user with  username and password
 	user, err = client.UserCreate("", "")
 	if assert.Error(t, err) {
 		if assert.IsType(t, groshi.GroshiAPIError{}, err) {
 			assert.Equal(t, http.StatusBadRequest, err.(groshi.GroshiAPIError).HTTPStatusCode)
 		}
 	}
-	assert.Empty(t, user.Username)
+	assert.Nil(t, user)
 }
 
 func TestAuth(t *testing.T) {
@@ -112,7 +112,7 @@ func TestUserDelete(t *testing.T) {
 			assert.Equal(t, http.StatusUnauthorized, err.(groshi.GroshiAPIError).HTTPStatusCode)
 		}
 	}
-	assert.Empty(t, readUser.Username)
+	assert.Nil(t, readUser)
 }
 
 func TestTransactionsCreate(t *testing.T) {
@@ -132,7 +132,6 @@ func TestTransactionsCreate(t *testing.T) {
 	)
 	assert.NoError(t, err)
 
-	assert.NotEmpty(t, transaction)
 	assert.Equal(t, amount, transaction.Amount)
 	assert.Equal(t, currency, transaction.Currency)
 	assert.Equal(t, description, transaction.Description)
@@ -145,7 +144,6 @@ func TestTransactionsCreate(t *testing.T) {
 	transaction, err = client.TransactionsReadOne(uuid)
 	assert.NoError(t, err)
 
-	assert.NotEmpty(t, transaction)
 	assert.Equal(t, uuid, transaction.UUID)
 	assert.Equal(t, amount, transaction.Amount)
 	assert.Equal(t, currency, transaction.Currency)
