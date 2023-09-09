@@ -1,9 +1,9 @@
 .PHONY: all
 all:
 	@echo "COMMAND    DESCRIPTION"
+	@echo "secrets    Create directories files for secrets."
 	@echo "docs       Generate groshi API Swagger documentation."
 	@echo "fmt        Format source code using `swag fmt` and `go fmt`."
-	@echo "secrets    Create directories files for secrets."
 
 .PHONY: docs
 docs:
