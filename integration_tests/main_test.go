@@ -213,7 +213,7 @@ func TestTransactionsSummary(t *testing.T) {
 	assert.NoError(t, err)
 
 	startTime := time.Now().Add(-time.Hour) // an hour ago
-	summary, err := client.TransactionsReadSummary(startTime, currency, nil)
+	summary, err := client.TransactionsReadSummary(currency, startTime, nil)
 	assert.NoError(t, err)
 
 	assert.Equal(t, 2, summary.TransactionsCount)
