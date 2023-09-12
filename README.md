@@ -125,3 +125,5 @@ The following tables provide an overview of the groshi API methods:
     |      `PUT`      |  `/transactions/:uuid`  | Update a transaction with a specified UUID            |
     |    `DELETE`     |  `/transactions/:uuid`  | Delete a transaction with a specified UUID            |
     |      `GET`      | `/transactions/summary` | Retrieve a summary of transactions for a given period |
+
+> Swagger (API documentation) is available at `/docs/index.html` route if `GROSHI_SWAGGER` environmental variable is set to `true`. 
