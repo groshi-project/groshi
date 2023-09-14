@@ -5,7 +5,16 @@ import (
 	"github.com/groshi-project/groshi/internal/currency/currency_rates"
 	"github.com/groshi-project/groshi/internal/loggers"
 	"regexp"
+	"time"
 )
+
+// NonzeroTimeValidator ensures that date is not a zero date.
+var NonzeroTimeValidator = func(fl validator.FieldLevel) bool {
+	if fl.Field().Interface().(time.Time).IsZero() {
+		return false
+	}
+	return true
+}
 
 // GetCurrencyValidator returns validator function for currencies.
 func GetCurrencyValidator() validator.Func {

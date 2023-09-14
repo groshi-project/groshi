@@ -48,6 +48,8 @@ func createHTTPRouter(jwtSecretKey string, enableDebug bool, enableSwagger bool)
 
 		"description": validators.GetRegexValidator(regexp.MustCompile(".*")),
 		"currency":    validators.GetCurrencyValidator(),
+
+		"nonzero_time": validators.NonzeroTimeValidator,
 	}
 
 	for validatorTag, validatorFunc := range validatorsMap {

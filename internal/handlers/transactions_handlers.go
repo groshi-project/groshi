@@ -121,7 +121,7 @@ func TransactionsReadOneHandler(c *gin.Context) {
 }
 
 type transactionsReadManyParams struct {
-	StartTime time.Time `form:"start_time" binding:"required"`
+	StartTime time.Time `form:"start_time" binding:"required,nonzero_time"`
 
 	EndTime *time.Time `form:"end_time"`
 }
@@ -187,7 +187,7 @@ func TransactionsReadManyHandler(c *gin.Context) {
 }
 
 type transactionsReadSummaryParams struct {
-	StartTime time.Time `form:"start_time" binding:"required"`
+	StartTime time.Time `form:"start_time" binding:"required,nonzero_time"`
 	Currency  string    `form:"currency" binding:"required,currency"`
 
 	EndTime *time.Time `form:"end_time"`
