@@ -24,13 +24,8 @@ func GetCurrencyValidator() validator.Func {
 	}
 
 	return func(fl validator.FieldLevel) bool {
-		value, ok := fl.Field().Interface().(string)
-		if !ok {
-			loggers.Error.Printf("could not get value to be validated")
-			return false
-		}
 		for _, currency := range currencies {
-			if value == currency {
+			if fl.Field().Interface().(string) == currency {
 				return true
 			}
 		}
@@ -41,10 +36,6 @@ func GetCurrencyValidator() validator.Func {
 // GetRegexValidator returns validator function which checks if string matches regex pattern.
 func GetRegexValidator(pattern *regexp.Regexp) validator.Func {
 	return func(fl validator.FieldLevel) bool {
-		value, ok := fl.Field().Interface().(string)
-		if !ok {
-			loggers.Error.Printf("could not get value to be validated")
-		}
-		return pattern.MatchString(value)
+		return pattern.MatchString(fl.Field().Interface().(string))
 	}
 }
