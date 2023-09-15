@@ -17,15 +17,21 @@ var NonzeroTimeValidator = func(fl validator.FieldLevel) bool {
 }
 
 // GetCurrencyValidator returns validator function for currencies.
-func GetCurrencyValidator() validator.Func {
+// `isOptional` param indicates if the valid currency can be an empty string.
+func GetCurrencyValidator(isOptional bool) validator.Func {
 	currencies, err := currency_rates.FetchCurrencies()
 	if err != nil {
 		loggers.Error.Fatalf("could not fetch available currencies: %v", err)
 	}
 
 	return func(fl validator.FieldLevel) bool {
-		for _, currency := range currencies {
-			if fl.Field().Interface().(string) == currency {
+		currency := fl.Field().Interface().(string)
+		if currency == "" { // return true on zero currency if it is optional, otherwise false.
+			return isOptional
+		}
+
+		for _, possibleCurrency := range currencies {
+			if currency == possibleCurrency {
 				return true
 			}
 		}

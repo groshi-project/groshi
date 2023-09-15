@@ -153,6 +153,7 @@ func FetchCurrencies() ([]string, error) {
 }
 
 // Convert converts amount from one currency units to another.
+// ?todo: make `amount` a param of type int.
 func Convert(fromCurrency string, toCurrency string, amount float64) (float64, error) {
 	if amount == 0 { // small optimization: if amount is 0, it will be 0 in any currency :)
 		return 0, nil

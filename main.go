@@ -46,8 +46,9 @@ func createHTTPRouter(jwtSecretKey string, enableDebug bool, enableSwagger bool)
 		"username": validators.GetRegexValidator(regexp.MustCompile(".{2,}")),
 		"password": validators.GetRegexValidator(regexp.MustCompile(".{8,}")),
 
-		"description": validators.GetRegexValidator(regexp.MustCompile(".*")),
-		"currency":    validators.GetCurrencyValidator(),
+		"description":       validators.GetRegexValidator(regexp.MustCompile(".*")),
+		"currency":          validators.GetCurrencyValidator(false),
+		"optional_currency": validators.GetCurrencyValidator(true),
 
 		"nonzero_time": validators.NonzeroTimeValidator,
 	}

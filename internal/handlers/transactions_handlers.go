@@ -16,6 +16,8 @@ import (
 	"time"
 )
 
+// todo: round converted transaction amounts according to mathematical rules instead of just using int()
+
 const errorDescriptionTransactionNotFound = "transaction was not found"
 const errorDescriptionTransactionForbidden = "you have no right to access to this transaction"
 
@@ -84,6 +86,10 @@ func TransactionsCreateHandler(c *gin.Context) {
 	util.ReturnSuccessfulResponse(c, transaction.APIModel())
 }
 
+type transactionsReadOneParams struct {
+	Currency string `form:"currency" binding:"optional_currency"`
+}
+
 // TransactionsReadOneHandler returns information about single transaction.
 //
 //	@summary		fetch one transaction
@@ -91,12 +97,18 @@ func TransactionsCreateHandler(c *gin.Context) {
 //	@tags			transactions
 //	@accept			json
 //	@produce		json
-//	@param			uuid	path		string				true	"UUID of transaction."
-//	@success		200		{object}	models.Transaction	"Transaction object is returned."
-//	@failure		404		{object}	models.Error		"Transaction was not found."
-//	@failure		403		{object}	models.Error		"You have no right to read this transaction."
+//	@param			uuid		path		string				true	"UUID of transaction."
+//	@param			currency	query		string				false	"The currency to convert amount to"
+//	@success		200			{object}	models.Transaction	"Transaction object is returned."
+//	@failure		404			{object}	models.Error		"Transaction was not found."
+//	@failure		403			{object}	models.Error		"You have no right to read this transaction."
 //	@router			/transactions/{uuid} [get]
 func TransactionsReadOneHandler(c *gin.Context) {
+	params := transactionsReadOneParams{}
+	if ok := util.BindQuery(c, &params); !ok {
+		return
+	}
+
 	transactionUUID := c.Param("uuid")
 
 	currentUser := c.MustGet("current_user").(*database.User)
@@ -117,13 +129,26 @@ func TransactionsReadOneHandler(c *gin.Context) {
 		return
 	}
 
+	// convert amount to the new currency if needed:
+	if params.Currency != "" {
+		if params.Currency != transaction.Currency {
+			newAmount, err := currency_rates.Convert(transaction.Currency, params.Currency, float64(transaction.Amount))
+			if err != nil {
+				util.AbortWithStatusInternalServerError(c, err)
+			}
+			transaction.Amount = int(newAmount)
+			transaction.Currency = params.Currency
+		}
+	}
+
 	util.ReturnSuccessfulResponse(c, transaction.APIModel())
 }
 
 type transactionsReadManyParams struct {
 	StartTime time.Time `form:"start_time" binding:"required,nonzero_time"`
 
-	EndTime *time.Time `form:"end_time"`
+	EndTime  *time.Time `form:"end_time"`
+	Currency string     `form:"currency" binding:"optional_currency"`
 }
 
 // TransactionsReadManyHandler returns all transactions for time given period.
@@ -135,6 +160,7 @@ type transactionsReadManyParams struct {
 //	@produce		json
 //	@param			start_time	query		string					true	"Beginning of the time period in RFC-3339 format."
 //	@param			end_time	query		string					false	"End of the time period in RFC-3339 format (current time is used by default if no value provided)."
+//	@param			currency	query		string					false	"The currency to convert amount to."
 //	@success		200			{object}	[]models.Transaction	"Array of transaction objects is returned."
 //	@router			/transactions [get]
 func TransactionsReadManyHandler(c *gin.Context) {
@@ -180,6 +206,20 @@ func TransactionsReadManyHandler(c *gin.Context) {
 		if err := cursor.Decode(&transaction); err != nil {
 			util.AbortWithStatusInternalServerError(c, err)
 		}
+
+		// convert amount to the new currency if needed:
+		if params.Currency != "" {
+			if params.Currency != transaction.Currency {
+				newAmount, err := currency_rates.Convert(transaction.Currency, params.Currency, float64(transaction.Amount))
+				if err != nil {
+					util.AbortWithStatusInternalServerError(c, err)
+					return
+				}
+				transaction.Amount = int(newAmount)
+				transaction.Currency = params.Currency
+			}
+		}
+
 		transactions = append(transactions, transaction.APIModel())
 	}
 
@@ -300,7 +340,7 @@ func TransactionsReadSummary(c *gin.Context) {
 
 type transactionsUpdateParams struct {
 	NewAmount      *int       `json:"new_amount" binding:"omitempty,required_without:NewCurrency,NewDescription,NewTimestamp"`
-	NewCurrency    *string    `json:"new_currency" binding:"omitempty,currency,required_without:NewAmount,NewTimestamp"`
+	NewCurrency    *string    `json:"new_currency" binding:"omitempty,optional_currency,required_without:NewAmount,NewTimestamp"`
 	NewDescription *string    `json:"new_description" binding:"omitempty,description,required_without:NewAmount,NewCurrency,NewTimestamp"`
 	NewTimestamp   *time.Time `json:"new_timestamp" binding:"omitempty,required_without:NewAmount,NewCurrency,NewDescription"`
 }
