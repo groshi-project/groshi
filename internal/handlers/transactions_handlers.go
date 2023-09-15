@@ -16,8 +16,6 @@ import (
 	"time"
 )
 
-// todo: round converted transaction amounts according to mathematical rules instead of just using int()
-
 const errorDescriptionTransactionNotFound = "transaction was not found"
 const errorDescriptionTransactionForbidden = "you have no right to access to this transaction"
 
@@ -136,7 +134,7 @@ func TransactionsReadOneHandler(c *gin.Context) {
 			if err != nil {
 				util.AbortWithStatusInternalServerError(c, err)
 			}
-			transaction.Amount = int(newAmount)
+			transaction.Amount = int(math.Round(newAmount))
 			transaction.Currency = params.Currency
 		}
 	}
@@ -215,7 +213,7 @@ func TransactionsReadManyHandler(c *gin.Context) {
 					util.AbortWithStatusInternalServerError(c, err)
 					return
 				}
-				transaction.Amount = int(newAmount)
+				transaction.Amount = int(math.Round(newAmount))
 				transaction.Currency = params.Currency
 			}
 		}
