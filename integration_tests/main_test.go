@@ -141,7 +141,7 @@ func TestTransactionsCreate(t *testing.T) {
 
 	// fetch the transaction:
 	uuid := transaction.UUID
-	transaction, err = client.TransactionsReadOne(uuid)
+	transaction, err = client.TransactionsReadOne(uuid, nil)
 	assert.NoError(t, err)
 
 	assert.Equal(t, uuid, transaction.UUID)
@@ -158,8 +158,8 @@ func TestTransactionsReadOne(t *testing.T) {
 
 	// create a new transaction:
 	amount := 1000
-	currency := "EUR"
-	description := "Description of transaction"
+	currency := "USD"
+	description := "Description of the transaction"
 	timestamp := time.Now()
 
 	transaction, err := client.TransactionsCreate(
@@ -168,13 +168,34 @@ func TestTransactionsReadOne(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, transaction.UUID)
 
-	// read the transaction:
-	readTransaction, err := client.TransactionsReadOne(transaction.UUID)
+	// read the transaction without currency conversion:
+	readTransaction, err := client.TransactionsReadOne(transaction.UUID, nil)
 	assert.NoError(t, err)
 
 	assert.Equal(t, transaction.UUID, readTransaction.UUID)
 	assert.Equal(t, transaction.Amount, readTransaction.Amount)
 	assert.Equal(t, transaction.Currency, readTransaction.Currency)
+	assert.Equal(t, transaction.Description, readTransaction.Description)
+	assert.Equal(t, transaction.Timestamp, readTransaction.Timestamp)
+
+	// read the transaction with currency conversion to the same currency:
+	readTransaction, err = client.TransactionsReadOne(transaction.UUID, &currency)
+	assert.NoError(t, err)
+
+	assert.Equal(t, transaction.UUID, readTransaction.UUID)
+	assert.Equal(t, transaction.Amount, readTransaction.Amount)
+	assert.Equal(t, transaction.Currency, readTransaction.Currency)
+	assert.Equal(t, transaction.Description, readTransaction.Description)
+	assert.Equal(t, transaction.Timestamp, readTransaction.Timestamp)
+
+	// read the transaction with currency conversion to EUR:
+	currency = "EUR"
+	readTransaction, err = client.TransactionsReadOne(transaction.UUID, &currency)
+	assert.NoError(t, err)
+
+	assert.Equal(t, transaction.UUID, readTransaction.UUID)
+	assert.NotEmpty(t, readTransaction.Amount)
+	assert.Equal(t, currency, readTransaction.Currency)
 	assert.Equal(t, transaction.Description, readTransaction.Description)
 	assert.Equal(t, transaction.Timestamp, readTransaction.Timestamp)
 }
@@ -187,18 +208,32 @@ func TestTransactionsReadMany(t *testing.T) {
 	for i := 0; i < transactionsCount; i++ {
 		amount := -200
 		currency := "USD"
+		description := "Transaction description"
 		timestamp := time.Now()
 		_, err := client.TransactionsCreate(
-			amount, currency, nil, &timestamp,
+			amount, currency, &description, &timestamp,
 		)
 		assert.NoError(t, err)
 	}
 
+	// read transactions without currency conversion:
 	startTime := time.Now().Add(-time.Hour) // an hour ago
-	readTransactions, err := client.TransactionsReadMany(startTime, nil)
+	readTransactions, err := client.TransactionsReadMany(startTime, nil, nil)
 	assert.NoError(t, err)
-
 	assert.Len(t, readTransactions, transactionsCount)
+
+	// read transactions with currency conversions to the same currency:
+	currency := "USD"
+	readTransactions, err = client.TransactionsReadMany(startTime, nil, &currency)
+	assert.NoError(t, err)
+	assert.Len(t, readTransactions, transactionsCount)
+
+	// read transactions with currency conversions to EUR:
+	currency = "EUR"
+	readTransactions, err = client.TransactionsReadMany(startTime, nil, &currency)
+	assert.NoError(t, err)
+	assert.Len(t, readTransactions, transactionsCount)
+
 }
 
 func TestTransactionsSummary(t *testing.T) {
@@ -213,6 +248,8 @@ func TestTransactionsSummary(t *testing.T) {
 	assert.NoError(t, err)
 
 	startTime := time.Now().Add(-time.Hour) // an hour ago
+
+	// fetch summary without currency conversions
 	summary, err := client.TransactionsReadSummary(currency, startTime, nil)
 	assert.NoError(t, err)
 
@@ -221,6 +258,15 @@ func TestTransactionsSummary(t *testing.T) {
 	assert.Equal(t, 100, summary.Outcome) // $1 outcome
 	assert.Equal(t, 50, summary.Total)    // $1.50 - $1 = $0.50
 	assert.Equal(t, "USD", currency)
+
+	// fetch summary with currency conversions
+	summary, err = client.TransactionsReadSummary("EUR", startTime, nil)
+	assert.NoError(t, err)
+	assert.Equal(t, 2, summary.TransactionsCount)
+	assert.NotEmpty(t, summary.Income)
+	assert.NotEmpty(t, summary.Outcome)
+	assert.NotEmpty(t, summary.Total)
+	assert.NotEmpty(t, "EUR")
 }
 
 func TestTransactionsDelete(t *testing.T) {
@@ -237,7 +283,7 @@ func TestTransactionsDelete(t *testing.T) {
 	assert.Equal(t, transaction.UUID, deletedTransaction.UUID)
 
 	// try to read the deleted transaction:
-	_, err = client.TransactionsReadOne(deletedTransaction.UUID)
+	_, err = client.TransactionsReadOne(deletedTransaction.UUID, nil)
 	if assert.Error(t, err) {
 		if assert.IsType(t, groshi.GroshiAPIError{}, err) {
 			assert.Equal(t, http.StatusNotFound, err.(groshi.GroshiAPIError).HTTPStatusCode)
