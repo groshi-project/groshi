@@ -82,6 +82,10 @@ paths:
         in: query
         name: end_time
         type: string
+      - description: The currency to convert amount to.
+        in: query
+        name: currency
+        type: string
       produces:
       - application/json
       responses:
@@ -169,6 +173,10 @@ paths:
         in: path
         name: uuid
         required: true
+        type: string
+      - description: The currency to convert amount to
+        in: query
+        name: currency
         type: string
       produces:
       - application/json

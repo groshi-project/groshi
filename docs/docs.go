@@ -45,6 +45,12 @@ const docTemplate = `{
                         "description": "End of the time period in RFC-3339 format (current time is used by default if no value provided).",
                         "name": "end_time",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "The currency to convert amount to.",
+                        "name": "currency",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -182,6 +188,12 @@ const docTemplate = `{
                         "name": "uuid",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "The currency to convert amount to",
+                        "name": "currency",
+                        "in": "query"
                     }
                 ],
                 "responses": {
