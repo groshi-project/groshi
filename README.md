@@ -28,8 +28,7 @@ Both of them are described in these instructions.
 First you will have set up some secrets and environmental variables in order to run the service.
 
 ### Step 1: secrets
-Run the following command to create `secrets` directory
-and other directories and files inside it which will hold secrets:
+Use the following command to create a `secrets` directory and its associated subdirectories and files to store secrets:
 
 ```shell
 make secrets
@@ -51,8 +50,8 @@ Then fill all the secrets:
 * Mind up yourself `mongo/username`, `mongo/password` and `mongo/database`
   if you are going to run **groshi** inside docker container, otherwise set actual credentials of your MongoDB instance.
   Also don't forget to bring it up!
-* Generate random string and fill `app/jwt_secret_key` with it.
-* Register at [exchangeratesapi.io](https://exchangeratesapi.io), obtain an API key and fill `app/exchangerates_api_key` secret with it.
+* Generate random string and populate `app/jwt_secret_key` with it.
+* Sign up for an account at [exchangeratesapi.io](https://exchangeratesapi.io), obtain an API key, and then enter it into `app/exchangerates_api_key` as a secret.
 
 ### Step 2: environmental variables
 #### If you are going to run groshi using docker
@@ -126,4 +125,5 @@ The following tables provide an overview of the groshi API methods:
     |    `DELETE`     |  `/transactions/:uuid`  | Delete a transaction with a specified UUID            |
     |      `GET`      | `/transactions/summary` | Retrieve a summary of transactions for a given period |
 
-> Swagger (API documentation) is available at `/docs/index.html` route if `GROSHI_SWAGGER` environmental variable is set to `true`. 
+> Access the Swagger API documentation at the `/docs/index.html` route
+> by setting the `GROSHI_SWAGGER` environment variable to `true`.
