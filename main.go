@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"regexp"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -10,13 +12,12 @@ import (
 	"github.com/groshi-project/groshi/internal/config"
 	"github.com/groshi-project/groshi/internal/currency/exchangerates"
 	"github.com/groshi-project/groshi/internal/database"
-	handlers2 "github.com/groshi-project/groshi/internal/handlers"
+	"github.com/groshi-project/groshi/internal/handlers"
 	"github.com/groshi-project/groshi/internal/loggers"
 	"github.com/groshi-project/groshi/internal/middlewares"
 	"github.com/groshi-project/groshi/internal/validators"
-	swaggerfiles "github.com/swaggo/files"
+	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"regexp"
 )
 
 //	@title			groshi HTTP API documentation
@@ -81,25 +82,25 @@ func createHTTPRouter(jwtSecretKey string, enableDebug bool, enableSwagger bool)
 
 	// register user routes:
 	user := router.Group("/user")
-	user.POST("", handlers2.UserCreateHandler)                  // create new user
-	user.GET("", jwtMiddleware, handlers2.UserReadHandler)      // read current user
-	user.PUT("", jwtMiddleware, handlers2.UserUpdateHandler)    // update current user
-	user.DELETE("", jwtMiddleware, handlers2.UserDeleteHandler) // delete current user
+	user.POST("", handlers.UserCreateHandler)                  // create new user
+	user.GET("", jwtMiddleware, handlers.UserReadHandler)      // read current user
+	user.PUT("", jwtMiddleware, handlers.UserUpdateHandler)    // update current user
+	user.DELETE("", jwtMiddleware, handlers.UserDeleteHandler) // delete current user
 
 	// register transactions routes:
 	transactions := router.Group("/transactions")
 	transactions.Use(jwtMiddleware)
-	transactions.POST("", handlers2.TransactionsCreateHandler)         // create new transaction
-	transactions.GET("", handlers2.TransactionsReadManyHandler)        // read multiple transactions for given period
-	transactions.GET("/:uuid", handlers2.TransactionsReadOneHandler)   // read one transaction
-	transactions.PUT("/:uuid", handlers2.TransactionsUpdateHandler)    // update transaction
-	transactions.DELETE("/:uuid", handlers2.TransactionsDeleteHandler) // delete transaction
-	transactions.GET("/summary", handlers2.TransactionsReadSummary)    // read summary about transactions for given period
+	transactions.POST("", handlers.TransactionsCreateHandler)         // create new transaction
+	transactions.GET("", handlers.TransactionsReadManyHandler)        // read multiple transactions for given period
+	transactions.GET("/:uuid", handlers.TransactionsReadOneHandler)   // read one transaction
+	transactions.PUT("/:uuid", handlers.TransactionsUpdateHandler)    // update transaction
+	transactions.DELETE("/:uuid", handlers.TransactionsDeleteHandler) // delete transaction
+	transactions.GET("/summary", handlers.TransactionsReadSummary)    // read summary about transactions for given period
 
 	// register Swagger documentation route if needed:
 	if enableSwagger {
 		docs.SwaggerInfo.BasePath = ""
-		router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+		router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	} else {
 		loggers.Warning.Println("swagger UI feature is disabled, no documentation will be shown at `/docs/index.html` route")
 	}
