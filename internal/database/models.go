@@ -57,7 +57,7 @@ func (t *Transaction) APIModel() *models.Transaction {
 type CurrencyRates struct {
 	ID primitive.ObjectID `bson:"_id"`
 
-	BaseCurrency string                 `bson:"currency"`
+	BaseCurrency string                 `bson:"base_currency"`
 	Rates        map[string]interface{} `bson:"rates"`
 
 	UpdatedAt time.Time `bson:"updated_at"`
