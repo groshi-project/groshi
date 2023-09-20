@@ -2,6 +2,9 @@ package handlers
 
 import (
 	"errors"
+	"math"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/groshi-project/groshi/internal/currency/currency_rates"
@@ -12,8 +15,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"math"
-	"time"
 )
 
 const errorDescriptionTransactionNotFound = "transaction was not found"

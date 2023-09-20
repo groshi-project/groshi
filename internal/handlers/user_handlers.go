@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"errors"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/groshi-project/groshi/internal/database"
 	"github.com/groshi-project/groshi/internal/handlers/util"
@@ -10,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"time"
 )
 
 type userCreateParams struct {

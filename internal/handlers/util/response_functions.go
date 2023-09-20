@@ -1,10 +1,11 @@
 package util
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/groshi-project/groshi/internal/loggers"
 	"github.com/groshi-project/groshi/internal/models"
-	"net/http"
 )
 
 // emptyErrorDetails is used when aborting with error
