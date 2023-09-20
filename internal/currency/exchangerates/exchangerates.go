@@ -67,7 +67,7 @@ func (client *exchangeratesAPIClient) GetRates(baseCurrency string) (map[string]
 	return response["rates"].(map[string]interface{}), nil
 }
 
-// GetCurrencies returns supported currency codes (ISO-TODO).
+// GetCurrencies returns supported currency codes (ISO-4217).
 func (client *exchangeratesAPIClient) GetCurrencies() ([]string, error) {
 	url := fmt.Sprintf("http://api.exchangeratesapi.io/v1/symbols?access_key=%v", client.accessKey)
 	response, err := client.sendRequest(url)
