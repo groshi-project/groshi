@@ -84,6 +84,7 @@ func fetchRates() (map[string]interface{}, error) {
 	if err != nil {
 		if errors.Is(err, errRatesAreNotCached) { // if cache is not stored
 			// then fetch it using API and store
+			loggers.Info.Println("fetching currency rates from third-party because rates are not cached")
 
 			if err := updateRatesFromAPI(&ratesDocument); err != nil {
 				return nil, err
@@ -106,7 +107,7 @@ func fetchRates() (map[string]interface{}, error) {
 		if time.Now().Sub(ratesDocument.UpdatedAt).Hours() > cacheTTL.Hours() { // if cache is expired
 			// then fetch new rates using API and update cache
 
-			loggers.Info.Println("currency rates cache is expired, updating it")
+			loggers.Info.Println("fetching currency rates from third-party because cache is expired")
 			if err := updateRatesFromAPI(&ratesDocument); err != nil {
 				return nil, err
 			}
