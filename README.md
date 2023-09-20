@@ -125,5 +125,13 @@ The following tables provide an overview of the groshi API methods:
     |    `DELETE`     |  `/transactions/:uuid`  | Delete a transaction with a specified UUID            |
     |      `GET`      | `/transactions/summary` | Retrieve a summary of transactions for a given period |
 
+
+- API methods related to **currencies**:
+
+  | **HTTP method** |   **Path**    | **Description**                        |
+  |:---------------:|:-------------:|----------------------------------------|
+  |      `GET`      | `/currencies` | Retrieve array of supported currencies |
+
+
 > Access the Swagger API documentation at the `/docs/index.html` route
 > by setting the `GROSHI_SWAGGER` environment variable to `true`.
