@@ -32,7 +32,7 @@ type Transaction struct {
 	Currency    string `bson:"currency"` // currency code in ISO-4217 format
 	Description string `bson:"description"`
 
-	Timestamp time.Time `bson:"time"` // transaction timestamp (when it happened)
+	Timestamp time.Time `bson:"timestamp"` // transaction timestamp (when it happened)
 
 	CreatedAt time.Time `bson:"created_at"`
 	UpdatedAt time.Time `bson:"updated_at"`
@@ -53,7 +53,7 @@ func (t *Transaction) APIModel() *models.Transaction {
 	}
 }
 
-// CurrencyRates TODO
+// CurrencyRates represents document containing currency rates information.
 type CurrencyRates struct {
 	ID primitive.ObjectID `bson:"_id"`
 
