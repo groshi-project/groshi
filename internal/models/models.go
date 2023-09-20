@@ -30,6 +30,9 @@ type Summary struct {
 	TransactionsCount int `json:"transactions_count" example:"6"`
 }
 
+// Currencies represents response containing array of available currency codes.
+type Currencies []string
+
 // Error represents response containing information about API error.
 type Error struct {
 	ErrorMessage string   `json:"error_message" example:"example error message"`

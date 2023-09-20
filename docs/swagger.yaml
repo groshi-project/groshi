@@ -66,6 +66,23 @@ info:
   title: groshi HTTP API documentation
   version: 0.1.0
 paths:
+  /currencies:
+    get:
+      consumes:
+      - application/json
+      description: Returns array of available currency codes in ISO-4217 format.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Array of currency codes in ISO-4217 format is returned.
+          schema:
+            items:
+              type: string
+            type: array
+      summary: get array of available currency codes
+      tags:
+      - currencies
   /transactions:
     get:
       consumes:

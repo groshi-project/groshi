@@ -97,6 +97,10 @@ func createHTTPRouter(jwtSecretKey string, enableDebug bool, enableSwagger bool)
 	transactions.DELETE("/:uuid", handlers.TransactionsDeleteHandler) // delete transaction
 	transactions.GET("/summary", handlers.TransactionsReadSummary)    // read summary about transactions for given period
 
+	// register currencies route:
+	currencies := router.Group("/currencies")
+	currencies.GET("", handlers.CurrenciesRead) // read available currencies
+
 	// register Swagger documentation route if needed:
 	if enableSwagger {
 		docs.SwaggerInfo.BasePath = ""

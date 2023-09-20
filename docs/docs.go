@@ -19,6 +19,32 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/currencies": {
+            "get": {
+                "description": "Returns array of available currency codes in ISO-4217 format.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "currencies"
+                ],
+                "summary": "get array of available currency codes",
+                "responses": {
+                    "200": {
+                        "description": "Array of currency codes in ISO-4217 format is returned.",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/transactions": {
             "get": {
                 "description": "Returns array of transactions for given time period.",
