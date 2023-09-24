@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/groshi-project/groshi/internal/currency/currency_rates"
 	"github.com/groshi-project/groshi/internal/handlers/util"
+	"slices"
 )
 
 // CurrenciesRead returns slice of available currency codes in ISO-4217 format.
@@ -36,6 +37,7 @@ func CurrenciesRead(c *gin.Context) {
 	// BUT: For now I see no point to fix that because the third party has a stable list of supported currencies,
 	//      and it will unlikely be changed.
 	currencies, err := currency_rates.FetchCurrencies()
+	slices.Sort(currencies)
 	if err != nil {
 		util.AbortWithStatusInternalServerError(c, err)
 	}
