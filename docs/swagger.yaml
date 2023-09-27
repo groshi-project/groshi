@@ -149,7 +149,7 @@ paths:
           description: Object of newly created transaction is returned.
           schema:
             $ref: '#/definitions/models.Transaction'
-      summary: create new transaction
+      summary: create a new transaction
       tags:
       - transactions
   /transactions/{uuid}:
@@ -350,7 +350,7 @@ paths:
           description: User with such username already exists.
           schema:
             $ref: '#/definitions/models.Error'
-      summary: create new user
+      summary: create a new user
       tags:
       - user
     put:

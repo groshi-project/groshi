@@ -102,7 +102,7 @@ const docTemplate = `{
                 "tags": [
                     "transactions"
                 ],
-                "summary": "create new transaction",
+                "summary": "create a new transaction",
                 "parameters": [
                     {
                         "description": "Negative or positive amount of transaction in minor units.",
@@ -414,7 +414,7 @@ const docTemplate = `{
                 "tags": [
                     "user"
                 ],
-                "summary": "create new user",
+                "summary": "create a new user",
                 "parameters": [
                     {
                         "description": "Username for new user.",
