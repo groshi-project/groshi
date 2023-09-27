@@ -28,9 +28,9 @@ type transactionsCreateParams struct {
 	Timestamp   *time.Time `json:"timestamp"`
 }
 
-// TransactionsCreateHandler creates new transaction.
+// TransactionsCreateHandler creates a new transaction.
 //
-//	@summary		create new transaction
+//	@summary		create a new transaction
 //	@description	Creates a new transaction owned by current user.
 //	@tags			transactions
 //	@accept			json
@@ -90,6 +90,7 @@ type transactionsReadOneParams struct {
 }
 
 // TransactionsReadOneHandler returns information about single transaction.
+// Optionally converts its amount to the given currency units.
 //
 //	@summary		fetch one transaction
 //	@description	Returns information about one transaction.
@@ -151,6 +152,7 @@ type transactionsReadManyParams struct {
 }
 
 // TransactionsReadManyHandler returns all transactions for time given period.
+// Optionally converts all amounts to given currency units.
 //
 //	@summary		fetch many transactions
 //	@description	Returns array of transactions for given time period.

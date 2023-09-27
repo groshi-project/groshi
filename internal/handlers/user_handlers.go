@@ -19,9 +19,9 @@ type userCreateParams struct {
 	Password string `json:"password" binding:"required,password"`
 }
 
-// UserCreateHandler creates new user.
+// UserCreateHandler creates ф new user.
 //
-//	@summary		create new user
+//	@summary		create a new user
 //	@description	Creates a new user.
 //	@tags			user
 //	@accept			json
