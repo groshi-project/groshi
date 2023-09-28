@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"regexp"
 
 	"github.com/gin-contrib/cors"
@@ -64,6 +65,7 @@ func createHTTPRouter(jwtSecretKey string, enableDebug bool, enableSwagger bool)
 	// setup cross-origin resource sharing
 	corsConfig := cors.Config{
 		AllowAllOrigins: true,
+		AllowMethods:    []string{http.MethodGet, http.MethodPost, http.MethodPost, http.MethodDelete, http.MethodOptions},
 		AllowHeaders: []string{
 			"Authorization",
 			"Content-Type",
