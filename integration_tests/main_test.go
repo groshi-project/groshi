@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+// todo: test transactions update
+
 const GroshiSocketEnvVarName = "GROSHI_TEST_SOCKET"
 
 var GroshiSocket string
