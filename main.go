@@ -65,7 +65,7 @@ func createHTTPRouter(jwtSecretKey string, enableDebug bool, enableSwagger bool)
 	// setup cross-origin resource sharing
 	corsConfig := cors.Config{
 		AllowAllOrigins: true,
-		AllowMethods:    []string{http.MethodGet, http.MethodPost, http.MethodPost, http.MethodDelete, http.MethodOptions},
+		AllowMethods:    []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
 		AllowHeaders: []string{
 			"Authorization",
 			"Content-Type",
