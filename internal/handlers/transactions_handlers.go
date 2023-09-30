@@ -186,7 +186,7 @@ func TransactionsReadManyHandler(c *gin.Context) {
 				"created_at",
 				bson.D{
 					{"$gte", params.StartTime},
-					{"$lt", *params.EndTime},
+					{"$lte", *params.EndTime},
 				},
 			}},
 	)
