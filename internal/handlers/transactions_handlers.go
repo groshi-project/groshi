@@ -340,10 +340,10 @@ func TransactionsReadSummary(c *gin.Context) {
 }
 
 type transactionsUpdateParams struct {
-	NewAmount      *int       `json:"new_amount" binding:"omitempty,required_without_all"`
-	NewCurrency    *string    `json:"new_currency" binding:"omitempty,optional_currency,required_without_all"`
-	NewDescription *string    `json:"new_description" binding:"omitempty,description,required_without_all"`
-	NewTimestamp   *time.Time `json:"new_timestamp" binding:"omitempty,required_without_all"`
+	NewAmount      *int       `json:"new_amount" binding:"omitempty"`
+	NewCurrency    *string    `json:"new_currency" binding:"omitempty"`
+	NewDescription *string    `json:"new_description" binding:"omitempty"`
+	NewTimestamp   *time.Time `json:"new_timestamp" binding:"omitempty"`
 }
 
 // TransactionsUpdateHandler updates transaction.
@@ -365,6 +365,19 @@ type transactionsUpdateParams struct {
 func TransactionsUpdateHandler(c *gin.Context) {
 	params := transactionsUpdateParams{}
 	if ok := util.BindBody(c, &params); !ok {
+		return
+	}
+
+	if params.NewAmount == nil && params.NewCurrency == nil && params.NewDescription == nil && params.NewTimestamp == nil {
+		// no new values provided for any of fields
+		util.AbortWithStatusBadRequest(c, "invalid request body params, please refer to the method documentation",
+			[]string{
+				"'new_amount' param is required if no other params were provided",
+				"'new_currency' param is required if no other params were provided",
+				"'new_description' param is required if no other params were provided",
+				"'new_timestamp' param is required if no other params were provided",
+			},
+		)
 		return
 	}
 
