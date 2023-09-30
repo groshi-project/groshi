@@ -340,10 +340,10 @@ func TransactionsReadSummary(c *gin.Context) {
 }
 
 type transactionsUpdateParams struct {
-	NewAmount      *int       `json:"new_amount" binding:"omitempty,required_without:NewCurrency,NewDescription,NewTimestamp"`
-	NewCurrency    *string    `json:"new_currency" binding:"omitempty,optional_currency,required_without:NewAmount,NewTimestamp"`
-	NewDescription *string    `json:"new_description" binding:"omitempty,description,required_without:NewAmount,NewCurrency,NewTimestamp"`
-	NewTimestamp   *time.Time `json:"new_timestamp" binding:"omitempty,required_without:NewAmount,NewCurrency,NewDescription"`
+	NewAmount      *int       `json:"new_amount" binding:"omitempty,required_without_all"`
+	NewCurrency    *string    `json:"new_currency" binding:"omitempty,optional_currency,required_without_all"`
+	NewDescription *string    `json:"new_description" binding:"omitempty,description,required_without_all"`
+	NewTimestamp   *time.Time `json:"new_timestamp" binding:"omitempty,required_without_all"`
 }
 
 // TransactionsUpdateHandler updates transaction.
