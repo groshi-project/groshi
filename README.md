@@ -17,9 +17,10 @@ Multiple users are supported, each with their own set of transactions.
 
 ### Client applications
 
-|                 **Application**                  |          **Platform**           |
-|:------------------------------------------------:|:-------------------------------:|
-| [grosh](https://github.com/groshi-project/grosh) | GNU/Linux, Windows, MacOS (CLI) |
+|                      **Application**                       |          **Platform**           |
+|:----------------------------------------------------------:|:-------------------------------:|
+|      [grosh](https://github.com/groshi-project/grosh)      | GNU/Linux, Windows, MacOS (CLI) |
+| [groshi-web](https://github.com/groshi-project/groshi-web) |               Web               |
 
 ## Running instructions
 To run **groshi**, you have two options: locally or inside docker containers.
