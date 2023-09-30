@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-// todo: test transactions update
-
 const GroshiSocketEnvVarName = "GROSHI_TEST_SOCKET"
 
 var GroshiSocket string
@@ -269,6 +267,68 @@ func TestTransactionsSummary(t *testing.T) {
 	assert.NotEmpty(t, summary.Outcome)
 	assert.NotEmpty(t, summary.Total)
 	assert.NotEmpty(t, "EUR")
+}
+
+func TestTransactionsUpdate(t *testing.T) {
+	_, _, client := NewAuthorizedGroshiClientWithUser(GroshiSocket)
+
+	amount := -350
+	currency := "EUR"
+	description := "Payed bills for goddamn drum lessons"
+	timestamp := time.Now()
+
+	transaction, err := client.TransactionsCreate(
+		amount,
+		currency,
+		&description,
+		&timestamp,
+	)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, transaction)
+
+	// update without providing anything new (error is to be expected)
+	_, err = client.TransactionsUpdate(transaction.UUID, nil, nil, nil, nil)
+	if assert.Error(t, err) {
+		if assert.IsType(t, groshi.GroshiAPIError{}, err) {
+			assert.Equal(t, http.StatusBadRequest, err.(groshi.GroshiAPIError).HTTPStatusCode)
+		}
+	}
+
+	newAmount1 := -600
+	newCurrency := "USD"
+	newDescription := "Payed bills for my car insurance (I think I cannot afford to own a car)"
+	newTimestamp := time.Date(2023, 1, 1, 15, 30, 1, 0, time.Local)
+
+	// update amount only:
+	updatedTransaction1, err := client.TransactionsUpdate(
+		transaction.UUID,
+		&newAmount1,
+		nil,
+		nil,
+		nil,
+	)
+	assert.NoError(t, err)
+	if assert.NotNil(t, updatedTransaction1) {
+		assert.Equal(t, newAmount1, updatedTransaction1.Amount)
+	}
+
+	// update all fields:
+	newAmount2 := -999
+	updatedTransaction2, err := client.TransactionsUpdate(
+		transaction.UUID,
+		&newAmount2,
+		&newCurrency,
+		&newDescription,
+		&newTimestamp,
+	)
+
+	assert.NoError(t, err)
+	if assert.NotNil(t, updatedTransaction2) {
+		assert.Equal(t, newAmount2, updatedTransaction2.Amount)
+		assert.Equal(t, newCurrency, updatedTransaction2.Currency)
+		assert.Equal(t, newDescription, updatedTransaction2.Description)
+		assert.Equal(t, newTimestamp.In(time.UTC), updatedTransaction2.Timestamp)
+	}
 }
 
 func TestTransactionsDelete(t *testing.T) {
