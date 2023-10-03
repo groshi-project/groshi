@@ -1,7 +1,7 @@
 # groshi
 📉 **groshi** - goddamn simple tool to keep track of your finances.
 
-![Swagger preview](https://imgur.com/zyn4BKd.jpg)
+![Swagger preview](https://imgur.com/H8P65Z2.jpg)
 
 ## Features
 With **groshi**, you can effortlessly manage financial transactions in various currencies. 
