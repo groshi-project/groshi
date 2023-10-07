@@ -92,6 +92,10 @@ github.com/groshi-project/go-groshi v0.1.8 h1:Vvo1Q7lk2ur1pjNHSFtv2rpBCNggycEHVB
 github.com/groshi-project/go-groshi v0.1.8/go.mod h1:GCSvYNc/nQrOQIZ7iYh7JhOyg9KQBesnYDTicz9b+C8=
 github.com/groshi-project/go-groshi v0.1.9 h1:GaiGsrnLyoiNy9BtlSSvE+tiQkkKHzgfwnh8fNW9014=
 github.com/groshi-project/go-groshi v0.1.9/go.mod h1:GCSvYNc/nQrOQIZ7iYh7JhOyg9KQBesnYDTicz9b+C8=
+github.com/groshi-project/go-groshi v0.1.10 h1:XVZn0lwma+vnwKlnMxZ7ZitsStSIFMhKDrJTP/6p7U8=
+github.com/groshi-project/go-groshi v0.1.10/go.mod h1:GCSvYNc/nQrOQIZ7iYh7JhOyg9KQBesnYDTicz9b+C8=
+github.com/groshi-project/go-groshi v0.1.11 h1:3NPC8SzvYKhfzLkgr8SY3OkSU/DTUoOn9wMik2fN38s=
+github.com/groshi-project/go-groshi v0.1.11/go.mod h1:GCSvYNc/nQrOQIZ7iYh7JhOyg9KQBesnYDTicz9b+C8=
 github.com/jieggii/lookupcfg v0.1.2 h1:yHSBmdz2aBlAsjDtiZIxVXAzJyzSl/4RJjFM8S7AQb4=
 github.com/jieggii/lookupcfg v0.1.2/go.mod h1:mm4OPJhKCjUCbP5s2NR2Ne07l8yHgkPYdYBHntYac2o=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
