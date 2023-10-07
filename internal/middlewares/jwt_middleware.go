@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/groshi-project/groshi/internal/database"
-	"github.com/groshi-project/groshi/internal/handlers/util"
+	"github.com/groshi-project/groshi/internal/handlers/response"
 	"github.com/groshi-project/groshi/internal/loggers"
-	"github.com/groshi-project/groshi/internal/password_hashing"
+	"github.com/groshi-project/groshi/internal/passhash"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -75,7 +75,7 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 				return nil, errors.New("internal server error")
 			}
 
-			if ok := password_hashing.ValidatePassword(credentials.Password, user.Password); !ok {
+			if ok := passhash.Validate(credentials.Password, user.Password); !ok {
 				return nil, errors.New("incorrect password")
 			}
 			return &jwtClaims{
@@ -110,18 +110,18 @@ func NewJWTMiddleware(secretKey string) *jwt.GinJWTMiddleware {
 		},
 
 		Unauthorized: func(c *gin.Context, code int, message string) {
-			util.AbortWithStatusUnauthorized(c, message)
+			response.AbortWithStatusUnauthorized(c, message)
 		},
 
 		LoginResponse: func(c *gin.Context, code int, token string, expiresAt time.Time) {
-			util.ReturnSuccessfulResponse(c, gin.H{
+			response.ReturnSuccessfulResponse(c, gin.H{
 				"token":      token,
 				"expires_at": expiresAt.Format(time.RFC3339),
 			})
 		},
 
 		RefreshResponse: func(c *gin.Context, code int, token string, expiresAt time.Time) {
-			util.ReturnSuccessfulResponse(c, gin.H{
+			response.ReturnSuccessfulResponse(c, gin.H{
 				"token":      token,
 				"expires_at": expiresAt.Format(time.RFC3339),
 			})

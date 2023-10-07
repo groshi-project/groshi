@@ -1,9 +1,10 @@
-package util
+package bind
 
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/groshi-project/groshi/internal/handlers/response"
 )
 
 func generateErrorDetails(err error) []string {
@@ -20,11 +21,11 @@ func generateErrorDetails(err error) []string {
 	return errorDetails
 }
 
-// BindBody is an alias function for gin.Context.ShouldBind to be used inside handlers.
-func BindBody(c *gin.Context, v interface{}) (ok bool) {
+// Body is an alias function for gin.Context.ShouldBind to be used inside handlers.
+func Body(c *gin.Context, v interface{}) (ok bool) {
 	if err := c.ShouldBind(v); err != nil {
 		//loggers.Error.Printf("error binding body: %v", err)
-		AbortWithStatusBadRequest(
+		response.AbortWithStatusBadRequest(
 			c,
 			"invalid request body params, please refer to the method documentation",
 			generateErrorDetails(err),
@@ -34,11 +35,11 @@ func BindBody(c *gin.Context, v interface{}) (ok bool) {
 	return true
 }
 
-// BindQuery is an alias for gin.Context.ShouldBindQuery to be used inside handlers.
-func BindQuery(c *gin.Context, v interface{}) (ok bool) {
+// Query is an alias for gin.Context.ShouldBindQuery to be used inside handlers.
+func Query(c *gin.Context, v interface{}) (ok bool) {
 	if err := c.ShouldBindQuery(v); err != nil {
 		//loggers.Error.Printf("error binding query: %v", err)
-		AbortWithStatusBadRequest(
+		response.AbortWithStatusBadRequest(
 			c,
 			"invalid query params, please refer to the method documentation",
 			generateErrorDetails(err),

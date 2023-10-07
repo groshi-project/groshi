@@ -27,7 +27,7 @@ type EnvVars struct {
 	MongoDatabaseFile string `env:"GROSHI_MONGO_DATABASE_FILE"`
 }
 
-// handleConfigPopulationError TODO
+// handleConfigPopulationError logs errors and exists, if any error occurred.
 func catchConfigPopulationError(result *lookupcfg.ConfigPopulationResult) {
 	die := false
 	if len(result.MissingFields) != 0 {
@@ -43,7 +43,7 @@ func catchConfigPopulationError(result *lookupcfg.ConfigPopulationResult) {
 	}
 }
 
-// ReadEnvVars TODO
+// ReadEnvVars reads necessary environmental variables.
 func ReadEnvVars() *EnvVars {
 	config := EnvVars{}
 	result := lookupcfg.PopulateConfig("env", os.LookupEnv, &config)
@@ -51,7 +51,7 @@ func ReadEnvVars() *EnvVars {
 	return &config
 }
 
-// ReadDockerSecret TODO
+// ReadDockerSecret reads docker secret file.
 func ReadDockerSecret(filePath string) string {
 	data, err := os.ReadFile(filePath)
 	if err != nil {

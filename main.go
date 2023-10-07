@@ -17,8 +17,8 @@ import (
 	"github.com/groshi-project/groshi/internal/loggers"
 	"github.com/groshi-project/groshi/internal/middlewares"
 	"github.com/groshi-project/groshi/internal/validators"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	swaggofiles "github.com/swaggo/files"
+	swagger "github.com/swaggo/gin-swagger"
 )
 
 //	@title			groshi HTTP API documentation
@@ -106,7 +106,7 @@ func createHTTPRouter(jwtSecretKey string, enableDebug bool, enableSwagger bool)
 	// register Swagger documentation route if needed:
 	if enableSwagger {
 		docs.SwaggerInfo.BasePath = ""
-		router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+		router.GET("/docs/*any", swagger.WrapHandler(swaggofiles.Handler))
 	} else {
 		loggers.Warning.Println("swagger UI feature is disabled, no documentation will be shown at `/docs/index.html` route")
 	}

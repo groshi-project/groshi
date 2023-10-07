@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"errors"
+	"github.com/groshi-project/groshi/internal/handlers/bind"
+	"github.com/groshi-project/groshi/internal/handlers/response"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/groshi-project/groshi/internal/database"
-	"github.com/groshi-project/groshi/internal/handlers/util"
 	"github.com/groshi-project/groshi/internal/models"
-	"github.com/groshi-project/groshi/internal/password_hashing"
+	"github.com/groshi-project/groshi/internal/passhash"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -33,25 +34,25 @@ type userCreateParams struct {
 //	@router			/user [post]
 func UserCreateHandler(c *gin.Context) {
 	params := userCreateParams{}
-	if ok := util.BindBody(c, &params); !ok {
+	if ok := bind.Body(c, &params); !ok {
 		return
 	}
 
 	// check if user already exists:
 	err := database.UsersCol.FindOne(database.Context, bson.D{{"username", params.Username}}).Err()
 	if err == nil {
-		util.AbortWithStatusConflict(c, "user with such username already exists")
+		response.AbortWithStatusConflict(c, "user with such username already exists")
 		return
 	}
 	if !errors.Is(err, mongo.ErrNoDocuments) {
-		util.AbortWithStatusInternalServerError(c, err)
+		response.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
 	// hash user password:
-	passwordHash, err := password_hashing.HashPassword(params.Password)
+	passwordHash, err := passhash.Hash(params.Password)
 	if err != nil {
-		util.AbortWithStatusInternalServerError(c, err)
+		response.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
@@ -67,10 +68,10 @@ func UserCreateHandler(c *gin.Context) {
 	}
 	_, err = database.UsersCol.InsertOne(database.Context, user)
 	if err != nil {
-		util.AbortWithStatusInternalServerError(c, err)
+		response.AbortWithStatusInternalServerError(c, err)
 		return
 	}
-	util.ReturnSuccessfulResponse(c, &models.User{
+	response.ReturnSuccessfulResponse(c, &models.User{
 		Username: user.Username,
 	})
 }
@@ -86,7 +87,7 @@ func UserCreateHandler(c *gin.Context) {
 //	@router			/user [get]
 func UserReadHandler(c *gin.Context) {
 	currentUser := c.MustGet("current_user").(*database.User)
-	util.ReturnSuccessfulResponse(c, &models.User{
+	response.ReturnSuccessfulResponse(c, &models.User{
 		Username: currentUser.Username,
 	})
 }
@@ -107,7 +108,7 @@ type userUpdateParams struct {
 //	@router			/user [put]
 func UserUpdateHandler(c *gin.Context) {
 	params := userUpdateParams{}
-	if ok := util.BindBody(c, &params); !ok {
+	if ok := bind.Body(c, &params); !ok {
 		return
 	}
 
@@ -118,11 +119,11 @@ func UserUpdateHandler(c *gin.Context) {
 		// check if user already exists:
 		err := database.UsersCol.FindOne(database.Context, bson.D{{"username", *params.NewUsername}}).Err()
 		if err == nil {
-			util.AbortWithStatusConflict(c, "user with such username already exists")
+			response.AbortWithStatusConflict(c, "user with such username already exists")
 			return
 		}
 		if !errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithStatusInternalServerError(c, err)
+			response.AbortWithStatusInternalServerError(c, err)
 			return
 		}
 		updateQueries = append(updateQueries, bson.E{Key: "username", Value: *params.NewUsername})
@@ -130,9 +131,9 @@ func UserUpdateHandler(c *gin.Context) {
 	}
 
 	if params.NewPassword != nil {
-		newPasswordHash, err := password_hashing.HashPassword(*params.NewPassword)
+		newPasswordHash, err := passhash.Hash(*params.NewPassword)
 		if err != nil {
-			util.AbortWithStatusInternalServerError(c, err)
+			response.AbortWithStatusInternalServerError(c, err)
 			return
 		}
 		updateQueries = append(updateQueries, bson.E{Key: "password", Value: newPasswordHash})
@@ -143,11 +144,11 @@ func UserUpdateHandler(c *gin.Context) {
 		bson.D{{"_id", currentUser.ID}},
 		bson.D{{"$set", updateQueries}},
 	); err != nil {
-		util.AbortWithStatusInternalServerError(c, err)
+		response.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
-	util.ReturnSuccessfulResponse(c, currentUser.APIModel())
+	response.ReturnSuccessfulResponse(c, currentUser.APIModel())
 }
 
 // UserDeleteHandler deletes current user.
@@ -165,11 +166,11 @@ func UserDeleteHandler(c *gin.Context) {
 		database.Context,
 		bson.D{{"_id", currentUser.ID}},
 	); err != nil {
-		util.AbortWithStatusInternalServerError(c, err)
+		response.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
-	util.ReturnSuccessfulResponse(c, &models.User{
+	response.ReturnSuccessfulResponse(c, &models.User{
 		Username: currentUser.Username,
 	})
 }

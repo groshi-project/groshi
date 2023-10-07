@@ -2,14 +2,15 @@ package handlers
 
 import (
 	"errors"
+	"github.com/groshi-project/groshi/internal/handlers/bind"
+	"github.com/groshi-project/groshi/internal/handlers/response"
 	"math"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/groshi-project/groshi/internal/currency/currency_rates"
+	"github.com/groshi-project/groshi/internal/currency/rates"
 	"github.com/groshi-project/groshi/internal/database"
-	"github.com/groshi-project/groshi/internal/handlers/util"
 	"github.com/groshi-project/groshi/internal/loggers"
 	"github.com/groshi-project/groshi/internal/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -43,7 +44,7 @@ type transactionsCreateParams struct {
 //	@router			/transactions [post]
 func TransactionsCreateHandler(c *gin.Context) {
 	params := transactionsCreateParams{}
-	if ok := util.BindBody(c, &params); !ok {
+	if ok := bind.Body(c, &params); !ok {
 		return
 	}
 
@@ -78,11 +79,11 @@ func TransactionsCreateHandler(c *gin.Context) {
 	}
 
 	if _, err := database.TransactionsCol.InsertOne(database.Context, &transaction); err != nil {
-		util.AbortWithStatusInternalServerError(c, err)
+		response.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
-	util.ReturnSuccessfulResponse(c, transaction.APIModel())
+	response.ReturnSuccessfulResponse(c, transaction.APIModel())
 }
 
 type transactionsReadOneParams struct {
@@ -105,7 +106,7 @@ type transactionsReadOneParams struct {
 //	@router			/transactions/{uuid} [get]
 func TransactionsReadOneHandler(c *gin.Context) {
 	params := transactionsReadOneParams{}
-	if ok := util.BindQuery(c, &params); !ok {
+	if ok := bind.Query(c, &params); !ok {
 		return
 	}
 
@@ -118,14 +119,14 @@ func TransactionsReadOneHandler(c *gin.Context) {
 		database.Context, bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithStatusNotFound(c, errorDescriptionTransactionNotFound)
+			response.AbortWithStatusNotFound(c, errorDescriptionTransactionNotFound)
 		} else {
-			util.AbortWithStatusInternalServerError(c, err)
+			response.AbortWithStatusInternalServerError(c, err)
 		}
 		return
 	}
 	if transaction.OwnerID != currentUser.ID {
-		util.AbortWithStatusForbidden(c, errorDescriptionTransactionForbidden)
+		response.AbortWithStatusForbidden(c, errorDescriptionTransactionForbidden)
 		return
 	}
 
@@ -134,14 +135,15 @@ func TransactionsReadOneHandler(c *gin.Context) {
 		if params.Currency != transaction.Currency {
 			newAmount, err := currency_rates.Convert(transaction.Currency, params.Currency, float64(transaction.Amount))
 			if err != nil {
-				util.AbortWithStatusInternalServerError(c, err)
+				response.AbortWithStatusInternalServerError(c, err)
+				return
 			}
 			transaction.Amount = int(math.Round(newAmount))
 			transaction.Currency = params.Currency
 		}
 	}
 
-	util.ReturnSuccessfulResponse(c, transaction.APIModel())
+	response.ReturnSuccessfulResponse(c, transaction.APIModel())
 }
 
 type transactionsReadManyParams struct {
@@ -166,7 +168,7 @@ type transactionsReadManyParams struct {
 //	@router			/transactions [get]
 func TransactionsReadManyHandler(c *gin.Context) {
 	params := transactionsReadManyParams{}
-	if ok := util.BindQuery(c, &params); !ok {
+	if ok := bind.Query(c, &params); !ok {
 		return
 	}
 	if params.EndTime == nil {
@@ -191,7 +193,7 @@ func TransactionsReadManyHandler(c *gin.Context) {
 			}},
 	)
 	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) { // unexpected error happened
-		util.AbortWithStatusInternalServerError(c, err)
+		response.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
@@ -205,7 +207,8 @@ func TransactionsReadManyHandler(c *gin.Context) {
 	for cursor.Next(database.Context) {
 		transaction := database.Transaction{}
 		if err := cursor.Decode(&transaction); err != nil {
-			util.AbortWithStatusInternalServerError(c, err)
+			response.AbortWithStatusInternalServerError(c, err)
+			return
 		}
 
 		// convert amount to the new currency if needed:
@@ -213,7 +216,7 @@ func TransactionsReadManyHandler(c *gin.Context) {
 			if params.Currency != transaction.Currency {
 				newAmount, err := currency_rates.Convert(transaction.Currency, params.Currency, float64(transaction.Amount))
 				if err != nil {
-					util.AbortWithStatusInternalServerError(c, err)
+					response.AbortWithStatusInternalServerError(c, err)
 					return
 				}
 				transaction.Amount = int(math.Round(newAmount))
@@ -224,7 +227,7 @@ func TransactionsReadManyHandler(c *gin.Context) {
 		transactions = append(transactions, transaction.APIModel())
 	}
 
-	util.ReturnSuccessfulResponse(c, transactions)
+	response.ReturnSuccessfulResponse(c, transactions)
 }
 
 type transactionsReadSummaryParams struct {
@@ -249,7 +252,7 @@ type transactionsReadSummaryParams struct {
 //	@router			/transactions/summary [get]
 func TransactionsReadSummary(c *gin.Context) {
 	params := transactionsReadSummaryParams{}
-	if ok := util.BindQuery(c, &params); !ok {
+	if ok := bind.Query(c, &params); !ok {
 		return
 	}
 	currentUser := c.MustGet("current_user").(*database.User)
@@ -275,7 +278,7 @@ func TransactionsReadSummary(c *gin.Context) {
 		},
 	)
 	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) { // if unexpected error happened
-		util.AbortWithStatusInternalServerError(c, err)
+		response.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
@@ -289,7 +292,7 @@ func TransactionsReadSummary(c *gin.Context) {
 	for cursor.Next(database.Context) {
 		transaction := database.Transaction{}
 		if err := cursor.Decode(&transaction); err != nil {
-			util.AbortWithStatusInternalServerError(c, err)
+			response.AbortWithStatusInternalServerError(c, err)
 			return
 		}
 		transactions = append(transactions, &transaction)
@@ -314,7 +317,7 @@ func TransactionsReadSummary(c *gin.Context) {
 				transaction.Currency, params.Currency, transactionAmount,
 			)
 			if err != nil {
-				util.AbortWithStatusInternalServerError(c, err)
+				response.AbortWithStatusInternalServerError(c, err)
 				return
 			}
 		}
@@ -330,7 +333,7 @@ func TransactionsReadSummary(c *gin.Context) {
 	intIncome := int(math.Round(income))
 	intOutcome := int(math.Round(outcome))
 
-	util.ReturnSuccessfulResponse(c, &models.Summary{
+	response.ReturnSuccessfulResponse(c, &models.Summary{
 		Currency:          params.Currency,
 		Income:            intIncome,
 		Outcome:           intOutcome,
@@ -364,13 +367,13 @@ type transactionsUpdateParams struct {
 //	@router			/transactions/{uuid} [put]
 func TransactionsUpdateHandler(c *gin.Context) {
 	params := transactionsUpdateParams{}
-	if ok := util.BindBody(c, &params); !ok {
+	if ok := bind.Body(c, &params); !ok {
 		return
 	}
 
 	if params.NewAmount == nil && params.NewCurrency == nil && params.NewDescription == nil && params.NewTimestamp == nil {
 		// no new values provided for any of fields
-		util.AbortWithStatusBadRequest(c, "invalid request body params, please refer to the method documentation",
+		response.AbortWithStatusBadRequest(c, "invalid request body params, please refer to the method documentation",
 			[]string{
 				"'new_amount' param is required if no other params were provided",
 				"'new_currency' param is required if no other params were provided",
@@ -390,15 +393,15 @@ func TransactionsUpdateHandler(c *gin.Context) {
 		database.Context, bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithStatusNotFound(c, errorDescriptionTransactionNotFound)
+			response.AbortWithStatusNotFound(c, errorDescriptionTransactionNotFound)
 		} else {
-			util.AbortWithStatusInternalServerError(c, err)
+			response.AbortWithStatusInternalServerError(c, err)
 		}
 		return
 	}
 
 	if transaction.OwnerID != currentUser.ID {
-		util.AbortWithStatusForbidden(c, errorDescriptionTransactionForbidden)
+		response.AbortWithStatusForbidden(c, errorDescriptionTransactionForbidden)
 		return
 	}
 
@@ -432,11 +435,11 @@ func TransactionsUpdateHandler(c *gin.Context) {
 		bson.D{{"uuid", transaction.UUID}},
 		bson.D{{"$set", updateQueries}},
 	); err != nil {
-		util.AbortWithStatusInternalServerError(c, err)
+		response.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
-	util.ReturnSuccessfulResponse(c, transaction.APIModel())
+	response.ReturnSuccessfulResponse(c, transaction.APIModel())
 }
 
 // TransactionsDeleteHandler deletes transaction.
@@ -463,16 +466,16 @@ func TransactionsDeleteHandler(c *gin.Context) {
 		bson.D{{"uuid", transactionUUID}},
 	).Decode(&transaction); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			util.AbortWithStatusNotFound(c, errorDescriptionTransactionNotFound)
+			response.AbortWithStatusNotFound(c, errorDescriptionTransactionNotFound)
 		} else {
-			util.AbortWithStatusInternalServerError(c, err)
+			response.AbortWithStatusInternalServerError(c, err)
 		}
 		return
 	}
 
 	// check if the current user owns transaction:
 	if transaction.OwnerID != currentUser.ID {
-		util.AbortWithStatusForbidden(c, errorDescriptionTransactionForbidden)
+		response.AbortWithStatusForbidden(c, errorDescriptionTransactionForbidden)
 		return
 	}
 
@@ -481,9 +484,9 @@ func TransactionsDeleteHandler(c *gin.Context) {
 		database.Context,
 		bson.D{{"uuid", transaction.UUID}},
 	); err != nil {
-		util.AbortWithStatusInternalServerError(c, err)
+		response.AbortWithStatusInternalServerError(c, err)
 		return
 	}
 
-	util.ReturnSuccessfulResponse(c, transaction.APIModel())
+	response.ReturnSuccessfulResponse(c, transaction.APIModel())
 }

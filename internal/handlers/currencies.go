@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/groshi-project/groshi/internal/currency/currency_rates"
+	"github.com/groshi-project/groshi/internal/currency/rates"
 	"github.com/groshi-project/groshi/internal/currency/symbols"
-	"github.com/groshi-project/groshi/internal/handlers/util"
+	"github.com/groshi-project/groshi/internal/handlers/response"
 	"github.com/groshi-project/groshi/internal/models"
 	"slices"
 )
@@ -20,10 +20,10 @@ import (
 //	@router			/currencies [get]
 func CurrenciesRead(c *gin.Context) {
 	// IMPORTANT NOTE:
-	// currency_rates.FetchCurrencies returns an array of supported currencies using
+	// currency_rates.GetCurrencies returns an array of supported currencies using
 	// either cache or third-party (if cache is expired).
 	//
-	// It is also important to mention, that currency_rates.FetchCurrencies is also used once
+	// It is also important to mention, that rates.GetCurrencies is also used once
 	// in the beginning of the runtime to initialize `currency` and `optional_currency` validators.
 	//
 	// Based on the two previous facts the following situation is possible (yet highly improbable):
@@ -38,20 +38,18 @@ func CurrenciesRead(c *gin.Context) {
 	//
 	// BUT: For now I see no point to fix that because the third party has a stable list of supported currencies,
 	//      and it will unlikely be changed.
-	currencyCodes, err := currency_rates.FetchCurrencies()
+	currencyCodes, err := currency_rates.GetCurrencies()
+	if err != nil {
+		response.AbortWithStatusInternalServerError(c, err)
+	}
 	slices.Sort(currencyCodes)
 
 	var currencies []models.Currency
-
 	for _, code := range currencyCodes {
 		currencies = append(currencies, models.Currency{
 			Code:   code,
 			Symbol: symbols.GetSymbol(code),
 		})
 	}
-
-	if err != nil {
-		util.AbortWithStatusInternalServerError(c, err)
-	}
-	util.ReturnSuccessfulResponse(c, currencies)
+	response.ReturnSuccessfulResponse(c, currencies)
 }

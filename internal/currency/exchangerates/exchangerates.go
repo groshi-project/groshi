@@ -8,22 +8,22 @@ import (
 	"net/http"
 )
 
-type exchangeratesAPIClient struct {
+type apiClient struct {
 	accessKey  string
 	httpClient http.Client
 }
 
-func newExchangeRatesIOAPIClient() *exchangeratesAPIClient {
-	return &exchangeratesAPIClient{
+func newAPIClient() *apiClient {
+	return &apiClient{
 		httpClient: http.Client{},
 	}
 }
 
-func (client *exchangeratesAPIClient) Init(accessKey string) {
+func (client *apiClient) Init(accessKey string) {
 	client.accessKey = accessKey
 }
 
-func (client *exchangeratesAPIClient) sendRequest(url string) (map[string]interface{}, error) {
+func (client *apiClient) sendRequest(url string) (map[string]interface{}, error) {
 	request, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (client *exchangeratesAPIClient) sendRequest(url string) (map[string]interf
 }
 
 // GetRates returns rates for provided baseCurrency.
-func (client *exchangeratesAPIClient) GetRates(baseCurrency string) (map[string]interface{}, error) {
+func (client *apiClient) GetRates(baseCurrency string) (map[string]interface{}, error) {
 	url := fmt.Sprintf(
 		"http://api.exchangeratesapi.io/v1/latest?access_key=%v&base=%v",
 		client.accessKey,
@@ -68,7 +68,7 @@ func (client *exchangeratesAPIClient) GetRates(baseCurrency string) (map[string]
 }
 
 // GetCurrencies returns supported currency codes (ISO-4217).
-func (client *exchangeratesAPIClient) GetCurrencies() ([]string, error) {
+func (client *apiClient) GetCurrencies() ([]string, error) {
 	url := fmt.Sprintf("http://api.exchangeratesapi.io/v1/symbols?access_key=%v", client.accessKey)
 	response, err := client.sendRequest(url)
 	if err != nil {
@@ -84,4 +84,4 @@ func (client *exchangeratesAPIClient) GetCurrencies() ([]string, error) {
 	return keys, err
 }
 
-var Client = newExchangeRatesIOAPIClient()
+var Client = newAPIClient()

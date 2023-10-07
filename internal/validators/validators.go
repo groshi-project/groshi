@@ -2,7 +2,7 @@ package validators
 
 import (
 	"github.com/go-playground/validator/v10"
-	"github.com/groshi-project/groshi/internal/currency/currency_rates"
+	"github.com/groshi-project/groshi/internal/currency/rates"
 	"github.com/groshi-project/groshi/internal/loggers"
 	"regexp"
 	"time"
@@ -19,7 +19,7 @@ var NonzeroTimeValidator = func(fl validator.FieldLevel) bool {
 // GetCurrencyValidator returns validator function for currencies.
 // `isOptional` param indicates if the valid currency can be an empty string.
 func GetCurrencyValidator(isOptional bool) validator.Func {
-	currencies, err := currency_rates.FetchCurrencies()
+	currencies, err := currency_rates.GetCurrencies()
 	if err != nil {
 		loggers.Error.Fatalf("could not fetch available currencies: %v", err)
 	}
