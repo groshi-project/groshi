@@ -405,11 +405,16 @@ func TestTransactionsDelete(t *testing.T) {
 func TestCurrenciesRead(t *testing.T) {
 	client := NewPureGroshiClient(GroshiSocket)
 
-	// fetch slice of supported currencies:
+	// fetch a slice of supported currencies:
 	currencies, err := client.CurrenciesRead()
 	if assert.NoError(t, err) {
 		if assert.NotNil(t, currencies) {
-			assert.NotEmpty(t, currencies)
+			if assert.NotEmpty(t, currencies) {
+				for _, currency := range currencies {
+					assert.NotEmpty(t, currency.Code)
+					assert.NotEmpty(t, currency.Symbol)
+				}
+			}
 		}
 	}
 }
