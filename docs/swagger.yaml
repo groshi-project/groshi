@@ -1,4 +1,13 @@
 definitions:
+  models.Currency:
+    properties:
+      code:
+        example: USD
+        type: string
+      symbol:
+        example: $
+        type: string
+    type: object
   models.Error:
     properties:
       error_details:
@@ -70,17 +79,18 @@ paths:
     get:
       consumes:
       - application/json
-      description: Returns array of available currency codes in ISO-4217 format.
+      description: Returns array of available currencies.
       produces:
       - application/json
       responses:
         "200":
-          description: Array of currency codes in ISO-4217 format is returned.
+          description: An array of objects that includes currency codes in the ISO-4217
+            format along with their respective symbols.
           schema:
             items:
-              type: string
+              $ref: '#/definitions/models.Currency'
             type: array
-      summary: get array of available currency codes
+      summary: retrieve an array of available currencies
       tags:
       - currencies
   /transactions:

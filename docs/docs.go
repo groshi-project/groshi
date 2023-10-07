@@ -21,7 +21,7 @@ const docTemplate = `{
     "paths": {
         "/currencies": {
             "get": {
-                "description": "Returns array of available currency codes in ISO-4217 format.",
+                "description": "Returns array of available currencies.",
                 "consumes": [
                     "application/json"
                 ],
@@ -31,14 +31,14 @@ const docTemplate = `{
                 "tags": [
                     "currencies"
                 ],
-                "summary": "get array of available currency codes",
+                "summary": "retrieve an array of available currencies",
                 "responses": {
                     "200": {
-                        "description": "Array of currency codes in ISO-4217 format is returned.",
+                        "description": "An array of objects that includes currency codes in the ISO-4217 format along with their respective symbols.",
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "string"
+                                "$ref": "#/definitions/models.Currency"
                             }
                         }
                     }
@@ -474,6 +474,19 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "models.Currency": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "example": "USD"
+                },
+                "symbol": {
+                    "type": "string",
+                    "example": "$"
+                }
+            }
+        },
         "models.Error": {
             "type": "object",
             "properties": {
