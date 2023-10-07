@@ -20,7 +20,7 @@ import (
 //	@router			/currencies [get]
 func CurrenciesRead(c *gin.Context) {
 	// IMPORTANT NOTE:
-	// currency_rates.GetCurrencies returns an array of supported currencies using
+	// rates.GetCurrencies returns an array of supported currencies using
 	// either cache or third-party (if cache is expired).
 	//
 	// It is also important to mention, that rates.GetCurrencies is also used once
