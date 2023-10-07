@@ -30,8 +30,11 @@ type Summary struct {
 	TransactionsCount int `json:"transactions_count" example:"6"`
 }
 
-// Currencies represents response containing array of available currency codes.
-type Currencies []string
+// Currency contains currency code in ISO-4217 format and currency symbol.
+type Currency struct {
+	Code   string `json:"code" example:"USD"`
+	Symbol string `json:"symbol" example:"$"`
+}
 
 // Error represents response containing information about API error.
 type Error struct {

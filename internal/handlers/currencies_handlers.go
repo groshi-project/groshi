@@ -3,18 +3,20 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/groshi-project/groshi/internal/currency/currency_rates"
+	"github.com/groshi-project/groshi/internal/currency/symbols"
 	"github.com/groshi-project/groshi/internal/handlers/util"
+	"github.com/groshi-project/groshi/internal/models"
 	"slices"
 )
 
 // CurrenciesRead returns slice of available currency codes in ISO-4217 format.
 //
-//	@summary		get array of available currency codes
-//	@description	Returns array of available currency codes in ISO-4217 format.
+//	@summary		retrieve an array of available currencies
+//	@description	Returns array of available currencies.
 //	@tags			currencies
 //	@accept			json
 //	@produce		json
-//	@success		200	{object}	[]string	"Array of currency codes in ISO-4217 format is returned."
+//	@success		200	{object}	[]models.Currency	"An array of objects that includes currency codes in the ISO-4217 format along with their respective symbols."
 //	@router			/currencies [get]
 func CurrenciesRead(c *gin.Context) {
 	// IMPORTANT NOTE:
@@ -36,8 +38,18 @@ func CurrenciesRead(c *gin.Context) {
 	//
 	// BUT: For now I see no point to fix that because the third party has a stable list of supported currencies,
 	//      and it will unlikely be changed.
-	currencies, err := currency_rates.FetchCurrencies()
-	slices.Sort(currencies)
+	currencyCodes, err := currency_rates.FetchCurrencies()
+	slices.Sort(currencyCodes)
+
+	var currencies []models.Currency
+
+	for _, code := range currencyCodes {
+		currencies = append(currencies, models.Currency{
+			Code:   code,
+			Symbol: symbols.GetSymbol(code),
+		})
+	}
+
 	if err != nil {
 		util.AbortWithStatusInternalServerError(c, err)
 	}
