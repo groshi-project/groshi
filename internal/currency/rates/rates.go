@@ -15,8 +15,8 @@ const cacheTTL = time.Hour * 24
 
 var errRatesAreNotCached = errors.New("rates are not cached")
 
-// storeCache saves rates to the database.
-func storeCache(v *database.CurrencyRates) error {
+// saveCache saves rates to the database.
+func saveCache(v *database.CurrencyRates) error {
 	_, err := database.CurrencyRatesCol.InsertOne(
 		database.Context,
 		v,
@@ -24,9 +24,19 @@ func storeCache(v *database.CurrencyRates) error {
 	return err
 }
 
-// readCache returns rates stored in the database.
+// updateCache updates cached currency rates in the database.
+func updateCache(v *database.CurrencyRates) error {
+	_, err := database.CurrencyRatesCol.ReplaceOne(
+		database.Context,
+		bson.D{{"_id", v.ID}},
+		v,
+	)
+	return err
+}
+
+// readFromCache returns rates stored in the database.
 // If currency rates collection is empty, returns errRatesAreNotCached.
-func readCache(v *database.CurrencyRates) error {
+func readFromCache(v *database.CurrencyRates) error {
 	cursor, err := database.CurrencyRatesCol.Find(
 		database.Context,
 		bson.M{},
@@ -53,16 +63,6 @@ func readCache(v *database.CurrencyRates) error {
 	return nil
 }
 
-// updateCache updates cached currency rates in the database.
-func updateCache(v *database.CurrencyRates) error {
-	_, err := database.CurrencyRatesCol.ReplaceOne(
-		database.Context,
-		bson.D{{"_id", v.ID}},
-		v,
-	)
-	return err
-}
-
 // readFromAPI fetches latest currency rates and updates fields of v with new data
 // (also updates UpdatedAt field).
 func readFromAPI(v *database.CurrencyRates) error {
@@ -79,7 +79,7 @@ func readFromAPI(v *database.CurrencyRates) error {
 // according to the cacheTTL. Also updates stored rates if needed.
 func read() (map[string]interface{}, error) {
 	rates := database.CurrencyRates{BaseCurrency: baseCurrency}
-	err := readCache(&rates)
+	err := readFromCache(&rates)
 
 	if err != nil {
 		if errors.Is(err, errRatesAreNotCached) { // if cache is not stored in the database
@@ -94,7 +94,7 @@ func read() (map[string]interface{}, error) {
 			rates.ID = primitive.NewObjectID()
 			rates.UpdatedAt = time.Now()
 
-			if err := storeCache(&rates); err != nil {
+			if err := saveCache(&rates); err != nil {
 				return nil, err
 			}
 		} else { // if unexpected error happened when fetching rates from the database
