@@ -78,7 +78,7 @@ func readFromAPI(v *database.CurrencyRates) error {
 // read reads up-to-date currency rates either from the database or third-part API,
 // according to the cacheTTL. Also updates stored rates if needed.
 func read() (map[string]interface{}, error) {
-	rates := database.CurrencyRates{BaseCurrency: baseCurrency}
+	rates := database.CurrencyRates{}
 	err := readFromCache(&rates)
 
 	if err != nil {
