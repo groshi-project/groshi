@@ -38,7 +38,7 @@ func CurrenciesRead(c *gin.Context) {
 	//
 	// BUT: For now I see no point to fix that because the third party has a stable list of supported currencies,
 	//      and it will unlikely be changed.
-	currencyCodes, err := currency_rates.GetCurrencies()
+	currencyCodes, err := rates.GetCurrencies()
 	if err != nil {
 		response.AbortWithStatusInternalServerError(c, err)
 	}

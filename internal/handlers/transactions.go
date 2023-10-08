@@ -133,7 +133,7 @@ func TransactionsReadOneHandler(c *gin.Context) {
 	// convert amount to the new currency if needed:
 	if params.Currency != "" {
 		if params.Currency != transaction.Currency {
-			newAmount, err := currency_rates.Convert(transaction.Currency, params.Currency, float64(transaction.Amount))
+			newAmount, err := rates.Convert(transaction.Currency, params.Currency, float64(transaction.Amount))
 			if err != nil {
 				response.AbortWithStatusInternalServerError(c, err)
 				return
@@ -214,7 +214,7 @@ func TransactionsReadManyHandler(c *gin.Context) {
 		// convert amount to the new currency if needed:
 		if params.Currency != "" {
 			if params.Currency != transaction.Currency {
-				newAmount, err := currency_rates.Convert(transaction.Currency, params.Currency, float64(transaction.Amount))
+				newAmount, err := rates.Convert(transaction.Currency, params.Currency, float64(transaction.Amount))
 				if err != nil {
 					response.AbortWithStatusInternalServerError(c, err)
 					return
@@ -313,7 +313,7 @@ func TransactionsReadSummary(c *gin.Context) {
 		if transaction.Currency == params.Currency {
 			transactionAmountInSameUnits = transactionAmount
 		} else {
-			transactionAmountInSameUnits, err = currency_rates.Convert(
+			transactionAmountInSameUnits, err = rates.Convert(
 				transaction.Currency, params.Currency, transactionAmount,
 			)
 			if err != nil {
