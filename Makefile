@@ -28,5 +28,5 @@ fmt:
 
 .PHONY: test-integration
 test-integration:
-	GROSHI_TEST_SOCKET=$(GROSHI_TEST_SOCKET) go test -count=1 ./integration_tests
+	GROSHI_TEST_SOCKET=$(GROSHI_TEST_SOCKET) go test -count=1 ./tests/integration
 
