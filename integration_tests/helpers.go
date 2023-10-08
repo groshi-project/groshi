@@ -21,11 +21,11 @@ func GenerateCredentials() (username string, password string) {
 	return username, password
 }
 
-func NewPureGroshiClient(groshiSocket string) *groshi.GroshiAPIClient {
-	return groshi.NewGroshiAPIClient(groshiSocket, "")
+func NewPureGroshiClient(groshiSocket string) *groshi.APIClient {
+	return groshi.NewAPIClient(groshiSocket, "")
 }
 
-func NewGroshiClientWithUser(groshiSocket string) (username string, password string, client *groshi.GroshiAPIClient) {
+func NewGroshiClientWithUser(groshiSocket string) (username string, password string, client *groshi.APIClient) {
 	client = NewPureGroshiClient(groshiSocket)
 	username, password = GenerateCredentials()
 	if _, err := client.UserCreate(username, password); err != nil {
@@ -36,7 +36,7 @@ func NewGroshiClientWithUser(groshiSocket string) (username string, password str
 	return username, password, client
 }
 
-func NewAuthorizedGroshiClientWithUser(groshiSocket string) (username string, password string, client *groshi.GroshiAPIClient) {
+func NewAuthorizedGroshiClientWithUser(groshiSocket string) (username string, password string, client *groshi.APIClient) {
 	username, password, client = NewGroshiClientWithUser(groshiSocket)
 	if err := client.Auth(username, password); err != nil {
 		panic(

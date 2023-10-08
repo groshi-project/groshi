@@ -40,8 +40,8 @@ func TestUserCreate(t *testing.T) {
 	// try to create user with the same username:
 	user, err = client.UserCreate(username, password)
 	if assert.Error(t, err) {
-		if assert.IsType(t, groshi.GroshiAPIError{}, err) {
-			assert.Equal(t, http.StatusConflict, err.(groshi.GroshiAPIError).HTTPStatusCode)
+		if assert.IsType(t, groshi.APIError{}, err) {
+			assert.Equal(t, http.StatusConflict, err.(groshi.APIError).HTTPStatusCode)
 		}
 		assert.Nil(t, user)
 	}
@@ -49,8 +49,8 @@ func TestUserCreate(t *testing.T) {
 	// try to create user with  username and password
 	user, err = client.UserCreate("", "")
 	if assert.Error(t, err) {
-		if assert.IsType(t, groshi.GroshiAPIError{}, err) {
-			assert.Equal(t, http.StatusBadRequest, err.(groshi.GroshiAPIError).HTTPStatusCode)
+		if assert.IsType(t, groshi.APIError{}, err) {
+			assert.Equal(t, http.StatusBadRequest, err.(groshi.APIError).HTTPStatusCode)
 		}
 		assert.Nil(t, user)
 	}
@@ -122,8 +122,8 @@ func TestUserDelete(t *testing.T) {
 	// read the current deleted user
 	readUser, err := client.UserRead()
 	if assert.Error(t, err) {
-		if assert.IsType(t, groshi.GroshiAPIError{}, err) {
-			assert.Equal(t, http.StatusUnauthorized, err.(groshi.GroshiAPIError).HTTPStatusCode)
+		if assert.IsType(t, groshi.APIError{}, err) {
+			assert.Equal(t, http.StatusUnauthorized, err.(groshi.APIError).HTTPStatusCode)
 		}
 		assert.Nil(t, readUser)
 	}
@@ -331,8 +331,8 @@ func TestTransactionsUpdate(t *testing.T) {
 	// update without providing anything new (error is to be expected)
 	_, err = client.TransactionsUpdate(transaction.UUID, nil, nil, nil, nil)
 	if assert.Error(t, err) {
-		if assert.IsType(t, groshi.GroshiAPIError{}, err) {
-			assert.Equal(t, http.StatusBadRequest, err.(groshi.GroshiAPIError).HTTPStatusCode)
+		if assert.IsType(t, groshi.APIError{}, err) {
+			assert.Equal(t, http.StatusBadRequest, err.(groshi.APIError).HTTPStatusCode)
 		}
 	}
 
@@ -395,8 +395,8 @@ func TestTransactionsDelete(t *testing.T) {
 	// try to read the deleted transaction:
 	_, err = client.TransactionsReadOne(deletedTransaction.UUID, nil)
 	if assert.Error(t, err) {
-		if assert.IsType(t, groshi.GroshiAPIError{}, err) {
-			assert.Equal(t, http.StatusNotFound, err.(groshi.GroshiAPIError).HTTPStatusCode)
+		if assert.IsType(t, groshi.APIError{}, err) {
+			assert.Equal(t, http.StatusNotFound, err.(groshi.APIError).HTTPStatusCode)
 		}
 	}
 
