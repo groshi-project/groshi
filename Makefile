@@ -14,7 +14,7 @@ help:
 .PHONY: secrets
 secrets:
 	mkdir ./secrets/ ./secrets/app/ ./secrets/mongo
-	touch ./secrets/app/exchangerats_api_key ./secrets/app/jwt_secret_key
+	touch ./secrets/app/exchangerates_api_key ./secrets/app/jwt_secret_key
 	touch ./secrets/mongo/username ./secrets/mongo/password ./secrets/mongo/database
 
 .PHONY: docs
