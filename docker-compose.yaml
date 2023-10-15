@@ -23,7 +23,7 @@ services:
       - groshi-mongo
 
     ports:
-      - "80:8080"
+      - "8080:8080"
 
     secrets:
       - app
