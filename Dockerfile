@@ -8,7 +8,7 @@ COPY ./internal ./internal
 COPY ./docs ./docs
 
 RUN go mod download
-RUN CGO_ENABLED=0 GOOS=linux go build -o ./groshi
+RUN CGO_ENABLED=0 GOOS=linux go build -x -o ./groshi
 
 FROM alpine:latest as runner
 COPY --from=builder /groshi-build/groshi /usr/bin/groshi
