@@ -178,8 +178,6 @@ func TransactionsReadManyHandler(c *gin.Context) {
 
 	currentUser := c.MustGet("current_user").(*database.User)
 
-	loggers.Info.Printf("start_time = %v : end_time = %v", params.StartTime, params.EndTime)
-
 	cursor, err := database.TransactionsCol.Find(
 		database.Context,
 		bson.D{
