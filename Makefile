@@ -15,7 +15,7 @@ help:
 secrets:
 	mkdir -p ./.secrets/groshi/ ./.secrets/groshi-mongo
 	touch ./.secrets/groshi/exchangerates_api_key ./.secrets/groshi/jwt_secret_key
-	touch ./.secrets/groshi-mongo/username ./.secrets/mongo/password ./.secrets/mongo/database
+	touch ./.secrets/groshi-mongo/username ./.secrets/groshi-mongo/password ./.secrets/groshi-mongo/database
 
 .PHONY: docs
 docs:
