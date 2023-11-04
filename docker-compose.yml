@@ -1,0 +1,52 @@
+services:
+  groshi:
+    container_name: groshi
+    build:
+      context: ./
+
+    environment:
+      GROSHI_HOST: 0.0.0.0
+      GROSHI_PORT: 8080
+      GROSHI_SWAGGER: true
+      GROSHI_DEBUG: false
+
+      GROSHI_JWT_SECRET_KEY_FILE: /run/secrets/groshi/jwt_secret_key
+      GROSHI_EXCHANGERATES_API_KEY: /run/secrets/groshi/exchangerates_api_key
+
+      GROSHI_MONGO_HOST: groshi-mongo
+      GROSHI_MONGO_PORT: 27017
+      GROSHI_MONGO_USERNAME_FILE: /run/secrets/groshi-mongo/username
+      GROSHI_MONGO_PASSWORD_FILE: /run/secrets/groshi-mongo/password
+      GROSHI_MONGO_DATABASE_FILE: /run/secrets/groshi-mongo/database
+
+    depends_on:
+      - groshi-mongo
+
+    ports:
+      - "8080:8080"
+
+    secrets:
+      - groshi
+      - groshi-mongo
+
+  groshi-mongo:
+    container_name: groshi-mongo
+    image: mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/groshi-mongo/username
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/groshi-mongo/password
+      MONGO_INITDB_DATABASE_FILE: /run/secrets/groshi-mongo/database
+
+    volumes:
+      - ./.mongo-data:/data/db
+
+    secrets:
+      - groshi-mongo
+
+secrets:
+  groshi:
+    file: ./.secrets/groshi
+
+  groshi-mongo:
+    file: ./.secrets/groshi-mongo
