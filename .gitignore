@@ -5,7 +5,7 @@
 .mongo-data/
 
 # docker secrets
-secrets/
+.secrets/
 
 # env file
 .env
