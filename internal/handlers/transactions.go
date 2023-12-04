@@ -178,6 +178,7 @@ func TransactionsReadManyHandler(c *gin.Context) {
 
 	currentUser := c.MustGet("current_user").(*database.User)
 
+	// todo: sort by timestamp
 	cursor, err := database.TransactionsCol.Find(
 		database.Context,
 		bson.D{
