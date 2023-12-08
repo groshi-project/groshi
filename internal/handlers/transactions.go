@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const errorDescriptionTransactionNotFound = "transaction was not found"
@@ -178,7 +179,6 @@ func TransactionsReadManyHandler(c *gin.Context) {
 
 	currentUser := c.MustGet("current_user").(*database.User)
 
-	// todo: sort by timestamp
 	cursor, err := database.TransactionsCol.Find(
 		database.Context,
 		bson.D{
@@ -191,7 +191,9 @@ func TransactionsReadManyHandler(c *gin.Context) {
 					{"$gte", params.StartTime},
 					{"$lte", *params.EndTime},
 				},
-			}},
+			},
+		},
+		options.Find().SetSort(bson.D{{"timestamp", 1}}),
 	)
 	if err != nil && !errors.Is(err, mongo.ErrNoDocuments) { // unexpected error happened
 		response.AbortWithStatusInternalServerError(c, err)
