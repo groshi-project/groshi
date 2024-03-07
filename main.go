@@ -1,151 +1,212 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"net/http"
-	"regexp"
-
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
-	"github.com/groshi-project/groshi/docs"
-	"github.com/groshi-project/groshi/internal/config"
-	"github.com/groshi-project/groshi/internal/currency/exchangerates"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/groshi-project/groshi/internal/database"
-	"github.com/groshi-project/groshi/internal/handlers"
-	"github.com/groshi-project/groshi/internal/loggers"
-	"github.com/groshi-project/groshi/internal/middlewares"
-	"github.com/groshi-project/groshi/internal/validators"
-	swaggofiles "github.com/swaggo/files"
-	swagger "github.com/swaggo/gin-swagger"
+	"github.com/groshi-project/groshi/internal/logger"
+	"github.com/groshi-project/groshi/internal/service"
+	"github.com/groshi-project/groshi/internal/service/authorities/jwt"
+	"github.com/groshi-project/groshi/internal/service/authorities/passwd"
+	"github.com/jessevdk/go-flags"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 )
 
-//	@title			groshi HTTP API documentation
-//	@version		0.1.0
-//	@description	📉 groshi - goddamn simple tool to keep track of your finances.
-//	@license.name	Licensed under MIT license.
-//	@license.url	https://github.com/groshi-project/groshi/tree/master/LICENSE
+// Options provides application options which can be provided both using CLI and environmental variables.
+type Options struct {
+	General struct {
+		Host string `long:"host" env:"GROSHI_HOST" default:"127.0.0.1" description:"host on which groshi will listen for client connections"`
+		Port int    `short:"p" long:"port" env:"GROSHI_PORT" default:"8080" description:"port on which groshi will listen for client connections"`
+	} `group:"General options"`
 
-func createHTTPRouter(jwtSecretKey string, enableDebug bool, enableSwagger bool) *gin.Engine {
-	// set appropriate gin mode
-	if enableDebug {
-		gin.SetMode(gin.DebugMode)
-	} else {
-		gin.SetMode(gin.ReleaseMode)
-	}
+	Service struct {
+		BcryptCost int `long:"bcrypt-cost" env:"GROSHI_BCRYPT_COST" description:"todo"`
 
-	router := gin.Default()
+		JWTSecretKey     string `long:"jwt-secret-key" env:"GROSHI_JWT_SECRET_KEY" description:"a secret key which will be used to generate JSON web tokens"`
+		jwtSecretKeyFile string `long:"jwt-secret-key-file" env:"GROSHI_JWT_SECRET_KEY_FILE" description:"file containing a secret key which will be used to generate JSON web tokens"`
 
-	// register validators:
-	validatorEngine, ok := binding.Validator.Engine().(*validator.Validate)
-	if !ok {
-		loggers.Error.Fatalf("could not initialize validator engine")
-	}
+		JWTTimeToLive time.Duration `long:"jwt-ttl" env:"GROSHI_JWT_TTL" description:"jwt time-to-live" default:"31d"`
+	} `group:"Service options"`
 
-	// validatorsMap contains all validators and their tags
-	validatorsMap := map[string]validator.Func{
-		"username": validators.GetRegexValidator(regexp.MustCompile(".{2,}")),
-		"password": validators.GetRegexValidator(regexp.MustCompile(".{8,}")),
+	Postgres struct {
+		Host string `long:"postgres-host" env:"GROSHI_POSTGRES_HOST" required:"true" description:"host on which postgres is listening for groshi's connection'"`
+		Port int    `long:"postgres-port" env:"GROSHI_POSTGRES_PORT" default:"123" description:"host on which postgres is listening for groshi's connection"`
 
-		"description":       validators.GetRegexValidator(regexp.MustCompile(".*")),
-		"currency":          validators.GetCurrencyValidator(false),
-		"optional_currency": validators.GetCurrencyValidator(true),
+		Username     string `long:"postgres-username" env:"GROSHI_POSTGRES_USERNAME"  description:"todo"`
+		UsernameFile string `long:"postgres-username-file" env:"GROSHI_POSTGRES_USERNAME_FILE" description:"todo"`
 
-		"nonzero_time": validators.NonzeroTimeValidator,
-	}
+		Password     string `long:"postgres-password" env:"GROSHI_POSTGRES_PASSWORD" description:"todo"`
+		PasswordFile string `long:"postgres-password-file" env:"GROSHI_POSTGRES_PASSWORD_FILE" description:"todo"`
 
-	for validatorTag, validatorFunc := range validatorsMap {
-		err := validatorEngine.RegisterValidation(validatorTag, validatorFunc)
-		if err != nil {
-			loggers.Error.Fatalf("could not register validator %v: %v", validatorTag, err)
-		}
-	}
-
-	// setup cross-origin resource sharing
-	corsConfig := cors.Config{
-		AllowAllOrigins: true,
-		AllowMethods:    []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
-		AllowHeaders: []string{
-			"Authorization",
-			"Content-Type",
-		},
-	}
-	router.Use(cors.New(corsConfig))
-
-	// define and initialize middlewares:
-	jwtHandlers := middlewares.NewJWTMiddleware(jwtSecretKey)
-	jwtMiddleware := jwtHandlers.MiddlewareFunc()
-
-	// register authorization & authentication routes:
-	auth := router.Group("/auth")
-	auth.POST("/login", jwtHandlers.LoginHandler)
-	auth.POST("/refresh", jwtHandlers.RefreshHandler)
-
-	// register user routes:
-	user := router.Group("/user")
-	user.POST("", handlers.UserCreateHandler)                  // create new user
-	user.GET("", jwtMiddleware, handlers.UserReadHandler)      // read current user
-	user.PUT("", jwtMiddleware, handlers.UserUpdateHandler)    // update current user
-	user.DELETE("", jwtMiddleware, handlers.UserDeleteHandler) // delete current user
-
-	// register transactions routes:
-	transactions := router.Group("/transactions")
-	transactions.Use(jwtMiddleware)
-	transactions.POST("", handlers.TransactionsCreateHandler)         // create new transaction
-	transactions.GET("", handlers.TransactionsReadManyHandler)        // read multiple transactions for given period
-	transactions.GET("/:uuid", handlers.TransactionsReadOneHandler)   // read one transaction
-	transactions.PUT("/:uuid", handlers.TransactionsUpdateHandler)    // update transaction
-	transactions.DELETE("/:uuid", handlers.TransactionsDeleteHandler) // delete transaction
-	transactions.GET("/summary", handlers.TransactionsReadSummary)    // read summary about transactions for given period
-
-	// register currencies route:
-	currencies := router.Group("/currencies")
-	currencies.GET("", handlers.CurrenciesRead) // read available currencies
-
-	// register Swagger documentation route if needed:
-	if enableSwagger {
-		docs.SwaggerInfo.BasePath = ""
-		router.GET("/docs/*any", swagger.WrapHandler(swaggofiles.Handler))
-	} else {
-		loggers.Warning.Println("swagger UI feature is disabled, no documentation will be shown at `/docs/index.html` route")
-	}
-
-	return router
+		Database     string `long:"postgres-database" env:"GROSHI_POSTGRES_DATABASE_FILE" description:"todo"`
+		DatabaseFile string `long:"postgres-database-file" env:"GROSHI_POSTGRES_DATABASE_FILE" description:"todo"`
+	} `group:"PostgreSQL options"`
 }
 
-func main() {
-	loggers.Info.Printf("starting groshi")
-
-	// read configuration from environmental variables:
-	env := config.ReadEnvVars()
-
-	// initialize database:
-	if err := database.InitDatabase(
-		env.MongoHost,
-		env.MongoPort,
-		config.ReadDockerSecret(env.MongoUsernameFile),
-		config.ReadDockerSecret(env.MongoPasswordFile),
-		config.ReadDockerSecret(env.MongoDatabaseFile),
-	); err != nil {
-		loggers.Error.Fatal(err)
+// parseOptionsPair parses option pair. Option pair means option and its "file" pair.
+// For example, `--postgres-password` and `--postgres-password-file`.
+func parseOptionsPair(cliFlag string, envVar string, value *string, valueFile string) error {
+	if *value == "" && valueFile == "" {
+		return fmt.Errorf("`%s` ($%s) or `%s-file` ($%s_FILE) is required but not provided", cliFlag, envVar, cliFlag, envVar)
 	}
-	defer func() {
-		if err := database.Client.Disconnect(database.Context); err != nil {
-			loggers.Error.Fatalf("could not disconnect from the database: %v", err)
+
+	if *value == "" { // if value was not provided, read value from file:
+		bytes, err := os.ReadFile(valueFile)
+		if err != nil {
+			return err
 		}
-	}()
 
-	// initialize exchangerates API client:
-	exchangerates.Client.Init(
-		config.ReadDockerSecret(env.ExchangeRatesAPIKey),
-	)
+		content := string(bytes)
+		content = strings.Trim(content, "\n ")
+		*value = content
+	} else if valueFile != "" { // if both value and file are provided:
+		return fmt.Errorf("both `%s` ($%s) and `%s-file` ($%s_FILE) are provided, expected only one of them", cliFlag, envVar, cliFlag, envVar)
+	}
 
-	router := createHTTPRouter(config.ReadDockerSecret(env.JWTSecretKeyFile), env.Debug, env.Swagger)
-	socket := fmt.Sprintf("%v:%v", env.Host, env.Port)
+	return nil
+}
 
-	loggers.Info.Printf("starting HTTP server on %v", socket)
-	if err := router.Run(socket); err != nil {
-		loggers.Error.Fatal(err)
+// getOptions parses options from CLI and environmental variables.
+// Prints error message and terminates program with code 1 on error.
+func getOptions() *Options {
+	parsingErrors := make([]error, 0)
+
+	var options Options
+	parser := flags.NewParser(&options, flags.Default)
+	if _, err := parser.Parse(); err != nil {
+		var flagsErr *flags.Error
+		if errors.As(err, &flagsErr) && errors.Is(flagsErr.Type, flags.ErrHelp) {
+			os.Exit(0)
+		} else {
+			os.Exit(1)
+		}
+	}
+
+	if err := parseOptionsPair("--jwt-secret-key", "GROSHI_JWT_SECRET_KEY", &options.Service.JWTSecretKey, options.Service.jwtSecretKeyFile); err != nil {
+		parsingErrors = append(parsingErrors, err)
+	}
+
+	if err := parseOptionsPair("--postgres-username", "GROSHI_POSTGRES_USERNAME", &options.Postgres.Username, options.Postgres.UsernameFile); err != nil {
+		parsingErrors = append(parsingErrors, err)
+	}
+
+	if err := parseOptionsPair("--postgres-password", "GROSHI_POSTGRES_PASSWORD", &options.Postgres.Password, options.Postgres.PasswordFile); err != nil {
+		parsingErrors = append(parsingErrors, err)
+	}
+
+	if err := parseOptionsPair("--postgres-database", "GROSHI_POSTGRES_DATABASE", &options.Postgres.Database, options.Postgres.DatabaseFile); err != nil {
+		parsingErrors = append(parsingErrors, err)
+	}
+
+	if len(parsingErrors) != 0 {
+		for _, parsingError := range parsingErrors {
+			if _, err := fmt.Fprintln(os.Stderr, parsingError); err != nil {
+				panic(err)
+			}
+		}
+		os.Exit(1)
+	}
+
+	return &options
+}
+
+func getHTTPRouter(groshi *service.Service) *chi.Mux {
+	r := chi.NewRouter()
+
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	// todo: add timeout middleware?
+
+	// protected routes:
+	r.Group(func(r chi.Router) {
+		r.Use(jwtauth.Verifier(groshi.JWTAuthority.JWTAuth))
+		r.Use(jwtauth.Authenticator(groshi.JWTAuthority.JWTAuth))
+
+		r.Route("/user", func(r chi.Router) {
+			r.Get("/", groshi.UserGet)
+			r.Put("/", groshi.UserUpdate)
+			r.Delete("/", groshi.UserDelete)
+		})
+
+		r.Route("/transactions", func(r chi.Router) {
+			r.Post("/", groshi.TransactionsCreate)
+			r.Get("/{uuid}", groshi.TransactionsGetOne)
+			r.Get("/", groshi.TransactionsGet)
+		})
+
+		r.Route("/stats", func(r chi.Router) {
+			r.Get("/total", groshi.StatsTotal)
+		})
+
+	})
+
+	// public routes:
+	r.Group(func(r chi.Router) {
+		r.Route("/user", func(r chi.Router) {
+			r.Post("/", groshi.UserCreate)
+		})
+
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/login", groshi.AuthLogin)
+		})
+	})
+
+	return r
+}
+
+// startJob starts repeating job which will be run in a goroutine.
+//func startJob(job func(args ...any), args []any, interval time.Duration) {
+//	go func() {
+//		job(args...)
+//		for range time.Tick(interval) {
+//			job(args...)
+//		}
+//	}()
+//}
+
+func main() {
+	// get options provided using CLI and environmental variables:
+	options := getOptions()
+
+	logger.Info.Printf("starting groshi")
+
+	// initialize postgres:
+	db := database.New()
+	if err := db.Connect(
+		options.Postgres.Host,
+		options.Postgres.Port,
+		options.Postgres.Username,
+		options.Postgres.Password,
+		options.Postgres.Database,
+	); err != nil {
+		logger.Fatal.Fatalf("could not connect to the database: %s", err)
+	}
+	if err := db.InitSchema(); err != nil {
+		logger.Fatal.Printf("could not initialize database schema: %s", err)
+	}
+
+	// initialize groshi service:
+	groshi := &service.Service{
+		Database:          db,
+		PasswordAuthority: passwd.NewAuthority(options.Service.BcryptCost),
+		JWTAuthority:      jwt.NewAuthority(options.Service.JWTTimeToLive, options.Service.JWTSecretKey),
+	}
+
+	// create an HTTP router:
+	router := getHTTPRouter(groshi)
+
+	// start listening:
+	addr := fmt.Sprintf("%s:%d", options.General.Host, options.General.Port)
+	logger.Info.Printf("groshi is listening for HTTP requests on %v", addr)
+	if err := http.ListenAndServe(addr, router); err != nil {
+		logger.Fatal.Fatal(err)
 	}
 }

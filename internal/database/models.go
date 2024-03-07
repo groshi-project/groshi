@@ -1,62 +1,84 @@
 package database
 
 import (
-	"github.com/groshi-project/groshi/internal/models"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"context"
+	"github.com/google/uuid"
+	"github.com/uptrace/bun"
 	"time"
 )
 
-// User represents service user.
+var EmptyUser = (*User)(nil)
+var EmptyTransaction = (*Transaction)(nil)
+var EmptyCurrency = (*Currency)(nil)
+
+// User represents a user of the service.
 type User struct {
-	ID primitive.ObjectID `bson:"_id"`
+	bun.BaseModel `bun:"table:users"`
 
-	Username string `bson:"username"`
-	Password string `bson:"password"`
+	ID int64 `bun:"id,pk,autoincrement"`
 
-	CreatedAt time.Time `bson:"created_at"`
-	UpdatedAt time.Time `bson:"updated_at"`
+	Username string `bun:"username,notnull"`
+	Password string `bun:"password,notnull"`
 }
 
-func (u *User) APIModel() *models.User {
-	return &models.User{Username: u.Username}
-}
-
-// Transaction represents financial transaction created by User.
+// Transaction represents financial transaction created by the service user.
 type Transaction struct {
-	ID   primitive.ObjectID `bson:"_id"`
-	UUID string             `bson:"uuid"`
+	bun.BaseModel `bun:"table:transactions"`
 
-	OwnerID primitive.ObjectID `bson:"owner_id"`
+	ID   int64     `bun:"id,pk,autoincrement"`
+	UUID uuid.UUID `bun:"uuid,type:uuid,notnull,default:uuid_generate_v4()"`
 
-	Amount      int    `bson:"amount"`   // amount of transaction in MINOR units
-	Currency    string `bson:"currency"` // currency code in ISO-4217 format
-	Description string `bson:"description"`
+	Amount int32 `bun:"amount,notnull"`
 
-	Timestamp time.Time `bson:"timestamp"` // transaction timestamp (when it happened)
+	CurrencyID int64    `bun:"currency_id,notnull"`
+	Currency   Currency `bun:"rel:belongs-to,join:currency_id=id"`
 
-	CreatedAt time.Time `bson:"created_at"`
-	UpdatedAt time.Time `bson:"updated_at"`
+	Description string `bun:"description,nullzero"`
+
+	OwnerID int64 `bun:"owner_id,notnull"`
+	Owner   User  `bun:"rel:belongs-to,join:owner_id=id"`
+
+	Timestamp time.Time `bun:",notnull"`
+	Timezone  string    `bun:",notnull"`
+
+	CreatedAt time.Time `bun:",notnull,default:current_timestamp"`
+	UpdatedAt time.Time `bun:",notnull,default:current_timestamp"`
 }
 
-func (t *Transaction) APIModel() *models.Transaction {
-	// please note: all time.Time values are returned relative to the UTC timezone!
-	return &models.Transaction{
-		UUID: t.UUID,
+var _ bun.BeforeAppendModelHook = (*Transaction)(nil)
 
-		Amount:      t.Amount,
-		Currency:    t.Currency,
-		Description: t.Description,
-		Timestamp:   t.Timestamp.In(time.UTC).Format(time.RFC3339),
-
-		CreatedAt: t.CreatedAt.In(time.UTC).Format(time.RFC3339),
-		UpdatedAt: t.UpdatedAt.In(time.UTC).Format(time.RFC3339),
+func (t *Transaction) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	switch query.(type) {
+	case *bun.InsertQuery:
+		t.CreatedAt = time.Now()
+	case *bun.UpdateQuery:
+		t.UpdatedAt = time.Now()
 	}
+	return nil
 }
 
-// CurrencyRates represents document containing currency rates information.
-type CurrencyRates struct {
-	ID primitive.ObjectID `bson:"_id"`
+// Currency represents currency supported by the service.
+type Currency struct {
+	bun.BaseModel `bun:"table:currencies"`
 
-	Rates     map[string]interface{} `bson:"rates"`
-	UpdatedAt time.Time              `bson:"updated_at"`
+	ID int64 `bun:"id,pk,autoincrement"`
+
+	Code   string  `bun:"code,notnull"`
+	Symbol string  `bun:"symbol,notnull"`
+	Rate   float64 `bun:"rate,notnull"`
+
+	UpdatedAt time.Time `bun:",notnull,default:current_timestamp"`
+}
+
+var _ bun.BeforeAppendModelHook = (*Currency)(nil)
+
+func (c *Currency) BeforeAppendModel(ctx context.Context, query bun.Query) error {
+	switch query.(type) { // todo: is this switch needed? are other queries provided to before append model?
+	case *bun.InsertQuery:
+		c.UpdatedAt = time.Now()
+	case *bun.UpdateQuery:
+		c.UpdatedAt = time.Now()
+	}
+
+	return nil
 }

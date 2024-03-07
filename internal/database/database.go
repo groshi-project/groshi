@@ -2,42 +2,56 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/uptrace/bun/driver/pgdriver"
 )
 
-var Context = context.TODO()
+// Database represents postgres database for the service.
+type Database struct {
+	Client *bun.DB
+	Ctx    context.Context
+}
 
-var Client *mongo.Client
+// New creates a new instance of [Database] and returns a pointer to it.
+func New() *Database {
+	return &Database{
+		Client: nil,
+		Ctx:    context.TODO(),
+	}
+}
 
-// UsersCol is `users` collection.
-var UsersCol *mongo.Collection
+// Connect initializes connection to the given database with provided credentials and checks the connection.
+func (d *Database) Connect(host string, port int, username string, password string, dbName string) error {
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", username, password, host, port, dbName)
+	db := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+	d.Client = bun.NewDB(db, pgdialect.New())
+	if err := d.Client.Ping(); err != nil {
+		return err
+	}
+	return nil
+}
 
-// TransactionsCol is `transactions` collection.
-var TransactionsCol *mongo.Collection
+// InitSchema creates all necessary tables if they do not exist,
+func (d *Database) InitSchema() error {
+	if err := d.createTableIfNotExists((*User)(nil)); err != nil {
+		return err
+	}
+	if err := d.createTableIfNotExists((*Currency)(nil)); err != nil {
+		return err
+	}
+	if err := d.createTableIfNotExists((*Transaction)(nil)); err != nil {
+		return err
+	}
+	return nil
+}
 
-// CurrencyRatesCol is `currency-rates` collection.
-var CurrencyRatesCol *mongo.Collection
-
-func InitDatabase(host string, port int, username string, password string, databaseName string) error {
-	clientOptions := options.Client().ApplyURI(
-		fmt.Sprintf("mongodb://%v:%v@%v:%v/", username, password, host, port),
-	)
-	var err error
-	Client, err = mongo.Connect(Context, clientOptions)
+func (d *Database) createTableIfNotExists(model any) error {
+	_, err := d.Client.NewCreateTable().Model((*User)(nil)).IfNotExists().Exec(d.Ctx)
 	if err != nil {
 		return err
 	}
-	err = Client.Ping(Context, nil)
-	if err != nil {
-		return err
-	}
-	database := Client.Database(databaseName)
-
-	UsersCol = database.Collection("users")
-	TransactionsCol = database.Collection("transactions")
-	CurrencyRatesCol = database.Collection("currency-rates")
-
 	return nil
 }
