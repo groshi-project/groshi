@@ -20,8 +20,8 @@ type AuthLoginResponse struct {
 }
 
 func (s *Service) AuthLogin(w http.ResponseWriter, r *http.Request) {
-	credentials := AuthLoginParams{}
-	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
+	params := AuthLoginParams{}
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
 		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
 	}
@@ -38,7 +38,7 @@ func (s *Service) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate provided password:
-	if !s.PasswordAuthority.ValidatePassword(credentials.Password, user.Password) {
+	if !s.PasswordAuthority.ValidatePassword(params.Password, user.Password) {
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}

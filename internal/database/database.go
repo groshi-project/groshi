@@ -23,35 +23,41 @@ func New() *Database {
 	}
 }
 
-// Connect initializes connection to the given database with provided credentials and checks the connection.
+// Connect initializes connection to a database with provided credentials and verifies the connection.
 func (d *Database) Connect(host string, port int, username string, password string, dbName string) error {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", username, password, host, port, dbName)
 	db := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+
+	// create a new database client:
 	d.Client = bun.NewDB(db, pgdialect.New())
+
+	// test the connection:
 	if err := d.Client.Ping(); err != nil {
 		return err
 	}
+
 	return nil
 }
 
-// InitSchema creates all necessary tables if they do not exist,
-func (d *Database) InitSchema() error {
-	if err := d.createTableIfNotExists((*User)(nil)); err != nil {
-		return err
-	}
-	if err := d.createTableIfNotExists((*Currency)(nil)); err != nil {
-		return err
-	}
-	if err := d.createTableIfNotExists((*Transaction)(nil)); err != nil {
-		return err
-	}
-	return nil
-}
+// Init creates all necessary tables and extensions if they do not exist.
+func (d *Database) Init() error {
+	var models = []any{ZeroUser, ZeroCategory, ZeroCurrency, ZeroTransaction}
+	var extensions = []string{"uuid-ossp"}
 
-func (d *Database) createTableIfNotExists(model any) error {
-	_, err := d.Client.NewCreateTable().Model((*User)(nil)).IfNotExists().Exec(d.Ctx)
-	if err != nil {
-		return err
+	// create necessary extensions if they do not exist:
+	for _, extension := range extensions {
+		if _, err := d.Client.NewRaw("CREATE EXTENSION IF NOT EXISTS ?;", bun.Ident(extension)).Exec(d.Ctx); err != nil {
+			return err
+		}
 	}
+
+	// create necessary tables if they do not exist:
+	for _, model := range models {
+		_, err := d.Client.NewCreateTable().Model(model).IfNotExists().Exec(d.Ctx)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

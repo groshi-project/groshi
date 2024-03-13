@@ -29,22 +29,22 @@ type Options struct {
 		BcryptCost int `long:"bcrypt-cost" env:"GROSHI_BCRYPT_COST" description:"todo"`
 
 		JWTSecretKey     string `long:"jwt-secret-key" env:"GROSHI_JWT_SECRET_KEY" description:"a secret key which will be used to generate JSON web tokens"`
-		jwtSecretKeyFile string `long:"jwt-secret-key-file" env:"GROSHI_JWT_SECRET_KEY_FILE" description:"file containing a secret key which will be used to generate JSON web tokens"`
+		JWTSecretKeyFile string `long:"jwt-secret-key-file" env:"GROSHI_JWT_SECRET_KEY_FILE" description:"file containing a secret key which will be used to generate JSON web tokens"`
 
-		JWTTimeToLive time.Duration `long:"jwt-ttl" env:"GROSHI_JWT_TTL" description:"jwt time-to-live" default:"31d"`
+		JWTTimeToLive time.Duration `long:"jwt-ttl" env:"GROSHI_JWT_TTL" description:"jwt time-to-live" default:"744h"`
 	} `group:"Service options"`
 
 	Postgres struct {
 		Host string `long:"postgres-host" env:"GROSHI_POSTGRES_HOST" required:"true" description:"host on which postgres is listening for groshi's connection'"`
-		Port int    `long:"postgres-port" env:"GROSHI_POSTGRES_PORT" default:"123" description:"host on which postgres is listening for groshi's connection"`
+		Port int    `long:"postgres-port" env:"GROSHI_POSTGRES_PORT" default:"5432" description:"host on which postgres is listening for groshi's connection"`
 
-		Username     string `long:"postgres-username" env:"GROSHI_POSTGRES_USERNAME"  description:"todo"`
-		UsernameFile string `long:"postgres-username-file" env:"GROSHI_POSTGRES_USERNAME_FILE" description:"todo"`
+		User     string `long:"postgres-user" env:"GROSHI_POSTGRES_USER"  description:"todo"`
+		UserFile string `long:"postgres-user-file" env:"GROSHI_POSTGRES_USER_FILE" description:"todo"`
 
 		Password     string `long:"postgres-password" env:"GROSHI_POSTGRES_PASSWORD" description:"todo"`
 		PasswordFile string `long:"postgres-password-file" env:"GROSHI_POSTGRES_PASSWORD_FILE" description:"todo"`
 
-		Database     string `long:"postgres-database" env:"GROSHI_POSTGRES_DATABASE_FILE" description:"todo"`
+		Database     string `long:"postgres-database" env:"GROSHI_POSTGRES_DATABASE" description:"todo"`
 		DatabaseFile string `long:"postgres-database-file" env:"GROSHI_POSTGRES_DATABASE_FILE" description:"todo"`
 	} `group:"PostgreSQL options"`
 }
@@ -88,11 +88,11 @@ func getOptions() *Options {
 		}
 	}
 
-	if err := parseOptionsPair("--jwt-secret-key", "GROSHI_JWT_SECRET_KEY", &options.Service.JWTSecretKey, options.Service.jwtSecretKeyFile); err != nil {
+	if err := parseOptionsPair("--jwt-secret-key", "GROSHI_JWT_SECRET_KEY", &options.Service.JWTSecretKey, options.Service.JWTSecretKeyFile); err != nil {
 		parsingErrors = append(parsingErrors, err)
 	}
 
-	if err := parseOptionsPair("--postgres-username", "GROSHI_POSTGRES_USERNAME", &options.Postgres.Username, options.Postgres.UsernameFile); err != nil {
+	if err := parseOptionsPair("--postgres-user", "GROSHI_POSTGRES_USER", &options.Postgres.User, options.Postgres.UserFile); err != nil {
 		parsingErrors = append(parsingErrors, err)
 	}
 
@@ -123,39 +123,55 @@ func getHTTPRouter(groshi *service.Service) *chi.Mux {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	// todo: add timeout middleware?
+	r.Use(middleware.Timeout(time.Duration(30) * time.Second))
 
-	// protected routes:
-	r.Group(func(r chi.Router) {
-		r.Use(jwtauth.Verifier(groshi.JWTAuthority.JWTAuth))
-		r.Use(jwtauth.Authenticator(groshi.JWTAuthority.JWTAuth))
+	r.Route("/auth", func(r chi.Router) {
+		// public `/auth` routes:
+		r.Post("/login", groshi.AuthLogin)
+	})
 
-		r.Route("/user", func(r chi.Router) {
+	r.Route("/user", func(r chi.Router) {
+		// public `/user` route:
+		r.Post("/", groshi.UserCreate)
+
+		// protected `/user` routes:
+		r.Group(func(r chi.Router) {
+			r.Use(jwtauth.Verifier(groshi.JWTAuthority.JWTAuth))
+			r.Use(jwtauth.Authenticator(groshi.JWTAuthority.JWTAuth))
+
 			r.Get("/", groshi.UserGet)
 			r.Put("/", groshi.UserUpdate)
 			r.Delete("/", groshi.UserDelete)
 		})
+	})
 
-		r.Route("/transactions", func(r chi.Router) {
+	r.Route("/categories", func(r chi.Router) {
+		// protected `/categories` routes:
+		r.Group(func(r chi.Router) {
+			r.Use(jwtauth.Verifier(groshi.JWTAuthority.JWTAuth))
+			r.Use(jwtauth.Authenticator(groshi.JWTAuthority.JWTAuth))
+		})
+	})
+
+	r.Route("/transactions", func(r chi.Router) {
+		// protected `/transactions` routes:
+		r.Group(func(r chi.Router) {
+			r.Use(jwtauth.Verifier(groshi.JWTAuthority.JWTAuth))
+			r.Use(jwtauth.Authenticator(groshi.JWTAuthority.JWTAuth))
+
 			r.Post("/", groshi.TransactionsCreate)
 			r.Get("/{uuid}", groshi.TransactionsGetOne)
 			r.Get("/", groshi.TransactionsGet)
 		})
-
-		r.Route("/stats", func(r chi.Router) {
-			r.Get("/total", groshi.StatsTotal)
-		})
-
 	})
 
-	// public routes:
-	r.Group(func(r chi.Router) {
-		r.Route("/user", func(r chi.Router) {
-			r.Post("/", groshi.UserCreate)
-		})
+	r.Route("/stats", func(r chi.Router) {
+		// protected `/stats` routes:
+		r.Group(func(r chi.Router) {
+			r.Use(jwtauth.Verifier(groshi.JWTAuthority.JWTAuth))
+			r.Use(jwtauth.Authenticator(groshi.JWTAuthority.JWTAuth))
 
-		r.Route("/auth", func(r chi.Router) {
-			r.Post("/login", groshi.AuthLogin)
+			r.Get("/total", groshi.StatsTotal)
 		})
 	})
 
@@ -183,14 +199,14 @@ func main() {
 	if err := db.Connect(
 		options.Postgres.Host,
 		options.Postgres.Port,
-		options.Postgres.Username,
+		options.Postgres.User,
 		options.Postgres.Password,
 		options.Postgres.Database,
 	); err != nil {
 		logger.Fatal.Fatalf("could not connect to the database: %s", err)
 	}
-	if err := db.InitSchema(); err != nil {
-		logger.Fatal.Printf("could not initialize database schema: %s", err)
+	if err := db.Init(); err != nil {
+		logger.Fatal.Printf("could not initialize database: %s", err)
 	}
 
 	// initialize groshi service:

@@ -1,11 +1,8 @@
 # IDE
 .idea/
 
-# mongo data mountpoint
-.mongo-data/
+# postgres mountpoint
+.postgres-data/
 
 # docker secrets
 .secrets/
-
-# env file
-.env

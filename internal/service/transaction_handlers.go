@@ -4,16 +4,20 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"github.com/google/uuid"
 	"github.com/groshi-project/groshi/internal/database"
 	"net/http"
 	"time"
 )
 
 type transactionsCreateParams struct {
-	Amount      int32     `json:"amount"`
-	Currency    string    `json:"currency"`
-	Description string    `json:"description"`
-	Timestamp   time.Time `json:"timestamp"`
+	Amount   int32  `json:"amount"`
+	Currency string `json:"currency"`
+
+	Description  string    `json:"description"`
+	CategoryUUID uuid.UUID `json:"category_uuid"`
+
+	Timestamp time.Time `json:"timestamp"`
 }
 
 type transactionsCreateResponse struct {
@@ -29,7 +33,18 @@ func (s *Service) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 
 	// fetch provided currency:
 	currency := database.Currency{}
-	if err := s.Database.Client.NewSelect().Model(database.EmptyCurrency).Where("code = ?", params.Currency).Scan(s.Database.Ctx, &currency); err != nil {
+	if err := s.Database.Client.NewSelect().Model(database.ZeroCurrency).Where("code = ?", params.Currency).Scan(s.Database.Ctx, &currency); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	// fetch provided category (todo: fetch only its id):
+	category := database.Category{}
+	if err := s.Database.Client.NewSelect().Model(&category).Where("uuid = ?", params.CategoryUUID).Scan(s.Database.Ctx, &category); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
@@ -61,12 +76,16 @@ func (s *Service) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 
 	// create a new transaction owned by the current user:
 	transaction := database.Transaction{
-		Amount:      params.Amount,
-		CurrencyID:  currency.ID,
+		Amount:     params.Amount,
+		CurrencyID: currency.ID,
+
 		Description: params.Description,
-		OwnerID:     user.ID,
-		Timestamp:   params.Timestamp,
-		Timezone:    location,
+		CategoryID:  category.ID,
+
+		OwnerID: user.ID,
+
+		Timestamp: params.Timestamp,
+		Timezone:  location,
 	}
 	if _, err := s.Database.Client.NewInsert().Model(&transaction).Exec(s.Database.Ctx); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -87,6 +106,7 @@ func (s *Service) TransactionsGetOne(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// todo: optionall by category, show transactions by categories
 func (s *Service) TransactionsGet(w http.ResponseWriter, r *http.Request) {
 
 }

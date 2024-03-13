@@ -7,46 +7,45 @@ services:
     environment:
       GROSHI_HOST: 0.0.0.0
       GROSHI_PORT: 8080
-      GROSHI_SWAGGER: true
-      GROSHI_DEBUG: false
 
+      GROSHI_BCRYPT_COST: 11
       GROSHI_JWT_SECRET_KEY_FILE: /run/secrets/groshi/jwt_secret_key
-      GROSHI_EXCHANGERATES_API_KEY: /run/secrets/groshi/exchangerates_api_key
+      GROSHI_JWT_TTL: 744h
 
-      GROSHI_MONGO_HOST: groshi-mongo
-      GROSHI_MONGO_PORT: 27017
-      GROSHI_MONGO_USERNAME_FILE: /run/secrets/groshi-mongo/username
-      GROSHI_MONGO_PASSWORD_FILE: /run/secrets/groshi-mongo/password
-      GROSHI_MONGO_DATABASE_FILE: /run/secrets/groshi-mongo/database
+      GROSHI_POSTGRES_HOST: groshi-postgres
+      GROSHI_POSTGRES_PORT: 5432
+
+      GROSHI_POSTGRES_USER_FILE: /run/secrets/postgres/user
+      GROSHI_POSTGRES_PASSWORD_FILE: /run/secrets/postgres/password
+      GROSHI_POSTGRES_DATABASE: groshi
 
     depends_on:
-      - groshi-mongo
+      - groshi-postgres
 
     ports:
       - "8080:8080"
 
     secrets:
       - groshi
-      - groshi-mongo
+      - postgres
 
-  groshi-mongo:
-    container_name: groshi-mongo
-    image: mongo
-    restart: unless-stopped
+  groshi-postgres:
+    container_name: groshi-postgres
+    image: postgres:16.2
     environment:
-      MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/groshi-mongo/username
-      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/groshi-mongo/password
-      MONGO_INITDB_DATABASE_FILE: /run/secrets/groshi-mongo/database
+      POSTGRES_USER_FILE: /run/secrets/postgres/user
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres/password
+      POSTGRES_DB: groshi
 
     volumes:
-      - ./.mongo-data:/data/db
+      - ./.postgres-data:/var/lib/postgresql/data
 
     secrets:
-      - groshi-mongo
+      - postgres
 
 secrets:
   groshi:
     file: ./.secrets/groshi
 
-  groshi-mongo:
-    file: ./.secrets/groshi-mongo
+  postgres:
+    file: ./.secrets/postgres

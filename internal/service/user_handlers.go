@@ -23,7 +23,7 @@ func (s *Service) UserCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check if user with such username already exist:
-	exists, err := s.Database.Client.NewSelect().Model(database.EmptyUser).Where("username = ?", params.Username).Exists(s.Database.Ctx)
+	exists, err := s.Database.Client.NewSelect().Model(database.ZeroUser).Where("username = ?", params.Username).Exists(s.Database.Ctx)
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -96,8 +96,19 @@ func (s *Service) UserDelete(w http.ResponseWriter, r *http.Request) {
 	}
 	username := claims["username"].(string)
 
+	// check if the user exists:
+	exists, err := s.Database.Client.NewSelect().Model(&database.ZeroUser).Where("username = ?", username).Exists(s.Database.Ctx)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+	if !exists {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
 	// delete the user from the database:
-	if _, err := s.Database.Client.NewDelete().Model(&database.EmptyUser).Where("username = ?", username).Exec(s.Database.Ctx); err != nil {
+	if _, err := s.Database.Client.NewDelete().Model(&database.ZeroUser).Where("username = ?", username).Exec(s.Database.Ctx); err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}

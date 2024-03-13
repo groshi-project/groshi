@@ -15,3 +15,6 @@ var Warning = log.New(os.Stdout, "[warn]: ", baseFlags)
 
 // Fatal is a logger used to log fatal errors.
 var Fatal = log.New(os.Stderr, "[fatal]: ", baseFlags|log.Llongfile)
+
+// InternalServerError is a logger used to log internal server errors returned to users.
+var InternalServerError = log.New(os.Stderr, "[internal server error]: ", baseFlags|log.Llongfile)
