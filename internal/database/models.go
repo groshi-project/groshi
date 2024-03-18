@@ -7,18 +7,6 @@ import (
 	"time"
 )
 
-// todo: doc comment
-var ZeroUser = (*User)(nil)
-
-// todo: doc comment
-var ZeroCategory = (*Category)(nil)
-
-// todo: doc comment
-var ZeroCurrency = (*Currency)(nil)
-
-// todo: doc comment
-var ZeroTransaction = (*Transaction)(nil)
-
 // User represents a user of the service.
 type User struct {
 	bun.BaseModel `bun:"table:users"`
@@ -88,8 +76,9 @@ type Transaction struct {
 	Owner   User  `bun:"rel:belongs-to,join:owner_id=id"`
 	OwnerID int64 `bun:"owner_id,notnull"`
 
+	// Timestamp of the transaction (when it happened)
+	// UTC is always used as the timezone.
 	Timestamp time.Time `bun:",notnull"`
-	Timezone  string    `bun:",notnull"`
 
 	CreatedAt time.Time `bun:",notnull,default:current_timestamp"`
 	UpdatedAt time.Time `bun:",notnull,default:current_timestamp"`

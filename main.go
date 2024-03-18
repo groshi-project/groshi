@@ -7,15 +7,22 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/groshi-project/groshi/internal/database"
-	"github.com/groshi-project/groshi/internal/logger"
 	"github.com/groshi-project/groshi/internal/service"
-	"github.com/groshi-project/groshi/internal/service/authorities/jwt"
-	"github.com/groshi-project/groshi/internal/service/authorities/passwd"
+	"github.com/groshi-project/groshi/pkg/jwtauthority"
+	"github.com/groshi-project/groshi/pkg/passwdauthority"
 	"github.com/jessevdk/go-flags"
+	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+)
+
+const loggingBaseFlags = log.Ldate | log.Ltime | log.Lmsgprefix
+
+var (
+	infoLogger  = log.New(os.Stdout, "[info]: ", loggingBaseFlags)
+	fatalLogger = log.New(os.Stderr, "[fatal]: ", loggingBaseFlags|log.Llongfile)
 )
 
 // Options provides application options which can be provided both using CLI and environmental variables.
@@ -124,6 +131,7 @@ func getHTTPRouter(groshi *service.Service) *chi.Mux {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(time.Duration(30) * time.Second))
+	//r.Use(render.SetContentType(render.ContentTypeJSON))
 
 	r.Route("/auth", func(r chi.Router) {
 		// public `/auth` routes:
@@ -140,7 +148,7 @@ func getHTTPRouter(groshi *service.Service) *chi.Mux {
 			r.Use(jwtauth.Authenticator(groshi.JWTAuthority.JWTAuth))
 
 			r.Get("/", groshi.UserGet)
-			r.Put("/", groshi.UserUpdate)
+			//r.Put("/", groshi.UserUpdate)
 			r.Delete("/", groshi.UserDelete)
 		})
 	})
@@ -150,6 +158,11 @@ func getHTTPRouter(groshi *service.Service) *chi.Mux {
 		r.Group(func(r chi.Router) {
 			r.Use(jwtauth.Verifier(groshi.JWTAuthority.JWTAuth))
 			r.Use(jwtauth.Authenticator(groshi.JWTAuthority.JWTAuth))
+
+			r.Post("/", groshi.CategoriesCreate)
+			r.Get("/", groshi.CategoriesGet)
+			r.Put("/{uuid}", groshi.CategoriesUpdate)
+			r.Delete("/{uuid}", groshi.CategoriesDelete)
 		})
 	})
 
@@ -175,6 +188,8 @@ func getHTTPRouter(groshi *service.Service) *chi.Mux {
 		})
 	})
 
+	r.Get("/ping", groshi.Ping)
+
 	return r
 }
 
@@ -192,7 +207,7 @@ func main() {
 	// get options provided using CLI and environmental variables:
 	options := getOptions()
 
-	logger.Info.Printf("starting groshi")
+	infoLogger.Printf("starting groshi")
 
 	// initialize postgres:
 	db := database.New()
@@ -203,26 +218,27 @@ func main() {
 		options.Postgres.Password,
 		options.Postgres.Database,
 	); err != nil {
-		logger.Fatal.Fatalf("could not connect to the database: %s", err)
+		fatalLogger.Fatalf("could not connect to the database: %s", err)
 	}
 	if err := db.Init(); err != nil {
-		logger.Fatal.Printf("could not initialize database: %s", err)
+		fatalLogger.Printf("could not initialize database: %s", err)
 	}
 
-	// initialize groshi service:
-	groshi := &service.Service{
-		Database:          db,
-		PasswordAuthority: passwd.NewAuthority(options.Service.BcryptCost),
-		JWTAuthority:      jwt.NewAuthority(options.Service.JWTTimeToLive, options.Service.JWTSecretKey),
-	}
+	// create a groshi service:
+	groshi := service.New(
+		db,
+		jwtauthority.New(options.Service.JWTTimeToLive, options.Service.JWTSecretKey),
+		passwdauthority.New(options.Service.BcryptCost),
+		log.New(os.Stderr, "[internal server error]: ", loggingBaseFlags|log.Llongfile),
+	)
 
 	// create an HTTP router:
 	router := getHTTPRouter(groshi)
 
 	// start listening:
 	addr := fmt.Sprintf("%s:%d", options.General.Host, options.General.Port)
-	logger.Info.Printf("groshi is listening for HTTP requests on %v", addr)
+	infoLogger.Printf("groshi is listening for HTTP requests on %v", addr)
 	if err := http.ListenAndServe(addr, router); err != nil {
-		logger.Fatal.Fatal(err)
+		fatalLogger.Fatal(err)
 	}
 }

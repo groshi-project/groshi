@@ -1,4 +1,4 @@
-package jwt
+package jwtauthority
 
 import (
 	"context"
@@ -6,18 +6,19 @@ import (
 	"time"
 )
 
+// hashing algorithm used for JWT verification.
 const algorithm = "HS256"
 
-// Authority represents JWT authority.
-type Authority struct {
+// JWTAuthority represents JWT authority.
+type JWTAuthority struct {
 	JWTAuth *jwtauth.JWTAuth
 
 	jwtTTL time.Duration
 }
 
-// NewAuthority creates a new instance of [Authority] and returns pointer to it.
-func NewAuthority(ttl time.Duration, secretKey string) *Authority {
-	return &Authority{
+// New creates a new instance of [JWTAuthority] and returns pointer to it.
+func New(ttl time.Duration, secretKey string) *JWTAuthority {
+	return &JWTAuthority{
 		JWTAuth: jwtauth.New(algorithm, []byte(secretKey), nil),
 		jwtTTL:  ttl,
 	}
@@ -25,7 +26,7 @@ func NewAuthority(ttl time.Duration, secretKey string) *Authority {
 
 // GenerateToken generates a new jwt for a user with the given username.
 // Returns token string and token's expiration date.
-func (a *Authority) GenerateToken(username string) (string, time.Time, error) {
+func (a *JWTAuthority) GenerateToken(username string) (string, time.Time, error) {
 	// setup claims:
 	claims := make(map[string]any)
 
@@ -46,10 +47,20 @@ func (a *Authority) GenerateToken(username string) (string, time.Time, error) {
 	return tokenString, expires, nil
 }
 
-func (a *Authority) ExtractClaims(ctx context.Context) (map[string]any, error) {
+// extractClaims extracts claims from provided context.
+func (a *JWTAuthority) extractClaims(ctx context.Context) (map[string]any, error) {
 	_, claims, err := jwtauth.FromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return claims, nil
+}
+
+// ExtractUsername extracts "username" claim from provided context.
+func (a *JWTAuthority) ExtractUsername(ctx context.Context) (string, error) {
+	claims, err := a.extractClaims(ctx)
+	if err != nil {
+		return "", err
+	}
+	return claims["username"].(string), nil
 }

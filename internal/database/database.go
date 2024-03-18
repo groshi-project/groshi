@@ -41,7 +41,7 @@ func (d *Database) Connect(host string, port int, username string, password stri
 
 // Init creates all necessary tables and extensions if they do not exist.
 func (d *Database) Init() error {
-	var models = []any{ZeroUser, ZeroCategory, ZeroCurrency, ZeroTransaction}
+	var models = []any{sampleUser, sampleCategory, sampleCurrency, sampleTransaction}
 	var extensions = []string{"uuid-ossp"}
 
 	// create necessary extensions if they do not exist:
