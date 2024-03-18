@@ -11,8 +11,8 @@ import (
 
 // Service represents groshi service containing all its dependencies.
 type Service struct {
-	// handler contains groshi's HTTP handlers and their dependencies.
-	handler *handler.Handler
+	// Handler contains groshi's HTTP handlers and their dependencies.
+	Handler *handler.Handler
 
 	// job contains groshi's jobs and their dependencies.
 	job *job.Job
@@ -21,7 +21,7 @@ type Service struct {
 // New creates a new instance of [Service] and returns pointer to it.
 func New(database *database.Database, jwtAuthority *jwtauthority.JWTAuthority, passwordAuthority *passwdauthority.PasswordAuthority, internalServerErrorLogger *log.Logger) *Service {
 	return &Service{
-		handler: handler.New(database, jwtAuthority, passwordAuthority, internalServerErrorLogger),
+		Handler: handler.New(database, jwtAuthority, passwordAuthority, internalServerErrorLogger),
 		job:     job.New(database),
 	}
 }

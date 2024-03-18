@@ -135,60 +135,60 @@ func getHTTPRouter(groshi *service.Service) *chi.Mux {
 
 	r.Route("/auth", func(r chi.Router) {
 		// public `/auth` routes:
-		r.Post("/login", groshi.AuthLogin)
+		r.Post("/login", groshi.Handler.AuthLogin)
 	})
 
 	r.Route("/user", func(r chi.Router) {
 		// public `/user` route:
-		r.Post("/", groshi.UserCreate)
+		r.Post("/", groshi.Handler.UserCreate)
 
 		// protected `/user` routes:
 		r.Group(func(r chi.Router) {
-			r.Use(jwtauth.Verifier(groshi.JWTAuthority.JWTAuth))
-			r.Use(jwtauth.Authenticator(groshi.JWTAuthority.JWTAuth))
+			r.Use(jwtauth.Verifier(groshi.Handler.JWTAuthority.JWTAuth))
+			r.Use(jwtauth.Authenticator(groshi.Handler.JWTAuthority.JWTAuth))
 
-			r.Get("/", groshi.UserGet)
+			r.Get("/", groshi.Handler.UserGet)
 			//r.Put("/", groshi.UserUpdate)
-			r.Delete("/", groshi.UserDelete)
+			r.Delete("/", groshi.Handler.UserDelete)
 		})
 	})
 
 	r.Route("/categories", func(r chi.Router) {
 		// protected `/categories` routes:
 		r.Group(func(r chi.Router) {
-			r.Use(jwtauth.Verifier(groshi.JWTAuthority.JWTAuth))
-			r.Use(jwtauth.Authenticator(groshi.JWTAuthority.JWTAuth))
+			r.Use(jwtauth.Verifier(groshi.Handler.JWTAuthority.JWTAuth))
+			r.Use(jwtauth.Authenticator(groshi.Handler.JWTAuthority.JWTAuth))
 
-			r.Post("/", groshi.CategoriesCreate)
-			r.Get("/", groshi.CategoriesGet)
-			r.Put("/{uuid}", groshi.CategoriesUpdate)
-			r.Delete("/{uuid}", groshi.CategoriesDelete)
+			r.Post("/", groshi.Handler.CategoriesCreate)
+			r.Get("/", groshi.Handler.CategoriesGet)
+			r.Put("/{uuid}", groshi.Handler.CategoriesUpdate)
+			r.Delete("/{uuid}", groshi.Handler.CategoriesDelete)
 		})
 	})
 
 	r.Route("/transactions", func(r chi.Router) {
 		// protected `/transactions` routes:
 		r.Group(func(r chi.Router) {
-			r.Use(jwtauth.Verifier(groshi.JWTAuthority.JWTAuth))
-			r.Use(jwtauth.Authenticator(groshi.JWTAuthority.JWTAuth))
+			r.Use(jwtauth.Verifier(groshi.Handler.JWTAuthority.JWTAuth))
+			r.Use(jwtauth.Authenticator(groshi.Handler.JWTAuthority.JWTAuth))
 
-			r.Post("/", groshi.TransactionsCreate)
-			r.Get("/{uuid}", groshi.TransactionsGetOne)
-			r.Get("/", groshi.TransactionsGet)
+			r.Post("/", groshi.Handler.TransactionsCreate)
+			r.Get("/{uuid}", groshi.Handler.TransactionsGetOne)
+			r.Get("/", groshi.Handler.TransactionsGet)
 		})
 	})
 
 	r.Route("/stats", func(r chi.Router) {
 		// protected `/stats` routes:
 		r.Group(func(r chi.Router) {
-			r.Use(jwtauth.Verifier(groshi.JWTAuthority.JWTAuth))
-			r.Use(jwtauth.Authenticator(groshi.JWTAuthority.JWTAuth))
+			r.Use(jwtauth.Verifier(groshi.Handler.JWTAuthority.JWTAuth))
+			r.Use(jwtauth.Authenticator(groshi.Handler.JWTAuthority.JWTAuth))
 
-			r.Get("/total", groshi.StatsTotal)
+			r.Get("/total", groshi.Handler.StatsTotal)
 		})
 	})
 
-	r.Get("/ping", groshi.Ping)
+	r.Get("/ping", groshi.Handler.Ping)
 
 	return r
 }
