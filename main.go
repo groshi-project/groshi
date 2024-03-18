@@ -33,7 +33,7 @@ type Options struct {
 	} `group:"General options"`
 
 	Service struct {
-		BcryptCost int `long:"bcrypt-cost" env:"GROSHI_BCRYPT_COST" description:"todo"`
+		BcryptCost int `long:"bcrypt-cost" env:"GROSHI_BCRYPT_COST" default:"10" description:"todo"`
 
 		JWTSecretKey     string `long:"jwt-secret-key" env:"GROSHI_JWT_SECRET_KEY" description:"a secret key which will be used to generate JSON web tokens"`
 		JWTSecretKeyFile string `long:"jwt-secret-key-file" env:"GROSHI_JWT_SECRET_KEY_FILE" description:"file containing a secret key which will be used to generate JSON web tokens"`
@@ -42,7 +42,7 @@ type Options struct {
 	} `group:"Service options"`
 
 	Postgres struct {
-		Host string `long:"postgres-host" env:"GROSHI_POSTGRES_HOST" required:"true" description:"host on which postgres is listening for groshi's connection'"`
+		Host string `long:"postgres-host" env:"GROSHI_POSTGRES_HOST" required:"true" description:"host on which postgres is listening for groshi's connection"`
 		Port int    `long:"postgres-port" env:"GROSHI_POSTGRES_PORT" default:"5432" description:"host on which postgres is listening for groshi's connection"`
 
 		User     string `long:"postgres-user" env:"GROSHI_POSTGRES_USER"  description:"todo"`
@@ -82,10 +82,10 @@ func parseOptionsPair(cliFlag string, envVar string, value *string, valueFile st
 // getOptions parses options from CLI and environmental variables.
 // Prints error message and terminates program with code 1 on error.
 func getOptions() *Options {
-	parsingErrors := make([]error, 0)
-
 	var options Options
 	parser := flags.NewParser(&options, flags.Default)
+
+	// parse options using parser:
 	if _, err := parser.Parse(); err != nil {
 		var flagsErr *flags.Error
 		if errors.As(err, &flagsErr) && errors.Is(flagsErr.Type, flags.ErrHelp) {
@@ -95,6 +95,8 @@ func getOptions() *Options {
 		}
 	}
 
+	// additionally parse options from paired options:
+	parsingErrors := make([]error, 0)
 	if err := parseOptionsPair("--jwt-secret-key", "GROSHI_JWT_SECRET_KEY", &options.Service.JWTSecretKey, options.Service.JWTSecretKeyFile); err != nil {
 		parsingErrors = append(parsingErrors, err)
 	}
