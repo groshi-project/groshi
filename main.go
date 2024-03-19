@@ -6,11 +6,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/jwtauth/v5"
+	_ "github.com/groshi-project/groshi/docs"
 	"github.com/groshi-project/groshi/internal/database"
 	"github.com/groshi-project/groshi/internal/service"
 	"github.com/groshi-project/groshi/pkg/jwtauthority"
 	"github.com/groshi-project/groshi/pkg/passwdauthority"
 	"github.com/jessevdk/go-flags"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
 	"net/http"
 	"os"
@@ -125,6 +127,20 @@ func getOptions() *Options {
 	return &options
 }
 
+// getHTTPRouter creates and configures a new HTTP router for groshi service
+//
+//	@title						groshi
+//	@version					0.1.0
+//	@description				📉 groshi - damn simple tool to keep track of your finances.
+//	@contact.name				jieggii
+//	@contact.url				https://github.com/jieggii
+//
+//	@license.name				MIT
+//	@license.url				https://github.com/groshi-project/groshi/blob/master/LICENSE
+//
+//	@securityDefinitions.apikey	JWT
+//	@in							header
+//	@name						JWT
 func getHTTPRouter(groshi *service.Service) *chi.Mux {
 	r := chi.NewRouter()
 
@@ -191,6 +207,8 @@ func getHTTPRouter(groshi *service.Service) *chi.Mux {
 	})
 
 	r.Get("/ping", groshi.Handler.Ping)
+
+	r.Get("/swagger/*", httpSwagger.Handler())
 
 	return r
 }

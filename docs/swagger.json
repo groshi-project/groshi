@@ -1,0 +1,188 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "📉 groshi - damn simple tool to keep track of your finances.",
+        "title": "groshi",
+        "contact": {
+            "name": "jieggii",
+            "url": "https://github.com/jieggii"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://github.com/groshi-project/groshi/blob/master/LICENSE"
+        },
+        "version": "0.1.0"
+    },
+    "paths": {
+        "/user": {
+            "get": {
+                "description": "Returns information about the current user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Retrieve information about the current user",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/handler.userGetResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/errresp.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errresp.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a new user and returns its username",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Create a new user",
+                "parameters": [
+                    {
+                        "description": "User object",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.userCreateParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/handler.userCreateResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "User with such username already exists",
+                        "schema": {
+                            "$ref": "#/definitions/errresp.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errresp.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Deletes the current user and returns its username",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Delete the current user",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/handler.userDeleteResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/errresp.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errresp.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "errresp.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error_message": {
+                    "type": "string",
+                    "example": "today is a sunny day so I decided to go for a walk instead of serving your requests"
+                }
+            }
+        },
+        "handler.userCreateParams": {
+            "type": "object",
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "example": "my-secret-password"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "jieggii"
+                }
+            }
+        },
+        "handler.userCreateResponse": {
+            "type": "object",
+            "properties": {
+                "username": {
+                    "type": "string",
+                    "example": "jieggii"
+                }
+            }
+        },
+        "handler.userDeleteResponse": {
+            "type": "object",
+            "properties": {
+                "username": {
+                    "type": "string",
+                    "example": "jieggii"
+                }
+            }
+        },
+        "handler.userGetResponse": {
+            "type": "object",
+            "properties": {
+                "username": {
+                    "type": "string",
+                    "example": "jieggii"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "JWT": {
+            "type": "apiKey",
+            "name": "JWT",
+            "in": "header"
+        }
+    }
+}

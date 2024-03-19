@@ -1,0 +1,126 @@
+definitions:
+  errresp.ErrorResponse:
+    properties:
+      error_message:
+        example: today is a sunny day so I decided to go for a walk instead of serving
+          your requests
+        type: string
+    type: object
+  handler.userCreateParams:
+    properties:
+      password:
+        example: my-secret-password
+        type: string
+      username:
+        example: jieggii
+        type: string
+    type: object
+  handler.userCreateResponse:
+    properties:
+      username:
+        example: jieggii
+        type: string
+    type: object
+  handler.userDeleteResponse:
+    properties:
+      username:
+        example: jieggii
+        type: string
+    type: object
+  handler.userGetResponse:
+    properties:
+      username:
+        example: jieggii
+        type: string
+    type: object
+info:
+  contact:
+    name: jieggii
+    url: https://github.com/jieggii
+  description: "\U0001F4C9 groshi - damn simple tool to keep track of your finances."
+  license:
+    name: MIT
+    url: https://github.com/groshi-project/groshi/blob/master/LICENSE
+  title: groshi
+  version: 0.1.0
+paths:
+  /user:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes the current user and returns its username
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/handler.userDeleteResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/errresp.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errresp.ErrorResponse'
+      summary: Delete the current user
+      tags:
+      - user
+    get:
+      consumes:
+      - application/json
+      description: Returns information about the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/handler.userGetResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/errresp.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errresp.ErrorResponse'
+      summary: Retrieve information about the current user
+      tags:
+      - user
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user and returns its username
+      parameters:
+      - description: User object
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handler.userCreateParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/handler.userCreateResponse'
+        "409":
+          description: User with such username already exists
+          schema:
+            $ref: '#/definitions/errresp.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errresp.ErrorResponse'
+      summary: Create a new user
+      tags:
+      - user
+securityDefinitions:
+  JWT:
+    in: header
+    name: JWT
+    type: apiKey
+swagger: "2.0"

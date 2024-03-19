@@ -1,11 +1,11 @@
 package errresp
 
-// ErrorData represents error response model.
-type ErrorData struct {
-	ErrorMessage string `json:"error_message"`
+// ErrorResponse represents error response model.
+type ErrorResponse struct {
+	ErrorMessage string `json:"error_message" example:"today is a sunny day so I decided to go for a walk instead of serving your requests"`
 }
 
-// NewErrorData creates a new instance of [ErrorData] and returns pointer to it.
-func NewErrorData(errorMessage string) *ErrorData {
-	return &ErrorData{ErrorMessage: errorMessage}
+// NewErrorResponse creates a new instance of [ErrorResponse] and returns pointer to it.
+func NewErrorResponse(errorMessage string) *ErrorResponse {
+	return &ErrorResponse{ErrorMessage: errorMessage}
 }

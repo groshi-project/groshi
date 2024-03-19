@@ -7,40 +7,40 @@ import (
 
 var InternalServerError = httpresp.New(
 	http.StatusInternalServerError,
-	NewErrorData("internal server error"),
+	NewErrorResponse("internal server error"),
 )
 
 var InvalidRequest = httpresp.New( // todo: rename InvalidRequest -> ?
 	http.StatusBadRequest,
-	NewErrorData("unable to decode request body"),
+	NewErrorResponse("unable to decode request body"),
 )
 
 var InvalidRequestParams = httpresp.New(
 	http.StatusBadRequest,
-	NewErrorData("invalid request parameters"),
+	NewErrorResponse("invalid request parameters"),
 )
 
 var UserNotFound = httpresp.New(
 	http.StatusNotFound,
-	NewErrorData("user not found"),
+	NewErrorResponse("user not found"),
 )
 
 var CategoryNotFound = httpresp.New(
 	http.StatusNotFound,
-	NewErrorData("category not found"),
+	NewErrorResponse("category not found"),
 )
 
 var CategoryForbidden = httpresp.New(
 	http.StatusForbidden,
-	NewErrorData("you have no access to this category"),
+	NewErrorResponse("you have no access to this category"),
 )
 
 var InvalidCredentials = httpresp.New(
 	http.StatusUnauthorized,
-	NewErrorData("invalid credentials"),
+	NewErrorResponse("invalid credentials"),
 )
 
 var CurrencyNotFound = httpresp.New(
 	http.StatusNotFound,
-	NewErrorData("currency not found"),
+	NewErrorResponse("currency not found"),
 )
