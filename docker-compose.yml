@@ -8,6 +8,8 @@ services:
       GROSHI_HOST: 0.0.0.0
       GROSHI_PORT: 8080
 
+      GROSHI_SWAGGER: true
+
       GROSHI_BCRYPT_COST: 11
       GROSHI_JWT_SECRET_KEY_FILE: /run/secrets/groshi/jwt_secret_key
       GROSHI_JWT_TTL: 744h
