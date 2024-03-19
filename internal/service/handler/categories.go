@@ -6,7 +6,7 @@ import (
 	"errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/groshi-project/groshi/internal/database"
-	"github.com/groshi-project/groshi/internal/service/handler/errresp"
+	"github.com/groshi-project/groshi/internal/service/handler/response"
 	"github.com/groshi-project/groshi/pkg/httpresp"
 	"net/http"
 )
@@ -23,13 +23,13 @@ func (h *Handler) CategoriesCreate(w http.ResponseWriter, r *http.Request) {
 	// decode request params:
 	params := &categoriesCreateParams{}
 	if err := json.NewDecoder(r.Body).Decode(params); err != nil {
-		errresp.InvalidRequest.Render(w)
+		httpresp.Render(w, response.InvalidRequest)
 		return
 	}
 
 	// validate request params:
 	if err := h.paramsValidate.Struct(params); err != nil {
-		errresp.InvalidRequestParams.Render(w)
+		httpresp.Render(w, response.InvalidRequestParams)
 		return
 	}
 
@@ -37,7 +37,7 @@ func (h *Handler) CategoriesCreate(w http.ResponseWriter, r *http.Request) {
 	username, err := h.JWTAuthority.ExtractUsername(r.Context())
 	if err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -45,11 +45,11 @@ func (h *Handler) CategoriesCreate(w http.ResponseWriter, r *http.Request) {
 	user := &database.User{}
 	if err := h.database.SelectUserByUsername(username, user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errresp.UserNotFound.Render(w)
+			httpresp.Render(w, response.UserNotFound)
 			return
 		}
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -60,7 +60,7 @@ func (h *Handler) CategoriesCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.database.CreateCategory(category); err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -68,7 +68,7 @@ func (h *Handler) CategoriesCreate(w http.ResponseWriter, r *http.Request) {
 	resp := &categoriesCreateResponse{
 		UUID: category.UUID.String(),
 	}
-	httpresp.NewOK(resp).Render(w)
+	httpresp.Render(w, httpresp.NewOK(resp))
 }
 
 type categoryResponse struct {
@@ -83,7 +83,7 @@ func (h *Handler) CategoriesGet(w http.ResponseWriter, r *http.Request) {
 	username, err := h.JWTAuthority.ExtractUsername(r.Context())
 	if err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -91,11 +91,11 @@ func (h *Handler) CategoriesGet(w http.ResponseWriter, r *http.Request) {
 	user := &database.User{}
 	if err := h.database.SelectUserByUsername(username, user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errresp.UserNotFound.Render(w)
+			httpresp.Render(w, response.UserNotFound)
 			return
 		}
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -104,7 +104,7 @@ func (h *Handler) CategoriesGet(w http.ResponseWriter, r *http.Request) {
 	if err := h.database.SelectCategoriesByOwnerID(user.ID, &categories); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			h.internalServerErrorLogger.Println(err)
-			errresp.InternalServerError.Render(w)
+			httpresp.Render(w, response.InternalServerError)
 			return
 		}
 	}
@@ -132,13 +132,13 @@ func (h *Handler) CategoriesUpdate(w http.ResponseWriter, r *http.Request) {
 	// decode request params:
 	params := &categoriesUpdateParams{}
 	if err := json.NewDecoder(r.Body).Decode(params); err != nil {
-		errresp.InvalidRequest.Render(w)
+		httpresp.Render(w, response.InvalidRequest)
 		return
 	}
 
 	// validate request params:
 	if err := h.paramsValidate.Struct(params); err != nil {
-		errresp.InvalidRequestParams.Render(w)
+		httpresp.Render(w, response.InvalidRequestParams)
 		return
 	}
 
@@ -149,11 +149,11 @@ func (h *Handler) CategoriesUpdate(w http.ResponseWriter, r *http.Request) {
 	category := &database.Category{}
 	if err := h.database.SelectCategoryByUUID(uuid, category); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errresp.CategoryNotFound.Render(w)
+			httpresp.Render(w, response.CategoryNotFound)
 			return
 		}
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -162,7 +162,7 @@ func (h *Handler) CategoriesUpdate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -170,17 +170,17 @@ func (h *Handler) CategoriesUpdate(w http.ResponseWriter, r *http.Request) {
 	user := &database.User{}
 	if err := h.database.SelectUserByUsername(username, user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errresp.UserNotFound.Render(w)
+			httpresp.Render(w, response.UserNotFound)
 			return
 		}
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
 	// check if the category owned by the current user:
 	if category.OwnerID != user.ID {
-		errresp.CategoryForbidden.Render(w)
+		httpresp.Render(w, response.CategoryForbidden)
 		return
 	}
 
@@ -188,7 +188,7 @@ func (h *Handler) CategoriesUpdate(w http.ResponseWriter, r *http.Request) {
 	category.Name = params.Name
 	if err := h.database.UpdateCategory(category); err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -211,11 +211,11 @@ func (h *Handler) CategoriesDelete(w http.ResponseWriter, r *http.Request) {
 	category := &database.Category{}
 	if err := h.database.SelectCategoryByUUID(uuid, category); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errresp.CategoryNotFound.Render(w)
+			httpresp.Render(w, response.CategoryNotFound)
 			return
 		}
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -223,7 +223,7 @@ func (h *Handler) CategoriesDelete(w http.ResponseWriter, r *http.Request) {
 	username, err := h.JWTAuthority.ExtractUsername(r.Context())
 	if err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -231,24 +231,24 @@ func (h *Handler) CategoriesDelete(w http.ResponseWriter, r *http.Request) {
 	user := &database.User{}
 	if err := h.database.SelectUserByUsername(username, user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errresp.UserNotFound.Render(w)
+			httpresp.Render(w, response.UserNotFound)
 			return
 		}
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
 	// check if the category belongs to the user:
 	if category.OwnerID != user.ID {
-		errresp.CategoryForbidden.Render(w)
+		httpresp.Render(w, response.CategoryForbidden)
 		return
 	}
 
 	// delete the given category from the database:
 	if err := h.database.DeleteCategoryByID(category.ID); err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 

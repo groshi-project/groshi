@@ -2,7 +2,8 @@ package handler
 
 import (
 	"encoding/json"
-	"github.com/groshi-project/groshi/internal/service/handler/errresp"
+	"github.com/groshi-project/groshi/internal/service/handler/model"
+	"github.com/groshi-project/groshi/internal/service/handler/response"
 	"net/http"
 
 	"github.com/groshi-project/groshi/pkg/httpresp"
@@ -36,13 +37,13 @@ func (h *Handler) UserCreate(w http.ResponseWriter, r *http.Request) {
 	// parse request params:
 	params := &userCreateParams{}
 	if err := json.NewDecoder(r.Body).Decode(params); err != nil {
-		errresp.InvalidRequest.Render(w)
+		httpresp.Render(w, response.InvalidRequest)
 		return
 	}
 
 	// validate request params:
 	if err := h.paramsValidate.Struct(params); err != nil {
-		errresp.InvalidRequestParams.Render(w)
+		httpresp.Render(w, response.InvalidRequestParams)
 		return
 	}
 
@@ -50,11 +51,11 @@ func (h *Handler) UserCreate(w http.ResponseWriter, r *http.Request) {
 	exists, err := h.database.UserExistsByUsername(params.Username)
 	if err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 	if exists {
-		httpresp.New(http.StatusConflict, errresp.NewErrorResponse("user already exists")).Render(w)
+		httpresp.Render(w, httpresp.New(http.StatusConflict, model.NewError("user already exists")))
 		return
 	}
 
@@ -62,7 +63,7 @@ func (h *Handler) UserCreate(w http.ResponseWriter, r *http.Request) {
 	passwordHash, err := h.passwordAuthority.HashPassword(params.Password)
 	if err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 	user := &database.User{
@@ -71,7 +72,7 @@ func (h *Handler) UserCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.database.CreateUser(user); err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -79,7 +80,7 @@ func (h *Handler) UserCreate(w http.ResponseWriter, r *http.Request) {
 	resp := &userCreateResponse{
 		Username: user.Username,
 	}
-	httpresp.NewOK(resp).Render(w)
+	httpresp.Render(w, httpresp.NewOK(resp))
 }
 
 type userGetResponse struct {
@@ -102,7 +103,7 @@ func (h *Handler) UserGet(w http.ResponseWriter, r *http.Request) {
 	username, err := h.JWTAuthority.ExtractUsername(r.Context())
 	if err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -137,7 +138,7 @@ func (h *Handler) UserDelete(w http.ResponseWriter, r *http.Request) {
 	username, err := h.JWTAuthority.ExtractUsername(r.Context())
 	if err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -145,18 +146,18 @@ func (h *Handler) UserDelete(w http.ResponseWriter, r *http.Request) {
 	exists, err := h.database.UserExistsByUsername(username)
 	if err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 	if !exists {
-		errresp.UserNotFound.Render(w)
+		httpresp.Render(w, response.UserNotFound)
 		return
 	}
 
 	// delete the user from the database:
 	if err := h.database.DeleteUserByUsername(username); err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -164,5 +165,5 @@ func (h *Handler) UserDelete(w http.ResponseWriter, r *http.Request) {
 	resp := &userDeleteResponse{
 		Username: username,
 	}
-	httpresp.NewOK(resp)
+	httpresp.Render(w, httpresp.NewOK(resp))
 }

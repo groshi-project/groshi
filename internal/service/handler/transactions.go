@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/groshi-project/groshi/internal/database"
-	"github.com/groshi-project/groshi/internal/service/handler/errresp"
+	"github.com/groshi-project/groshi/internal/service/handler/response"
 	"github.com/groshi-project/groshi/pkg/httpresp"
 	"net/http"
 	"time"
@@ -29,13 +29,13 @@ func (h *Handler) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 	// decode request params:
 	params := &transactionsCreateParams{}
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		errresp.InvalidRequest.Render(w)
+		httpresp.Render(w, response.InvalidRequest)
 		return
 	}
 
 	// validate request params:
 	if err := h.paramsValidate.Struct(params); err != nil {
-		errresp.InvalidRequestParams.Render(w)
+		httpresp.Render(w, response.InvalidRequestParams)
 		return
 	}
 
@@ -43,11 +43,11 @@ func (h *Handler) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 	currency := &database.Currency{}
 	if err := h.database.SelectCurrencyByCode(params.CurrencyCode, currency); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errresp.CurrencyNotFound.Render(w)
+			httpresp.Render(w, response.CurrencyNotFound)
 			return
 		}
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -55,11 +55,11 @@ func (h *Handler) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 	category := &database.Category{}
 	if err := h.database.SelectCategoryByUUID(params.CategoryUUID, category); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errresp.CategoryNotFound.Render(w)
+			httpresp.Render(w, response.CategoryNotFound)
 			return
 		}
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -67,7 +67,7 @@ func (h *Handler) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 	username, err := h.JWTAuthority.ExtractUsername(r.Context())
 	if err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -75,11 +75,11 @@ func (h *Handler) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 	user := &database.User{}
 	if err := h.database.SelectUserByUsername(username, user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errresp.UserNotFound.Render(w)
+			httpresp.Render(w, response.UserNotFound)
 			return
 		}
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -100,7 +100,7 @@ func (h *Handler) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.database.CreateTransaction(transaction); err != nil {
 		h.internalServerErrorLogger.Println(err)
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 

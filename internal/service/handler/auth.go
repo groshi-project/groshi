@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/groshi-project/groshi/internal/database"
-	"github.com/groshi-project/groshi/internal/service/handler/errresp"
+	"github.com/groshi-project/groshi/internal/service/handler/response"
 	"github.com/groshi-project/groshi/pkg/httpresp"
 	"net/http"
 	"time"
@@ -25,13 +25,13 @@ func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	// decode request params:
 	params := &authLoginParams{}
 	if err := json.NewDecoder(r.Body).Decode(params); err != nil {
-		errresp.InvalidRequest.Render(w)
+		httpresp.Render(w, response.InvalidRequest)
 		return
 	}
 
 	// validate request params:
 	if err := h.paramsValidate.Struct(params); err != nil {
-		errresp.InvalidRequestParams.Render(w)
+		httpresp.Render(w, response.InvalidRequestParams)
 		return
 	}
 
@@ -39,23 +39,23 @@ func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	user := &database.User{}
 	if err := h.database.SelectUserByUsername(params.Username, user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			errresp.InvalidCredentials.Render(w)
+			httpresp.Render(w, response.InvalidCredentials)
 			return
 		}
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
 	// validate provided password:
 	if !h.passwordAuthority.ValidatePassword(params.Password, user.Password) {
-		errresp.InvalidCredentials.Render(w)
+		httpresp.Render(w, response.InvalidCredentials)
 		return
 	}
 
 	// generate a new jwt:
 	token, expires, err := h.JWTAuthority.GenerateToken(user.Username)
 	if err != nil {
-		errresp.InternalServerError.Render(w)
+		httpresp.Render(w, response.InternalServerError)
 		return
 	}
 
@@ -64,5 +64,5 @@ func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 		Token:   token,
 		Expires: expires,
 	}
-	httpresp.NewOK(resp).Render(w)
+	httpresp.Render(w, httpresp.NewOK(resp))
 }
