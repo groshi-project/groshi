@@ -34,6 +34,10 @@ type Options struct {
 		Port int    `short:"p" long:"port" env:"GROSHI_PORT" default:"8080" description:"port on which groshi will listen for client connections"`
 	} `group:"General options"`
 
+	Development struct {
+		Swagger bool `long:"swagger" env:"GROSHI_SWAGGER" description:"enable Swagger UI route"`
+	} `group:"Development"`
+
 	Service struct {
 		BcryptCost int `long:"bcrypt-cost" env:"GROSHI_BCRYPT_COST" default:"10" description:"todo"`
 
@@ -208,7 +212,9 @@ func getHTTPRouter(groshi *service.Service) *chi.Mux {
 
 	r.Get("/ping", groshi.Handler.Ping)
 
-	r.Get("/swagger/*", httpSwagger.Handler())
+	if groshi.Swagger {
+		r.Get("/swagger/*", httpSwagger.Handler())
+	}
 
 	return r
 }
@@ -250,6 +256,7 @@ func main() {
 		jwtauthority.New(options.Service.JWTTimeToLive, options.Service.JWTSecretKey),
 		passwdauthority.New(options.Service.BcryptCost),
 		log.New(os.Stderr, "[internal server error]: ", loggingBaseFlags|log.Llongfile),
+		options.Development.Swagger,
 	)
 
 	// create an HTTP router:
