@@ -15,7 +15,7 @@ const (
 	zeroTokenTTL = time.Duration(0) * time.Nanosecond
 )
 
-func NewTestAuthority(tokenTTL time.Duration) *Authority {
+func NewTestAuthority(tokenTTL time.Duration) *DefaultAuthority {
 	return New(signingMethod, secretKey, tokenTTL)
 }
 

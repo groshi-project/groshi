@@ -22,7 +22,7 @@ type Service struct {
 }
 
 // New creates a new instance of [Service] and returns pointer to it.
-func New(database *database.Database, jwtAuthority *jwtauthority.Authority, passwordAuthority *passwdauthority.Authority, internalServerErrorLogger *log.Logger, swagger bool) *Service {
+func New(database *database.Database, jwtAuthority *jwtauthority.DefaultAuthority, passwordAuthority *passwdauthority.Authority, internalServerErrorLogger *log.Logger, swagger bool) *Service {
 	return &Service{
 		Handler: handler.New(database, jwtAuthority, passwordAuthority, internalServerErrorLogger),
 		Swagger: swagger,

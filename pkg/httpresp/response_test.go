@@ -35,8 +35,8 @@ func TestRender(t *testing.T) {
 	}
 	response := New(http.StatusOK, &payload)
 	Render(r, response)
-	assert.Equal(t, r.Code, http.StatusOK)
-	assert.Equal(t, r.Header().Get("Content-Type"), "application/json")
+	assert.Equal(t, http.StatusOK, r.Code)
+	assert.Equal(t, "application/json", r.Header().Get("Content-Type"))
 
 	responsePayload := make(map[string]any)
 	err := json.NewDecoder(r.Body).Decode(&responsePayload)
@@ -45,5 +45,4 @@ func TestRender(t *testing.T) {
 	if assert.NotEmpty(t, responsePayload) {
 		assert.Equal(t, payload, responsePayload)
 	}
-
 }
