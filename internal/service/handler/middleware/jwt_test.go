@@ -13,7 +13,7 @@ func TestTokenFromHeader(t *testing.T) {
 	// test empty header value:
 	token1, err := tokenFromHeader("")
 	if assert.Error(t, err) {
-		assert.ErrorIs(t, err, errEmptyAuthHeader)
+		assert.ErrorIs(t, err, errEmptyOrMissingAuthHeader)
 	}
 	assert.Empty(t, token1)
 
@@ -64,6 +64,19 @@ func (m *mockAuthority) VerifyToken(tokenString string) (jwt.MapClaims, error) {
 	}
 }
 
+// testRequest creates a new [httptest.Recorder] and makes a test request to handler using it,
+// then returns pointer to this recorder.
+func testRequest(setAuthHeader bool, authHeaderValue string, handler http.Handler) *httptest.ResponseRecorder {
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/", nil)
+	if setAuthHeader {
+		request.Header.Set("Authorization", authHeaderValue)
+	}
+
+	handler.ServeHTTP(recorder, request)
+	return recorder
+}
+
 func TestNewJWT(t *testing.T) {
 	// username of a test user:
 	username := "my-username-123"
@@ -82,32 +95,23 @@ func TestNewJWT(t *testing.T) {
 	middleware := NewJWT(authority)
 	handlerWithMiddleware := middleware(testHandler)
 
-	// test with valid token:
-	recorder1 := httptest.NewRecorder()
-	req1 := httptest.NewRequest(http.MethodPost, "/", nil)
-	req1.Header.Set("Authorization", "Bearer example-token-123")
-
-	handlerWithMiddleware.ServeHTTP(recorder1, req1)
-	assert.Equal(t, http.StatusOK, recorder1.Code)
+	// test with correct token:
+	recorder := testRequest(true, "Bearer example-token-123", handlerWithMiddleware)
+	assert.Equal(t, http.StatusOK, recorder.Code)
 
 	// test with wrong token:
-	recorder2 := httptest.NewRecorder()
-	req2 := httptest.NewRequest(http.MethodPost, "/", nil)
-	req2.Header.Set("Authorization", "Bearer wrong-token")
+	recorder = testRequest(true, "Bearer wrong-token", handlerWithMiddleware)
+	assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 
-	handlerWithMiddleware.ServeHTTP(recorder2, req2)
-	assert.Equal(t, http.StatusUnauthorized, recorder2.Code)
+	// test with empty authorization header value:
+	recorder = testRequest(true, "", handlerWithMiddleware)
+	assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 
-	// test without "Authorization" header
-	recorder3 := httptest.NewRecorder()
-	req3 := httptest.NewRequest(http.MethodPost, "/", nil)
-	handlerWithMiddleware.ServeHTTP(recorder3, req3)
-	assert.Equal(t, http.StatusBadRequest, recorder3.Code)
+	// test without authorization header at all:
+	recorder = testRequest(false, "", handlerWithMiddleware)
+	assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 
-	// test with invalid "Authorization" header:
-	recorder4 := httptest.NewRecorder()
-	req4 := httptest.NewRequest(http.MethodPost, "/", nil)
-	req2.Header.Set("Authorization", "hello! I am temmie www!")
-	handlerWithMiddleware.ServeHTTP(recorder4, req4)
-	assert.Equal(t, http.StatusBadRequest, recorder4.Code)
+	// test with invalid authorization header:
+	recorder = testRequest(true, "Bearer is... who the hell is Bearer???", handlerWithMiddleware)
+	assert.Equal(t, http.StatusBadRequest, recorder.Code)
 }

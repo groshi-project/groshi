@@ -13,14 +13,14 @@ import (
 const authorizationHeader = "Authorization"
 const usernameContextKey = "username"
 
-var errEmptyAuthHeader = errors.New("empty authorization header")
+var errEmptyOrMissingAuthHeader = errors.New("empty or missing authorization header")
 var errInvalidAuthHeader = errors.New("invalid authorization header")
 
 // tokenFromHeader extracts token from a header value.
 // For example, it will extract "some-token" from string "Bearer some-token".
 func tokenFromHeader(headerValue string) (string, error) {
 	if headerValue == "" {
-		return "", errEmptyAuthHeader
+		return "", errEmptyOrMissingAuthHeader
 	}
 
 	tokens := strings.SplitN(headerValue, " ", 3)
@@ -40,11 +40,11 @@ func NewJWT(jwtAuthority jwtauthority.Authority) func(next http.Handler) http.Ha
 			token, err := tokenFromHeader(r.Header.Get(authorizationHeader))
 			if err != nil {
 				switch {
-				case errors.Is(err, errEmptyAuthHeader):
-					httpresp.Render(w, httpresp.New(http.StatusBadRequest, model.NewError("missing required authorization header")))
+				case errors.Is(err, errEmptyOrMissingAuthHeader):
+					httpresp.Render(w, httpresp.New(http.StatusUnauthorized, model.NewError("empty or missing required authorization header")))
 					return
 				case errors.Is(err, errInvalidAuthHeader):
-					httpresp.Render(w, httpresp.New(http.StatusUnauthorized, model.NewError("invalid authorization header")))
+					httpresp.Render(w, httpresp.New(http.StatusBadRequest, model.NewError("invalid authorization header")))
 					return
 				default:
 					panic(err)
