@@ -9,10 +9,7 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {
-            "name": "jieggii",
-            "url": "https://github.com/jieggii"
-        },
+        "contact": {},
         "license": {
             "name": "MIT",
             "url": "https://github.com/groshi-project/groshi/blob/master/LICENSE"
@@ -22,8 +19,65 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/login": {
+            "post": {
+                "description": "Authenticates user, generates and returns valid JSON Web Token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Authenticate user",
+                "parameters": [
+                    {
+                        "description": "Username and password",
+                        "name": "credentials",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.authLoginParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/handler.authLoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body format or invalid request params",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/user": {
             "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Returns information about the current user",
                 "consumes": [
                     "application/json"
@@ -42,16 +96,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/handler.userGetResponse"
                         }
                     },
+                    "400": {
+                        "description": "Invalid request body format or invalid request params",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    },
                     "404": {
                         "description": "User not found",
                         "schema": {
-                            "$ref": "#/definitions/errresp.ErrorResponse"
+                            "$ref": "#/definitions/model.Error"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/errresp.ErrorResponse"
+                            "$ref": "#/definitions/model.Error"
                         }
                     }
                 }
@@ -70,7 +130,7 @@ const docTemplate = `{
                 "summary": "Create a new user",
                 "parameters": [
                     {
-                        "description": "User object",
+                        "description": "Username and password",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -86,16 +146,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/handler.userCreateResponse"
                         }
                     },
+                    "400": {
+                        "description": "Invalid request body format or invalid request params",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    },
                     "409": {
                         "description": "User with such username already exists",
                         "schema": {
-                            "$ref": "#/definitions/errresp.ErrorResponse"
+                            "$ref": "#/definitions/model.Error"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/errresp.ErrorResponse"
+                            "$ref": "#/definitions/model.Error"
                         }
                     }
                 }
@@ -119,16 +185,22 @@ const docTemplate = `{
                             "$ref": "#/definitions/handler.userDeleteResponse"
                         }
                     },
+                    "400": {
+                        "description": "Invalid request body format or invalid request params",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    },
                     "404": {
                         "description": "User not found",
                         "schema": {
-                            "$ref": "#/definitions/errresp.ErrorResponse"
+                            "$ref": "#/definitions/model.Error"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/errresp.ErrorResponse"
+                            "$ref": "#/definitions/model.Error"
                         }
                     }
                 }
@@ -136,12 +208,27 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "errresp.ErrorResponse": {
+        "handler.authLoginParams": {
             "type": "object",
             "properties": {
-                "error_message": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.authLoginResponse": {
+            "type": "object",
+            "properties": {
+                "expires": {
                     "type": "string",
-                    "example": "today is a sunny day so I decided to go for a walk instead of serving your requests"
+                    "example": "2034-03-20T12:57:38+02:00"
+                },
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IldlbGwsIGlmIHlvdSBjYW4gcmVhZCB0aGlzLCB0aGVuIHlvdSBkZWZpbmV0ZWx5IHdvdWxkIGxpa2UgdGhpcyBvbmU6IGh0dHBzOi8veW91dHUuYmUvZFF3NHc5V2dYY1EifQ.1ervhGZz1m6xiHR447rbwh8W1sfATF2qYudOtNWhkkw"
                 }
             }
         },
@@ -184,12 +271,22 @@ const docTemplate = `{
                     "example": "jieggii"
                 }
             }
+        },
+        "model.Error": {
+            "type": "object",
+            "properties": {
+                "error_message": {
+                    "type": "string",
+                    "example": "example error message (who cares)"
+                }
+            }
         }
     },
     "securityDefinitions": {
-        "JWT": {
+        "Bearer": {
+            "description": "Type \"Bearer\" followed by a space and JWT token.",
             "type": "apiKey",
-            "name": "JWT",
+            "name": "Authorization",
             "in": "header"
         }
     }

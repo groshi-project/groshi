@@ -29,7 +29,7 @@ func (h *Handler) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 	// decode request params:
 	params := &transactionsCreateParams{}
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		httpresp.Render(w, response.InvalidRequest)
+		httpresp.Render(w, response.InvalidRequestBodyFormat)
 		return
 	}
 
@@ -63,13 +63,8 @@ func (h *Handler) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// extract current user's username from claims:
-	username, err := h.JWTAuthority.ExtractUsername(r.Context())
-	if err != nil {
-		h.internalServerErrorLogger.Println(err)
-		httpresp.Render(w, response.InternalServerError)
-		return
-	}
+	// extract current user's username from context:
+	username := r.Context().Value("username").(string)
 
 	// fetch the current user from the database:
 	user := &database.User{}

@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/jwtauth/v5"
+	"github.com/golang-jwt/jwt/v4"
 	_ "github.com/groshi-project/groshi/docs"
 	"github.com/groshi-project/groshi/internal/database"
 	"github.com/groshi-project/groshi/internal/service"
+	serviceMiddleware "github.com/groshi-project/groshi/internal/service/handler/middleware"
 	"github.com/groshi-project/groshi/pkg/jwtauthority"
 	"github.com/groshi-project/groshi/pkg/passwdauthority"
 	"github.com/jessevdk/go-flags"
@@ -41,7 +42,7 @@ type Options struct {
 	Service struct {
 		BcryptCost int `long:"bcrypt-cost" env:"GROSHI_BCRYPT_COST" default:"10" description:"todo"`
 
-		JWTSecretKey     string `long:"jwt-secret-key" env:"GROSHI_JWT_SECRET_KEY" description:"a secret key which will be used to generate JSON web tokens"`
+		JWTSecretKey     string `long:"jwt-secret-key" env:"GROSHI_JWT_SECRET_KEY" description:"a secret key which will be used to generate JSON Web Tokens"`
 		JWTSecretKeyFile string `long:"jwt-secret-key-file" env:"GROSHI_JWT_SECRET_KEY_FILE" description:"file containing a secret key which will be used to generate JSON web tokens"`
 
 		JWTTimeToLive time.Duration `long:"jwt-ttl" env:"GROSHI_JWT_TTL" description:"jwt time-to-live" default:"744h"`
@@ -136,15 +137,14 @@ func getOptions() *Options {
 //	@title						groshi
 //	@version					0.1.0
 //	@description				📉 groshi - damn simple tool to keep track of your finances.
-//	@contact.name				jieggii
-//	@contact.url				https://github.com/jieggii
 //
 //	@license.name				MIT
 //	@license.url				https://github.com/groshi-project/groshi/blob/master/LICENSE
 //
-//	@securityDefinitions.apikey	JWT
+//	@securityDefinitions.apikey	Bearer
 //	@in							header
-//	@name						JWT
+//	@name						Authorization
+//	@description				Type "Bearer" followed by a space and JWT token.
 func getHTTPRouter(groshi *service.Service) *chi.Mux {
 	r := chi.NewRouter()
 
@@ -153,68 +153,58 @@ func getHTTPRouter(groshi *service.Service) *chi.Mux {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(time.Duration(30) * time.Second))
-	//r.Use(render.SetContentType(render.ContentTypeJSON))
 
-	r.Route("/auth", func(r chi.Router) {
-		// public `/auth` routes:
-		r.Post("/login", groshi.Handler.AuthLogin)
+	jwtMiddleware := serviceMiddleware.NewJWT(groshi.Handler.JWTAuthority)
+
+	// public routes:
+	r.Group(func(r chi.Router) {
+		if groshi.Swagger {
+			r.Route("/swagger", func(r chi.Router) {
+				r.Get("/*", httpSwagger.Handler())
+			})
+		}
+
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/login", groshi.Handler.AuthLogin)
+		})
+
 	})
 
+	// `/user` route which is partly public and partly protected:
 	r.Route("/user", func(r chi.Router) {
 		// public `/user` route:
 		r.Post("/", groshi.Handler.UserCreate)
 
 		// protected `/user` routes:
 		r.Group(func(r chi.Router) {
-			r.Use(jwtauth.Verifier(groshi.Handler.JWTAuthority.JWTAuth))
-			r.Use(jwtauth.Authenticator(groshi.Handler.JWTAuthority.JWTAuth))
-
+			r.Use(jwtMiddleware)
 			r.Get("/", groshi.Handler.UserGet)
-			//r.Put("/", groshi.UserUpdate)
+			r.Put("/", groshi.Handler.UserUpdate)
 			r.Delete("/", groshi.Handler.UserDelete)
 		})
 	})
 
-	r.Route("/categories", func(r chi.Router) {
-		// protected `/categories` routes:
-		r.Group(func(r chi.Router) {
-			r.Use(jwtauth.Verifier(groshi.Handler.JWTAuthority.JWTAuth))
-			r.Use(jwtauth.Authenticator(groshi.Handler.JWTAuthority.JWTAuth))
-
+	// protected routes:
+	r.Group(func(r chi.Router) {
+		r.Use(jwtMiddleware)
+		r.Route("/categories", func(r chi.Router) {
 			r.Post("/", groshi.Handler.CategoriesCreate)
 			r.Get("/", groshi.Handler.CategoriesGet)
 			r.Put("/{uuid}", groshi.Handler.CategoriesUpdate)
 			r.Delete("/{uuid}", groshi.Handler.CategoriesDelete)
 		})
-	})
 
-	r.Route("/transactions", func(r chi.Router) {
-		// protected `/transactions` routes:
-		r.Group(func(r chi.Router) {
-			r.Use(jwtauth.Verifier(groshi.Handler.JWTAuthority.JWTAuth))
-			r.Use(jwtauth.Authenticator(groshi.Handler.JWTAuthority.JWTAuth))
-
+		r.Route("/transactions", func(r chi.Router) {
 			r.Post("/", groshi.Handler.TransactionsCreate)
 			r.Get("/{uuid}", groshi.Handler.TransactionsGetOne)
 			r.Get("/", groshi.Handler.TransactionsGet)
 		})
-	})
 
-	r.Route("/stats", func(r chi.Router) {
-		// protected `/stats` routes:
-		r.Group(func(r chi.Router) {
-			r.Use(jwtauth.Verifier(groshi.Handler.JWTAuthority.JWTAuth))
-			r.Use(jwtauth.Authenticator(groshi.Handler.JWTAuthority.JWTAuth))
-
+		r.Route("/stats", func(r chi.Router) {
 			r.Get("/total", groshi.Handler.StatsTotal)
+
 		})
 	})
-
-	r.Get("/ping", groshi.Handler.Ping)
-
-	if groshi.Swagger {
-		r.Get("/swagger/*", httpSwagger.Handler())
-	}
 
 	return r
 }
@@ -237,6 +227,7 @@ func main() {
 
 	// initialize postgres:
 	db := database.New()
+	time.Sleep(time.Duration(4) * time.Second) // todo: remove
 	if err := db.Connect(
 		options.Postgres.Host,
 		options.Postgres.Port,
@@ -253,7 +244,7 @@ func main() {
 	// create a groshi service:
 	groshi := service.New(
 		db,
-		jwtauthority.New(options.Service.JWTTimeToLive, options.Service.JWTSecretKey),
+		jwtauthority.New(jwt.SigningMethodHS256, options.Service.JWTSecretKey, options.Service.JWTTimeToLive),
 		passwdauthority.New(options.Service.BcryptCost),
 		log.New(os.Stderr, "[internal server error]: ", loggingBaseFlags|log.Llongfile),
 		options.Development.Swagger,

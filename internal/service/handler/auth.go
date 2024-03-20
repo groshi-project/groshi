@@ -12,20 +12,33 @@ import (
 )
 
 type authLoginParams struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `json:"username" username:"elle4ka"`
+	Password string `json:"password" password:"my-secret-password"`
 }
 
 type authLoginResponse struct {
-	Token   string    `json:"token"`
-	Expires time.Time `json:"expires"`
+	Token   string    `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IldlbGwsIGlmIHlvdSBjYW4gcmVhZCB0aGlzLCB0aGVuIHlvdSBkZWZpbmV0ZWx5IHdvdWxkIGxpa2UgdGhpcyBvbmU6IGh0dHBzOi8veW91dHUuYmUvZFF3NHc5V2dYY1EifQ.1ervhGZz1m6xiHR447rbwh8W1sfATF2qYudOtNWhkkw"`
+	Expires time.Time `json:"expires" example:"2034-03-20T12:57:38+02:00"`
 }
 
+// AuthLogin authenticates user, generates and returns JWT.
+//
+//	@Summary		Authenticate user
+//	@Description	Authenticates user, generates and returns valid JSON Web Token
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			credentials	body		authLoginParams		true	"Username and password"
+//	@Success		200			{object}	authLoginResponse	"Successful operation"
+//	@Failure		403			{object}	model.Error			"Invalid credentials"
+//	@Failure		400			{object}	model.Error			"Invalid request body format or invalid request params"
+//	@Failure		500			{object}	model.Error			"Internal server error"
+//	@Router			/auth/login [post]
 func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	// decode request params:
 	params := &authLoginParams{}
 	if err := json.NewDecoder(r.Body).Decode(params); err != nil {
-		httpresp.Render(w, response.InvalidRequest)
+		httpresp.Render(w, response.InvalidRequestBodyFormat)
 		return
 	}
 
@@ -47,13 +60,13 @@ func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate provided password:
-	if !h.passwordAuthority.ValidatePassword(params.Password, user.Password) {
+	if !h.passwordAuthority.VerifyPassword(params.Password, user.Password) {
 		httpresp.Render(w, response.InvalidCredentials)
 		return
 	}
 
 	// generate a new jwt:
-	token, expires, err := h.JWTAuthority.GenerateToken(user.Username)
+	token, expires, err := h.JWTAuthority.CreateToken(user.Username)
 	if err != nil {
 		httpresp.Render(w, response.InternalServerError)
 		return

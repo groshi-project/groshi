@@ -1,9 +1,18 @@
 definitions:
-  errresp.ErrorResponse:
+  handler.authLoginParams:
     properties:
-      error_message:
-        example: today is a sunny day so I decided to go for a walk instead of serving
-          your requests
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  handler.authLoginResponse:
+    properties:
+      expires:
+        example: "2034-03-20T12:57:38+02:00"
+        type: string
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IldlbGwsIGlmIHlvdSBjYW4gcmVhZCB0aGlzLCB0aGVuIHlvdSBkZWZpbmV0ZWx5IHdvdWxkIGxpa2UgdGhpcyBvbmU6IGh0dHBzOi8veW91dHUuYmUvZFF3NHc5V2dYY1EifQ.1ervhGZz1m6xiHR447rbwh8W1sfATF2qYudOtNWhkkw
         type: string
     type: object
   handler.userCreateParams:
@@ -33,10 +42,14 @@ definitions:
         example: jieggii
         type: string
     type: object
+  model.Error:
+    properties:
+      error_message:
+        example: example error message (who cares)
+        type: string
+    type: object
 info:
-  contact:
-    name: jieggii
-    url: https://github.com/jieggii
+  contact: {}
   description: "\U0001F4C9 groshi - damn simple tool to keep track of your finances."
   license:
     name: MIT
@@ -44,6 +57,40 @@ info:
   title: groshi
   version: 0.1.0
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates user, generates and returns valid JSON Web Token
+      parameters:
+      - description: Username and password
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/handler.authLoginParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/handler.authLoginResponse'
+        "400":
+          description: Invalid request body format or invalid request params
+          schema:
+            $ref: '#/definitions/model.Error'
+        "403":
+          description: Invalid credentials
+          schema:
+            $ref: '#/definitions/model.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.Error'
+      summary: Authenticate user
+      tags:
+      - auth
   /user:
     delete:
       consumes:
@@ -56,14 +103,18 @@ paths:
           description: Successful operation
           schema:
             $ref: '#/definitions/handler.userDeleteResponse'
+        "400":
+          description: Invalid request body format or invalid request params
+          schema:
+            $ref: '#/definitions/model.Error'
         "404":
           description: User not found
           schema:
-            $ref: '#/definitions/errresp.ErrorResponse'
+            $ref: '#/definitions/model.Error'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/errresp.ErrorResponse'
+            $ref: '#/definitions/model.Error'
       summary: Delete the current user
       tags:
       - user
@@ -78,14 +129,20 @@ paths:
           description: Successful operation
           schema:
             $ref: '#/definitions/handler.userGetResponse'
+        "400":
+          description: Invalid request body format or invalid request params
+          schema:
+            $ref: '#/definitions/model.Error'
         "404":
           description: User not found
           schema:
-            $ref: '#/definitions/errresp.ErrorResponse'
+            $ref: '#/definitions/model.Error'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/errresp.ErrorResponse'
+            $ref: '#/definitions/model.Error'
+      security:
+      - Bearer: []
       summary: Retrieve information about the current user
       tags:
       - user
@@ -94,7 +151,7 @@ paths:
       - application/json
       description: Creates a new user and returns its username
       parameters:
-      - description: User object
+      - description: Username and password
         in: body
         name: user
         required: true
@@ -107,20 +164,25 @@ paths:
           description: Successful operation
           schema:
             $ref: '#/definitions/handler.userCreateResponse'
+        "400":
+          description: Invalid request body format or invalid request params
+          schema:
+            $ref: '#/definitions/model.Error'
         "409":
           description: User with such username already exists
           schema:
-            $ref: '#/definitions/errresp.ErrorResponse'
+            $ref: '#/definitions/model.Error'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/errresp.ErrorResponse'
+            $ref: '#/definitions/model.Error'
       summary: Create a new user
       tags:
       - user
 securityDefinitions:
-  JWT:
+  Bearer:
+    description: Type "Bearer" followed by a space and JWT token.
     in: header
-    name: JWT
+    name: Authorization
     type: apiKey
 swagger: "2.0"

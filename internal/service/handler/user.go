@@ -28,16 +28,17 @@ type userCreateResponse struct {
 //	@Tags			user
 //	@Accept			json
 //	@Produce		json
-//	@Param			user	body		userCreateParams		true	"User object"
-//	@Success		200		{object}	userCreateResponse		"Successful operation"
-//	@Failure		409		{object}	errresp.ErrorResponse	"User with such username already exists"
-//	@Failure		500		{object}	errresp.ErrorResponse	"Internal server error"
+//	@Param			user	body		userCreateParams	true	"Username and password"
+//	@Success		200		{object}	userCreateResponse	"Successful operation"
+//	@Failure		409		{object}	model.Error			"User with such username already exists"
+//	@Failure		400		{object}	model.Error			"Invalid request body format or invalid request params"
+//	@Failure		500		{object}	model.Error			"Internal server error"
 //	@Router			/user [post]
 func (h *Handler) UserCreate(w http.ResponseWriter, r *http.Request) {
 	// parse request params:
 	params := &userCreateParams{}
 	if err := json.NewDecoder(r.Body).Decode(params); err != nil {
-		httpresp.Render(w, response.InvalidRequest)
+		httpresp.Render(w, response.InvalidRequestBodyFormat)
 		return
 	}
 
@@ -94,24 +95,21 @@ type userGetResponse struct {
 //	@Tags			user
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{object}	userGetResponse			"Successful operation"
-//	@Failure		404	{object}	errresp.ErrorResponse	"User not found"
-//	@Failure		500	{object}	errresp.ErrorResponse	"Internal server error"
+//	@Success		200	{object}	userGetResponse	"Successful operation"
+//	@Failure		404	{object}	model.Error		"User not found"
+//	@Failure		400	{object}	model.Error		"Invalid request body format or invalid request params"
+//	@Failure		500	{object}	model.Error		"Internal server error"
+//	@Security		Bearer
 //	@Router			/user [get]
 func (h *Handler) UserGet(w http.ResponseWriter, r *http.Request) {
-	// extract current user's username from claims:
-	username, err := h.JWTAuthority.ExtractUsername(r.Context())
-	if err != nil {
-		h.internalServerErrorLogger.Println(err)
-		httpresp.Render(w, response.InternalServerError)
-		return
-	}
+	// extract current user's username from context:
+	username := r.Context().Value("username").(string)
 
 	// todo?: fetch user from the database to check if it exists.
 
 	// respond:
 	resp := &userGetResponse{Username: username}
-	httpresp.NewOK(resp)
+	httpresp.Render(w, httpresp.NewOK(resp))
 }
 
 func (h *Handler) UserUpdate(w http.ResponseWriter, r *http.Request) {
@@ -129,18 +127,14 @@ type userDeleteResponse struct {
 //	@Tags			user
 //	@Accept			json
 //	@Produce		json
-//	@Success		200	{object}	userDeleteResponse		"Successful operation"
-//	@Failure		404	{object}	errresp.ErrorResponse	"User not found"
-//	@Failure		500	{object}	errresp.ErrorResponse	"Internal server error"
+//	@Success		200	{object}	userDeleteResponse	"Successful operation"
+//	@Failure		404	{object}	model.Error			"User not found"
+//	@Failure		400	{object}	model.Error			"Invalid request body format or invalid request params"
+//	@Failure		500	{object}	model.Error			"Internal server error"
 //	@Router			/user [delete]
 func (h *Handler) UserDelete(w http.ResponseWriter, r *http.Request) {
-	// extract current user's username from claims:
-	username, err := h.JWTAuthority.ExtractUsername(r.Context())
-	if err != nil {
-		h.internalServerErrorLogger.Println(err)
-		httpresp.Render(w, response.InternalServerError)
-		return
-	}
+	// extract current user's username from context:
+	username := r.Context().Value("username").(string)
 
 	// check if the user exists:
 	exists, err := h.database.UserExistsByUsername(username)

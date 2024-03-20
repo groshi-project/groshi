@@ -11,18 +11,18 @@ import (
 
 // Service represents groshi service containing all its dependencies.
 type Service struct {
-	// Handler contains groshi's HTTP handlers and their dependencies.
+	// Service's HTTP handlers and their dependencies.
 	Handler *handler.Handler
 
 	// Enable Swagger UI route.
 	Swagger bool
 
-	// job contains groshi's jobs and their dependencies.
+	// Service's jobs and their dependencies.
 	job *job.Job
 }
 
 // New creates a new instance of [Service] and returns pointer to it.
-func New(database *database.Database, jwtAuthority *jwtauthority.JWTAuthority, passwordAuthority *passwdauthority.PasswordAuthority, internalServerErrorLogger *log.Logger, swagger bool) *Service {
+func New(database *database.Database, jwtAuthority *jwtauthority.Authority, passwordAuthority *passwdauthority.Authority, internalServerErrorLogger *log.Logger, swagger bool) *Service {
 	return &Service{
 		Handler: handler.New(database, jwtAuthority, passwordAuthority, internalServerErrorLogger),
 		Swagger: swagger,

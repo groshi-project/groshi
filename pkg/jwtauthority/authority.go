@@ -1,45 +1,43 @@
 package jwtauthority
 
 import (
-	"context"
-	"github.com/go-chi/jwtauth/v5"
+	"github.com/golang-jwt/jwt/v4"
 	"time"
 )
 
-// hashing algorithm used for JWT verification.
-const algorithm = "HS256"
+// Authority represents JWT authority.
+type Authority struct {
+	// signing method used to sign token claims.
+	signingMethod jwt.SigningMethod
 
-// JWTAuthority represents JWT authority.
-type JWTAuthority struct {
-	JWTAuth *jwtauth.JWTAuth
+	// secret key used to sign token claims.
+	secretKey []byte
 
-	jwtTTL time.Duration
+	// duration of a token validity.
+	tokenTTL time.Duration
 }
 
-// New creates a new instance of [JWTAuthority] and returns pointer to it.
-func New(ttl time.Duration, secretKey string) *JWTAuthority {
-	return &JWTAuthority{
-		JWTAuth: jwtauth.New(algorithm, []byte(secretKey), nil),
-		jwtTTL:  ttl,
+// New creates a new instance of [Authority] and returns pointer to it.
+func New(signingMethod jwt.SigningMethod, secretKey string, tokenTTL time.Duration) *Authority {
+	return &Authority{
+		signingMethod: signingMethod,
+		secretKey:     []byte(secretKey),
+		tokenTTL:      tokenTTL,
 	}
 }
 
-// GenerateToken generates a new jwt for a user with the given username.
-// Returns token string and token's expiration date.
-func (a *JWTAuthority) GenerateToken(username string) (string, time.Time, error) {
-	// setup claims:
-	claims := make(map[string]any)
+// CreateToken generates a new JWT and returns its string representation and expiration timestamp.
+// todo: should `expires` be returned and is it necessary for a user?
+func (a *Authority) CreateToken(username string) (string, time.Time, error) {
+	issued := time.Now()
+	expires := time.Now().Add(a.tokenTTL)
+	token := jwt.NewWithClaims(a.signingMethod, jwt.MapClaims{
+		"username": username,
+		"exp":      expires.Unix(),
+		"iat":      issued.Unix(),
+	})
 
-	now := time.Now()
-	jwtauth.SetIssuedAt(claims, now)
-
-	expires := now.Add(a.jwtTTL)
-	jwtauth.SetExpiry(claims, expires)
-
-	claims["username"] = username
-
-	// generate token:
-	_, tokenString, err := a.JWTAuth.Encode(claims)
+	tokenString, err := token.SignedString(a.secretKey)
 	if err != nil {
 		return "", expires, err
 	}
@@ -47,20 +45,19 @@ func (a *JWTAuthority) GenerateToken(username string) (string, time.Time, error)
 	return tokenString, expires, nil
 }
 
-// extractClaims extracts claims from provided context.
-func (a *JWTAuthority) extractClaims(ctx context.Context) (map[string]any, error) {
-	_, claims, err := jwtauth.FromContext(ctx)
+// VerifyToken verifies that JWT token is valid and not expired, returns claims it contains.
+func (a *Authority) VerifyToken(tokenString string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+		// todo: verify signing method (https://pkg.go.dev/github.com/golang-jwt/jwt/v5#example-Parse-Hmac)
+		return a.secretKey, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	return claims, nil
-}
 
-// ExtractUsername extracts "username" claim from provided context.
-func (a *JWTAuthority) ExtractUsername(ctx context.Context) (string, error) {
-	claims, err := a.extractClaims(ctx)
-	if err != nil {
-		return "", err
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, jwt.ErrTokenMalformed
 	}
-	return claims["username"].(string), nil
+	return claims, nil
 }

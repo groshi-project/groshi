@@ -12,7 +12,7 @@ var InternalServerError = httpresp.New(
 	model.NewError("internal server error"),
 )
 
-var InvalidRequest = httpresp.New( // todo: rename InvalidRequest -> ?
+var InvalidRequestBodyFormat = httpresp.New(
 	http.StatusBadRequest,
 	model.NewError("unable to decode request body"),
 )

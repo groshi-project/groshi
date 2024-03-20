@@ -7,10 +7,10 @@ import (
 
 // Response represents HTTP response.
 type Response struct {
-	// statusCode is HTTP status code.
+	// HTTP response status code.
 	statusCode int
 
-	// response body structure which will be encoded to json.
+	// Response body.
 	body any
 }
 
@@ -19,14 +19,10 @@ func New(statusCode int, response any) *Response {
 	return &Response{statusCode: statusCode, body: response}
 }
 
-// NewOK creates a new instance of [Response] with Response.statusCode field set to 200 and returns pointer to it.
+// NewOK creates a new instance of [Response] with HTTP status code 200 and returns pointer to it.
 func NewOK(response any) *Response {
 	return &Response{statusCode: http.StatusOK, body: response}
 }
-
-//func (r *Response) render(w http.ResponseWriter) {
-//	renderJSON(w, r.statusCode, r.body)
-//}
 
 // Render renders HTTP response.
 // renderJSON sends response header with provided statusCode,

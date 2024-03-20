@@ -14,10 +14,10 @@ type Handler struct {
 	database *database.Database
 
 	// JWTAuthority is a JWT authority used to generate and validate JavaScript Web Tokens.
-	JWTAuthority *jwtauthority.JWTAuthority
+	JWTAuthority *jwtauthority.Authority
 
 	// passwordAuthority is a password authority used to hash and validate passwords.
-	passwordAuthority *passwdauthority.PasswordAuthority
+	passwordAuthority *passwdauthority.Authority
 
 	// internalServerErrorLogger is an internal server error logger used to log internal server errors :).
 	internalServerErrorLogger *log.Logger
@@ -27,7 +27,7 @@ type Handler struct {
 }
 
 // New creates a new instance of [Handler] and returns pointer to it.
-func New(database *database.Database, jwtAuthority *jwtauthority.JWTAuthority, passwordAuthority *passwdauthority.PasswordAuthority, internalServerErrorLogger *log.Logger) *Handler {
+func New(database *database.Database, jwtAuthority *jwtauthority.Authority, passwordAuthority *passwdauthority.Authority, internalServerErrorLogger *log.Logger) *Handler {
 	return &Handler{
 		database:                  database,
 		JWTAuthority:              jwtAuthority,
