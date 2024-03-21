@@ -5,7 +5,6 @@ WORKDIR /groshi-build
 # copy sources:
 COPY go.mod go.sum ./
 COPY ./internal ./internal
-COPY ./pkg ./pkg
 COPY ./docs ./docs
 COPY main.go ./
 
