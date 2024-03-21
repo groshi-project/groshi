@@ -9,8 +9,8 @@ import (
 	_ "github.com/groshi-project/groshi/docs"
 	"github.com/groshi-project/groshi/internal/auth"
 	"github.com/groshi-project/groshi/internal/database"
+	serviceMiddleware "github.com/groshi-project/groshi/internal/middleware"
 	"github.com/groshi-project/groshi/internal/service"
-	serviceMiddleware "github.com/groshi-project/groshi/internal/service/handler/middleware"
 	"github.com/jessevdk/go-flags"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
@@ -157,7 +157,7 @@ func getHTTPRouter(groshi *service.Service) *chi.Mux {
 
 	// public routes:
 	r.Group(func(r chi.Router) {
-		if groshi.Swagger {
+		if groshi.SwaggerEnable {
 			r.Route("/swagger", func(r chi.Router) {
 				r.Get("/*", httpSwagger.Handler())
 			})

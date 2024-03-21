@@ -6,8 +6,8 @@ import (
 	"errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/groshi-project/groshi/internal/database"
+	"github.com/groshi-project/groshi/internal/service/handler/httpresp"
 	"github.com/groshi-project/groshi/internal/service/handler/response"
-	"github.com/groshi-project/groshi/pkg/httpresp"
 	"net/http"
 )
 

@@ -2,11 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"github.com/groshi-project/groshi/internal/service/handler/httpresp"
 	"github.com/groshi-project/groshi/internal/service/handler/model"
 	"github.com/groshi-project/groshi/internal/service/handler/response"
 	"net/http"
-
-	"github.com/groshi-project/groshi/pkg/httpresp"
 
 	"github.com/groshi-project/groshi/internal/database"
 )
