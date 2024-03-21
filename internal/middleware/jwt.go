@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"github.com/groshi-project/groshi/internal/auth"
+	"github.com/groshi-project/groshi/internal/service/handler/httpresp"
 	"github.com/groshi-project/groshi/internal/service/handler/model"
-	"github.com/groshi-project/groshi/pkg/httpresp"
 	"net/http"
 	"strings"
 )
