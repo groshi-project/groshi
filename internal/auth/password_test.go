@@ -1,14 +1,16 @@
-package passwdauthority
+package auth
 
 import (
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-const bcryptCost = 1
+func newTestPasswordAuthenticator() *PasswordAuthenticator {
+	return NewPasswordAuthenticator(1)
+}
 
 func TestAuthority_HashPassword(t *testing.T) {
-	a := New(bcryptCost)
+	a := newTestPasswordAuthenticator()
 
 	// [a.HashPassword] can hash an empty password, so check what you are passing!
 	hash1, err := a.HashPassword("")
@@ -21,7 +23,7 @@ func TestAuthority_HashPassword(t *testing.T) {
 }
 
 func TestAuthority_VerifyPassword(t *testing.T) {
-	a := New(bcryptCost)
+	a := newTestPasswordAuthenticator()
 
 	rightPassword := "password-123"
 	wrongPassword := "wrong lol"

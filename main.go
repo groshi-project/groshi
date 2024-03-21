@@ -7,11 +7,10 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/golang-jwt/jwt/v4"
 	_ "github.com/groshi-project/groshi/docs"
+	"github.com/groshi-project/groshi/internal/auth"
 	"github.com/groshi-project/groshi/internal/database"
 	"github.com/groshi-project/groshi/internal/service"
 	serviceMiddleware "github.com/groshi-project/groshi/internal/service/handler/middleware"
-	"github.com/groshi-project/groshi/pkg/jwtauthority"
-	"github.com/groshi-project/groshi/pkg/passwdauthority"
 	"github.com/jessevdk/go-flags"
 	httpSwagger "github.com/swaggo/http-swagger"
 	"log"
@@ -154,7 +153,7 @@ func getHTTPRouter(groshi *service.Service) *chi.Mux {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(time.Duration(30) * time.Second))
 
-	jwtMiddleware := serviceMiddleware.NewJWT(groshi.Handler.JWTAuthority)
+	jwtMiddleware := serviceMiddleware.NewJWT(groshi.Handler.JWTAuthenticator)
 
 	// public routes:
 	r.Group(func(r chi.Router) {
@@ -244,8 +243,8 @@ func main() {
 	// create a groshi service:
 	groshi := service.New(
 		db,
-		jwtauthority.New(jwt.SigningMethodHS256, options.Service.JWTSecretKey, options.Service.JWTTimeToLive),
-		passwdauthority.New(options.Service.BcryptCost),
+		auth.NewJWTAuthenticator(jwt.SigningMethodHS256, options.Service.JWTSecretKey, options.Service.JWTTimeToLive),
+		auth.NewPasswordAuthenticator(options.Service.BcryptCost),
 		log.New(os.Stderr, "[internal server error]: ", loggingBaseFlags|log.Llongfile),
 		options.Development.Swagger,
 	)

@@ -60,13 +60,13 @@ func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate provided password:
-	if !h.passwordAuthority.VerifyPassword(params.Password, user.Password) {
+	if !h.passwordAuthenticator.VerifyPassword(params.Password, user.Password) {
 		httpresp.Render(w, response.InvalidCredentials)
 		return
 	}
 
 	// generate a new jwt:
-	token, expires, err := h.JWTAuthority.CreateToken(user.Username)
+	token, expires, err := h.JWTAuthenticator.CreateToken(user.Username)
 	if err != nil {
 		httpresp.Render(w, response.InternalServerError)
 		return

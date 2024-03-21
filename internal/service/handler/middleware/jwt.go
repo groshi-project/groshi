@@ -3,9 +3,9 @@ package middleware
 import (
 	"context"
 	"errors"
+	"github.com/groshi-project/groshi/internal/auth"
 	"github.com/groshi-project/groshi/internal/service/handler/model"
 	"github.com/groshi-project/groshi/pkg/httpresp"
-	"github.com/groshi-project/groshi/pkg/jwtauthority"
 	"net/http"
 	"strings"
 )
@@ -33,7 +33,7 @@ func tokenFromHeader(headerValue string) (string, error) {
 
 // NewJWT returns new JWT middleware which extracts and verifies JWT from authorization header.
 // Additionally, sets [usernameContextKey] context key to the authorized user's username.
-func NewJWT(jwtAuthority jwtauthority.Authority) func(next http.Handler) http.Handler {
+func NewJWT(jwtAuthority auth.JWTAuthenticator) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// extract token from authorization header value:

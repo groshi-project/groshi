@@ -1,4 +1,4 @@
-package jwtauthority
+package auth
 
 import (
 	"github.com/golang-jwt/jwt/v4"
@@ -15,12 +15,12 @@ const (
 	zeroTokenTTL = time.Duration(0) * time.Nanosecond
 )
 
-func NewTestAuthority(tokenTTL time.Duration) *DefaultAuthority {
-	return New(signingMethod, secretKey, tokenTTL)
+func NewTestJWTAuthenticator(tokenTTL time.Duration) *DefaultJWTAuthenticator {
+	return NewJWTAuthenticator(signingMethod, secretKey, tokenTTL)
 }
 
 func TestAuthority_CreateToken(t *testing.T) {
-	a := NewTestAuthority(longTokenTTL)
+	a := NewTestJWTAuthenticator(longTokenTTL)
 
 	token, expires, err := a.CreateToken("jieggii")
 	assert.NoError(t, err)
@@ -29,7 +29,7 @@ func TestAuthority_CreateToken(t *testing.T) {
 }
 
 func TestAuthority_VerifyToken(t *testing.T) {
-	a1 := NewTestAuthority(longTokenTTL)
+	a1 := NewTestJWTAuthenticator(longTokenTTL)
 
 	// test valid token:
 	token1, _, _ := a1.CreateToken("jieggii")
@@ -38,7 +38,7 @@ func TestAuthority_VerifyToken(t *testing.T) {
 	assert.NotEmpty(t, claims1)
 
 	// test expired token:
-	a2 := NewTestAuthority(zeroTokenTTL)
+	a2 := NewTestJWTAuthenticator(zeroTokenTTL)
 	token2, _, _ := a2.CreateToken("jieggii")
 	claims2, err := a2.VerifyToken(token2)
 	if assert.Error(t, err) {

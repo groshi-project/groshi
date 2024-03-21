@@ -78,7 +78,7 @@ func testRequest(setAuthHeader bool, authHeaderValue string, handler http.Handle
 }
 
 func TestNewJWT(t *testing.T) {
-	// username of a test user:
+	// username of the test user:
 	username := "my-username-123"
 
 	authority := &mockAuthority{
