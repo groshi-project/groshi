@@ -71,6 +71,167 @@ const docTemplate = `{
                 }
             }
         },
+        "/categories": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Returns all categories created by user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Fetch all categories",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handler.categoriesGetResponseItem"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Creates a new category and returns its UUID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Create a new category",
+                "parameters": [
+                    {
+                        "description": "Category name",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.categoriesCreateParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/handler.categoriesCreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body format or invalid request params",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions": {
+            "post": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Creates a new transaction and returns its UUID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Create a new transaction",
+                "parameters": [
+                    {
+                        "description": "Transaction",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.transactionsCreateParams"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/handler.transactionsCreateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body format or invalid request params",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Access to the category is forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/user": {
             "get": {
                 "security": [
@@ -94,12 +255,6 @@ const docTemplate = `{
                         "description": "Successful operation",
                         "schema": {
                             "$ref": "#/definitions/handler.userGetResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body format or invalid request params",
-                        "schema": {
-                            "$ref": "#/definitions/model.Error"
                         }
                     },
                     "404": {
@@ -167,6 +322,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
                 "description": "Deletes the current user and returns its username",
                 "consumes": [
                     "application/json"
@@ -183,12 +343,6 @@ const docTemplate = `{
                         "description": "Successful operation",
                         "schema": {
                             "$ref": "#/definitions/handler.userDeleteResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body format or invalid request params",
-                        "schema": {
-                            "$ref": "#/definitions/model.Error"
                         }
                     },
                     "404": {
@@ -210,6 +364,10 @@ const docTemplate = `{
     "definitions": {
         "handler.authLoginParams": {
             "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
             "properties": {
                 "password": {
                     "type": "string"
@@ -232,8 +390,85 @@ const docTemplate = `{
                 }
             }
         },
+        "handler.categoriesCreateParams": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "Transport"
+                }
+            }
+        },
+        "handler.categoriesCreateResponse": {
+            "type": "object",
+            "properties": {
+                "uuid": {
+                    "type": "string",
+                    "example": "c319d169-c7bd-4768-b61c-07f796dce3a2"
+                }
+            }
+        },
+        "handler.categoriesGetResponseItem": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": "Transport"
+                },
+                "uuid": {
+                    "type": "string",
+                    "example": "8b95b038-8a7a-4cdc-96b5-506101ed3a73"
+                }
+            }
+        },
+        "handler.transactionsCreateParams": {
+            "type": "object",
+            "required": [
+                "amount",
+                "currency",
+                "timestamp"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "integer",
+                    "example": 2500
+                },
+                "category": {
+                    "type": "string",
+                    "example": "02983837-7ab0-492a-90b6-285491936067"
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "USD"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Bought a donut for $2.5 only!"
+                },
+                "timestamp": {
+                    "type": "string",
+                    "example": "todo-timestamp"
+                }
+            }
+        },
+        "handler.transactionsCreateResponse": {
+            "type": "object",
+            "properties": {
+                "uuid": {
+                    "type": "string",
+                    "example": "3be1ed0a-c307-49de-872e-38730200f301"
+                }
+            }
+        },
         "handler.userCreateParams": {
             "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
             "properties": {
                 "password": {
                     "type": "string",
@@ -241,7 +476,7 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string",
-                    "example": "jieggii"
+                    "example": "username"
                 }
             }
         },
@@ -250,7 +485,7 @@ const docTemplate = `{
             "properties": {
                 "username": {
                     "type": "string",
-                    "example": "jieggii"
+                    "example": "username"
                 }
             }
         },

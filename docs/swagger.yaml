@@ -5,6 +5,9 @@ definitions:
         type: string
       username:
         type: string
+    required:
+    - password
+    - username
     type: object
   handler.authLoginResponse:
     properties:
@@ -15,19 +18,73 @@ definitions:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IldlbGwsIGlmIHlvdSBjYW4gcmVhZCB0aGlzLCB0aGVuIHlvdSBkZWZpbmV0ZWx5IHdvdWxkIGxpa2UgdGhpcyBvbmU6IGh0dHBzOi8veW91dHUuYmUvZFF3NHc5V2dYY1EifQ.1ervhGZz1m6xiHR447rbwh8W1sfATF2qYudOtNWhkkw
         type: string
     type: object
+  handler.categoriesCreateParams:
+    properties:
+      name:
+        example: Transport
+        type: string
+    required:
+    - name
+    type: object
+  handler.categoriesCreateResponse:
+    properties:
+      uuid:
+        example: c319d169-c7bd-4768-b61c-07f796dce3a2
+        type: string
+    type: object
+  handler.categoriesGetResponseItem:
+    properties:
+      name:
+        example: Transport
+        type: string
+      uuid:
+        example: 8b95b038-8a7a-4cdc-96b5-506101ed3a73
+        type: string
+    type: object
+  handler.transactionsCreateParams:
+    properties:
+      amount:
+        example: 2500
+        type: integer
+      category:
+        example: 02983837-7ab0-492a-90b6-285491936067
+        type: string
+      currency:
+        example: USD
+        type: string
+      description:
+        example: Bought a donut for $2.5 only!
+        type: string
+      timestamp:
+        example: todo-timestamp
+        type: string
+    required:
+    - amount
+    - currency
+    - timestamp
+    type: object
+  handler.transactionsCreateResponse:
+    properties:
+      uuid:
+        example: 3be1ed0a-c307-49de-872e-38730200f301
+        type: string
+    type: object
   handler.userCreateParams:
     properties:
       password:
         example: my-secret-password
         type: string
       username:
-        example: jieggii
+        example: username
         type: string
+    required:
+    - password
+    - username
     type: object
   handler.userCreateResponse:
     properties:
       username:
-        example: jieggii
+        example: username
         type: string
     type: object
   handler.userDeleteResponse:
@@ -91,18 +148,51 @@ paths:
       summary: Authenticate user
       tags:
       - auth
-  /user:
-    delete:
+  /categories:
+    get:
       consumes:
       - application/json
-      description: Deletes the current user and returns its username
+      description: Returns all categories created by user.
       produces:
       - application/json
       responses:
         "200":
           description: Successful operation
           schema:
-            $ref: '#/definitions/handler.userDeleteResponse'
+            items:
+              $ref: '#/definitions/handler.categoriesGetResponseItem'
+            type: array
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/model.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.Error'
+      security:
+      - Bearer: []
+      summary: Fetch all categories
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      description: Creates a new category and returns its UUID
+      parameters:
+      - description: Category name
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handler.categoriesCreateParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/handler.categoriesCreateResponse'
         "400":
           description: Invalid request body format or invalid request params
           schema:
@@ -115,6 +205,73 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/model.Error'
+      security:
+      - Bearer: []
+      summary: Create a new category
+      tags:
+      - categories
+  /transactions:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new transaction and returns its UUID
+      parameters:
+      - description: Transaction
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handler.transactionsCreateParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/handler.transactionsCreateResponse'
+        "400":
+          description: Invalid request body format or invalid request params
+          schema:
+            $ref: '#/definitions/model.Error'
+        "403":
+          description: Access to the category is forbidden
+          schema:
+            $ref: '#/definitions/model.Error'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/model.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.Error'
+      security:
+      - Bearer: []
+      summary: Create a new transaction
+      tags:
+      - transactions
+  /user:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes the current user and returns its username
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/handler.userDeleteResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/model.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/model.Error'
+      security:
+      - Bearer: []
       summary: Delete the current user
       tags:
       - user
@@ -129,10 +286,6 @@ paths:
           description: Successful operation
           schema:
             $ref: '#/definitions/handler.userGetResponse'
-        "400":
-          description: Invalid request body format or invalid request params
-          schema:
-            $ref: '#/definitions/model.Error'
         "404":
           description: User not found
           schema:
