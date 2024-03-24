@@ -6,19 +6,34 @@ import (
 	"errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/groshi-project/groshi/internal/database"
+	"github.com/groshi-project/groshi/internal/middleware"
 	"github.com/groshi-project/groshi/internal/service/handler/httpresp"
 	"github.com/groshi-project/groshi/internal/service/handler/response"
 	"net/http"
 )
 
 type categoriesCreateParams struct {
-	Name string `json:"name"`
+	Name string `json:"name" example:"Transport" validate:"required"`
 }
 
 type categoriesCreateResponse struct {
-	UUID string `json:"uuid"`
+	UUID string `json:"uuid" example:"c319d169-c7bd-4768-b61c-07f796dce3a2"`
 }
 
+// CategoriesCreate creates a new category and returns its UUID.
+//
+//	@Summary		Create a new category
+//	@Description	Creates a new category and returns its UUID
+//	@Tags			categories
+//	@Accept			json
+//	@Produce		json
+//	@Param			user	body		categoriesCreateParams		true	"Category name"
+//	@Success		200		{object}	categoriesCreateResponse	"Successful operation"
+//	@Failure		400		{object}	model.Error					"Invalid request body format or invalid request params"
+//	@Failure		404		{object}	model.Error					"User not found"
+//	@Failure		500		{object}	model.Error					"Internal server error"
+//	@Security		Bearer
+//	@Router			/categories [post]
 func (h *Handler) CategoriesCreate(w http.ResponseWriter, r *http.Request) {
 	// decode request params:
 	params := &categoriesCreateParams{}
@@ -34,9 +49,13 @@ func (h *Handler) CategoriesCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// extract current user's username from context:
-	username := r.Context().Value("username").(string)
+	username, ok := r.Context().Value(middleware.UsernameContextVar).(string)
+	if !ok {
+		h.internalServerErrorLogger.Println(errMissingUsernameContextValue)
+		httpresp.Render(w, response.InternalServerError)
+	}
 
-	// fetch current user from the database:
+	// fetch the current user from the database:
 	user := &database.User{}
 	if err := h.database.SelectUserByUsername(r.Context(), username, user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -66,16 +85,33 @@ func (h *Handler) CategoriesCreate(w http.ResponseWriter, r *http.Request) {
 	httpresp.Render(w, httpresp.NewOK(resp))
 }
 
-type categoryResponse struct {
-	UUID string `json:"uuid"`
-	Name string `json:"name"`
+type categoriesGetResponseItem struct {
+	UUID string `json:"uuid" example:"8b95b038-8a7a-4cdc-96b5-506101ed3a73"`
+	Name string `json:"name" example:"Transport"`
 }
 
-//type categoriesGetResponse []categoryResponse
+type categoriesGetResponse []categoriesGetResponseItem
 
+// CategoriesGet returns all categories created by user.
+//
+//	@Summary		Fetch all categories
+//	@Description	Returns all categories created by user.
+//	@Tags			categories
+//	@Accept			json
+//	@Produce		json
+//	@Success		200	{object}	categoriesGetResponse	"Successful operation"
+//	@Failure		404	{object}	model.Error				"User not found"
+//	@Failure		500	{object}	model.Error				"Internal server error"
+//	@Security		Bearer
+//	@Router			/categories [get]
 func (h *Handler) CategoriesGet(w http.ResponseWriter, r *http.Request) {
 	// extract current user's username from context
-	username := r.Context().Value("username").(string)
+	username, ok := r.Context().Value(middleware.UsernameContextVar).(string)
+	if !ok {
+		h.internalServerErrorLogger.Println(errMissingUsernameContextValue)
+		httpresp.Render(w, response.InternalServerError)
+		return
+	}
 
 	// fetch current user from the database:
 	user := &database.User{}
@@ -90,6 +126,7 @@ func (h *Handler) CategoriesGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// fetch categories that belong to this user from the database:
+	// todo: should slice of pointers be used instead of a slice of objects?
 	categories := make([]database.Category, 0)
 	if err := h.database.SelectCategoriesByOwnerID(r.Context(), user.ID, &categories); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
@@ -100,9 +137,9 @@ func (h *Handler) CategoriesGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// respond:
-	resp := make([]categoryResponse, 0)
+	resp := make([]categoriesGetResponseItem, 0)
 	for _, category := range categories {
-		resp = append(resp, categoryResponse{
+		resp = append(resp, categoriesGetResponseItem{
 			UUID: category.UUID.String(),
 			Name: category.Name,
 		})
@@ -111,11 +148,11 @@ func (h *Handler) CategoriesGet(w http.ResponseWriter, r *http.Request) {
 }
 
 type categoriesUpdateParams struct {
-	Name string `json:"name"`
+	Name string `json:"name" example:"Food" validate:"required"`
 }
 
 type categoriesUpdateResponse struct {
-	UUID string `json:"uuid"`
+	UUID string `json:"uuid" example:"9d1a6ba2-d2e1-4ca4-b8d3-164f2009c823"`
 }
 
 func (h *Handler) CategoriesUpdate(w http.ResponseWriter, r *http.Request) {
@@ -184,7 +221,7 @@ func (h *Handler) CategoriesUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 type categoriesDeleteResponse struct {
-	UUID string `json:"uuid"`
+	UUID string `json:"uuid" example:"9d1a6ba2-d2e1-4ca4-b8d3-164f2009c823"`
 }
 
 func (h *Handler) CategoriesDelete(w http.ResponseWriter, r *http.Request) {

@@ -10,11 +10,15 @@ import (
 	"strings"
 )
 
-const authorizationHeader = "Authorization"
-const usernameContextKey = "username"
+const (
+	UsernameContextVar  = "username" // todo: is it the right place for this const?
+	authorizationHeader = "Authorization"
+)
 
-var errEmptyOrMissingAuthHeader = errors.New("empty or missing authorization header")
-var errInvalidAuthHeader = errors.New("invalid authorization header")
+var (
+	errEmptyOrMissingAuthHeader = errors.New("empty or missing authorization header")
+	errInvalidAuthHeader        = errors.New("invalid authorization header")
+)
 
 // tokenFromHeader extracts token from a header value.
 // For example, it will extract "some-token" from string "Bearer some-token".
@@ -32,7 +36,7 @@ func tokenFromHeader(headerValue string) (string, error) {
 }
 
 // NewJWT returns new JWT middleware which extracts and verifies JWT from authorization header.
-// Additionally, sets [usernameContextKey] context key to the authorized user's username.
+// Additionally, sets [UsernameContextVar] context key to the authorized user's username.
 func NewJWT(jwtAuthority auth.JWTAuthenticator) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -58,7 +62,7 @@ func NewJWT(jwtAuthority auth.JWTAuthenticator) func(next http.Handler) http.Han
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), usernameContextKey, claims["username"])
+			ctx := context.WithValue(r.Context(), UsernameContextVar, claims["username"])
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

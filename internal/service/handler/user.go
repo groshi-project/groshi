@@ -140,6 +140,7 @@ type userDeleteResponse struct {
 //	@Success		200	{object}	userDeleteResponse	"Successful operation"
 //	@Failure		404	{object}	model.Error			"User not found"
 //	@Failure		500	{object}	model.Error			"Internal server error"
+//	@Security		Bearer
 //	@Router			/user [delete]
 func (h *Handler) UserDelete(w http.ResponseWriter, r *http.Request) {
 	// extract current user's username from context:

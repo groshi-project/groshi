@@ -7,18 +7,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"github.com/groshi-project/groshi/internal/database"
+	"io"
 	"log"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"time"
-)
-
-const (
-	testUsername     = "test-user"
-	testPassword     = "test-password"
-	testPasswordHash = "hash(test-password)"
-	testToken        = "test-token"
 )
 
 type mockPasswordAuthenticator struct{}
@@ -57,7 +53,7 @@ func newMockJWTAuthenticator(username string, token string) *mockJWTAuthenticato
 }
 
 func (m *mockJWTAuthenticator) CreateToken(username string) (token string, expires time.Time, err error) {
-	return testToken, time.Time{}, nil
+	return "test-token", time.Time{}, nil
 }
 
 func (m *mockJWTAuthenticator) VerifyToken(token string) (jwt.MapClaims, error) {
@@ -65,12 +61,15 @@ func (m *mockJWTAuthenticator) VerifyToken(token string) (jwt.MapClaims, error) 
 }
 
 type mockDatabase struct {
-	users []*database.User
+	users []*database.User // todo: slice of pointers or slice of objects?
+
+	categories []*database.Category // todo: slice of pointers or slice of objects?
 }
 
 func newMockDatabase() *mockDatabase {
 	return &mockDatabase{
-		users: make([]*database.User, 0),
+		users:      make([]*database.User, 0),
+		categories: make([]*database.Category, 0),
 	}
 }
 
@@ -84,6 +83,9 @@ func (m *mockDatabase) Init(ctx context.Context) error {
 }
 
 func (m *mockDatabase) CreateUser(ctx context.Context, u *database.User) error {
+	if u.ID == 0 {
+		u.ID = int64(rand.Intn(9999) + 1)
+	}
 	m.users = append(m.users, u)
 	return nil
 }
@@ -126,13 +128,39 @@ func (m *mockDatabase) DeleteUserByUsername(ctx context.Context, username string
 }
 
 func (m *mockDatabase) CreateCategory(ctx context.Context, c *database.Category) error {
-	//TODO implement me
-	panic("implement me")
+	if c.UUID.String() == "" {
+		c.UUID = uuid.New()
+	} else {
+		exists, err := m.CategoryExistsByUUID(ctx, c.UUID.String())
+		if err != nil {
+			panic(err)
+		}
+		if exists {
+			panic(fmt.Errorf("category with UUID %s already exists", c.UUID.String()))
+		}
+	}
+
+	m.categories = append(m.categories, c)
+	return nil
+}
+
+func (m *mockDatabase) CategoryExistsByUUID(ctx context.Context, uuid string) (bool, error) {
+	for _, category := range m.categories {
+		if category.UUID.String() == uuid {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (m *mockDatabase) SelectCategoryByUUID(ctx context.Context, uuid string, c *database.Category) error {
-	//TODO implement me
-	panic("implement me")
+	for _, category := range m.categories {
+		if category.UUID.String() == uuid {
+			*c = *category
+			return nil
+		}
+	}
+	return sql.ErrNoRows
 }
 
 func (m *mockDatabase) SelectCategoriesByOwnerID(ctx context.Context, ownerID int64, c *[]database.Category) error {
@@ -165,7 +193,7 @@ func newTestHandler() *Handler {
 		newMockDatabase(),
 		newMockJWTAuthenticator("some-username", "some-token"),
 		newMockPasswordAuthenticator(),
-		&log.Logger{},
+		log.New(io.Discard, "", 0),
 	)
 }
 

@@ -1,11 +1,14 @@
 package handler
 
 import (
+	"errors"
 	"github.com/go-playground/validator/v10"
 	"github.com/groshi-project/groshi/internal/auth"
 	"github.com/groshi-project/groshi/internal/database"
 	"log"
 )
+
+var errMissingUsernameContextValue = errors.New("missing username context value")
 
 // Handler represents dependencies for HTTP handler functions.
 type Handler struct {

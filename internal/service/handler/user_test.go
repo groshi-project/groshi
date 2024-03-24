@@ -11,6 +11,12 @@ import (
 )
 
 func TestHandler_UserCreate(t *testing.T) {
+	const (
+		testUsername     = "test-user"
+		testPassword     = "test-password"
+		testPasswordHash = "hash(test-password)"
+	)
+
 	var (
 		ctx = context.Background() // context which will be used for all test requests
 
@@ -19,7 +25,7 @@ func TestHandler_UserCreate(t *testing.T) {
 		rec     *httptest.ResponseRecorder
 	)
 
-	// test with non-existing user:
+	// case: create a new user with a unique non-existing username:
 	handler = newTestHandler()
 
 	params = &userCreateParams{
@@ -38,7 +44,7 @@ func TestHandler_UserCreate(t *testing.T) {
 		}
 	}
 
-	// test with already existing user:
+	// case: create a user with username which is already taken:
 	handler = newTestHandler()
 
 	if err := handler.database.CreateUser(ctx, &database.User{
@@ -54,7 +60,7 @@ func TestHandler_UserCreate(t *testing.T) {
 	rec = testRequest(ctx, params, handler.UserCreate)
 	assert.Equal(t, http.StatusConflict, rec.Code)
 
-	// test with empty params:
+	// case: empty params:
 	handler = newTestHandler()
 
 	params = nil
@@ -63,6 +69,10 @@ func TestHandler_UserCreate(t *testing.T) {
 }
 
 func TestHandler_UserGet(t *testing.T) {
+	const (
+		testUsername = "test-user"
+	)
+
 	var (
 		handler = newTestHandler() // handler which will be used to test all requests
 
@@ -76,7 +86,7 @@ func TestHandler_UserGet(t *testing.T) {
 		panic(err)
 	}
 
-	// test getting existing user:
+	// case: get existing user:
 	ctx = context.WithValue(context.Background(), "username", testUsername)
 	rec = testRequest(ctx, nil, handler.UserGet)
 	if assert.Equal(t, http.StatusOK, rec.Code) {
@@ -89,12 +99,12 @@ func TestHandler_UserGet(t *testing.T) {
 		}
 	}
 
-	// test getting non-existing user:
+	// case: get non-existing user:
 	ctx = context.WithValue(context.Background(), "username", "i-do-not-exist")
 	rec = testRequest(ctx, nil, handler.UserGet)
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 
-	// test without "username" context var:
+	// case: call handler without "username" context var:
 	ctx = context.Background()
 	rec = testRequest(ctx, nil, handler.UserGet)
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
@@ -103,6 +113,10 @@ func TestHandler_UserGet(t *testing.T) {
 // todo: test user update?
 
 func TestHandler_UserDelete(t *testing.T) {
+	const (
+		testUsername = "test-user"
+	)
+
 	var (
 		handler = newTestHandler()
 

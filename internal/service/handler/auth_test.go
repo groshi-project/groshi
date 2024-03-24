@@ -11,6 +11,12 @@ import (
 )
 
 func TestHandler_AuthLogin(t *testing.T) {
+	const (
+		testUsername     = "test-username"
+		testPassword     = "test-password"
+		testPasswordHash = "hash(test-password)"
+	)
+
 	var (
 		handler = newTestHandler()
 		ctx     = context.Background()
@@ -20,6 +26,7 @@ func TestHandler_AuthLogin(t *testing.T) {
 	)
 
 	if err := handler.database.CreateUser(ctx, &database.User{
+		ID:       5,
 		Username: testUsername,
 		Password: testPasswordHash,
 	}); err != nil {

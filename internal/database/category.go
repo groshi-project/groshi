@@ -22,6 +22,7 @@ type Category struct {
 // CategoryQuerier interface describes a type which executes database queries related to the [Category] model.
 type CategoryQuerier interface {
 	CreateCategory(ctx context.Context, c *Category) error
+	CategoryExistsByUUID(ctx context.Context, uuid string) (bool, error)
 	SelectCategoryByUUID(ctx context.Context, uuid string, c *Category) error
 	SelectCategoriesByOwnerID(ctx context.Context, ownerID int64, c *[]Category) error
 	UpdateCategory(ctx context.Context, c *Category) error
@@ -41,6 +42,10 @@ func (d *DefaultDatabase) CreateCategory(ctx context.Context, c *Category) error
 		return err
 	}
 	return nil
+}
+
+func (d *DefaultDatabase) CategoryExistsByUUID(ctx context.Context, uuid string) (bool, error) {
+	panic("implement me")
 }
 
 func (d *DefaultDatabase) SelectCategoryByUUID(ctx context.Context, uuid string, c *Category) error {
