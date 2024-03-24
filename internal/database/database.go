@@ -9,62 +9,82 @@ import (
 	"github.com/uptrace/bun/driver/pgdriver"
 )
 
-// Sample type of database model.
 var (
-	sampleUser        = (*User)(nil)
-	sampleCategory    = (*Category)(nil)
-	sampleCurrency    = (*Currency)(nil)
+	// Sample of the [User] database model.
+	sampleUser = (*User)(nil)
+
+	// Sample of the [Category] database model.
+	sampleCategory = (*Category)(nil)
+
+	// Sample of the [Currency] database model.
+	sampleCurrency = (*Currency)(nil)
+
+	// Sample of the [Transaction] database model.
 	sampleTransaction = (*Transaction)(nil)
 )
 
-// models that will be used to create tables.
-var models = []any{sampleUser, sampleCategory, sampleCurrency, sampleTransaction}
+var (
+	// Model samples which are used to create tables.
+	models = []any{sampleUser, sampleUser, sampleCurrency, sampleTransaction}
 
-// PostgreSQL extensions that will be enabled.
-var extensions = []string{"uuid-ossp"}
+	// PostgreSQL extensions that should be created.
+	extensions = []string{"uuid-ossp"}
+)
 
-// Database represents interface for interacting with a PostgreSQL database.
-type Database struct {
-	Client *bun.DB
-	Ctx    context.Context
+// Credentials represents PostgreSQL database credentials.
+type Credentials struct {
+	Host     string
+	Port     int
+	User     string
+	Password string
+	Database string
 }
 
-// New creates a new instance of [Database] and returns a pointer to it.
-func New() *Database {
-	return &Database{
-		Client: nil,
-		Ctx:    context.TODO(),
+type Database interface {
+	TestConnection() error
+	Init(ctx context.Context) error
+
+	UserQuerier
+	CategoryQuerier
+	CurrencyQuerier
+	TransactionQuerier
+}
+
+// DefaultDatabase is the default implementation of the [Database] interface
+type DefaultDatabase struct {
+	client *bun.DB
+}
+
+// New creates a new instance of [DefaultDatabase] and returns a pointer to it.
+func New(c Credentials) *DefaultDatabase {
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", c.User, c.Password, c.Host, c.Port, c.Database)
+	sqlDb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
+	bunDb := bun.NewDB(sqlDb, pgdialect.New())
+	return &DefaultDatabase{
+		client: bunDb,
 	}
 }
 
-// Connect initializes a connection to a database with provided credentials and verifies the connection.
-func (d *Database) Connect(host string, port int, username string, password string, dbName string) error {
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", username, password, host, port, dbName)
-	db := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
-
-	// create a new database client:
-	d.Client = bun.NewDB(db, pgdialect.New())
-
-	// test the connection:
-	if err := d.Client.Ping(); err != nil {
+// TestConnection tests database connection.
+func (d *DefaultDatabase) TestConnection() error {
+	if err := d.client.Ping(); err != nil {
 		return err
 	}
-
 	return nil
 }
 
 // Init creates all necessary tables and extensions if they do not exist.
-func (d *Database) Init() error {
+func (d *DefaultDatabase) Init(ctx context.Context) error {
 	// create necessary extensions if they do not exist:
 	for _, extension := range extensions {
-		if _, err := d.Client.NewRaw("CREATE EXTENSION IF NOT EXISTS ?;", bun.Ident(extension)).Exec(d.Ctx); err != nil {
+		if _, err := d.client.NewRaw("CREATE EXTENSION IF NOT EXISTS ?;", bun.Ident(extension)).Exec(ctx); err != nil {
 			return err
 		}
 	}
 
 	// create necessary tables if they do not exist:
 	for _, model := range models {
-		_, err := d.Client.NewCreateTable().Model(model).IfNotExists().Exec(d.Ctx)
+		_, err := d.client.NewCreateTable().Model(model).IfNotExists().Exec(ctx)
 		if err != nil {
 			return err
 		}

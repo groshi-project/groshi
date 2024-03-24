@@ -8,14 +8,14 @@ import (
 // Job represents dependencies for the service jobs.
 type Job struct {
 	// database used to store and retrieve data.
-	database *database.Database
+	database database.Database
 
 	// errLogger used to log warnings and errors.
 	errLogger *log.Logger
 }
 
 // New creates a new instance of [Job] and returns pointer to it.
-func New(database *database.Database) *Job {
+func New(database database.Database) *Job {
 	return &Job{database: database}
 }
 
@@ -41,7 +41,7 @@ func (j *Job) UpdateCurrencies() error {
 	//			currency.Code = code
 	//			currency.Symbol = code // todo: get currency symbol (e.g. "$") from somewhere
 	//			currency.Rate = rate
-	//			if _, err := s.Database.Client.NewInsert().Model(currency).Exec(s.Database.Ctx); err != nil {
+	//			if _, err := s.DefaultDatabase.Client.NewInsert().Model(currency).Exec(s.DefaultDatabase.Context); err != nil {
 	//				j.errLogger.Printf("could not create new currency %s: %s", code, err)
 	//			}
 	//			continue
@@ -51,7 +51,7 @@ func (j *Job) UpdateCurrencies() error {
 	//	}
 	//
 	//	currency.Rate = rate
-	//	if _, err := s.Database.Client.NewUpdate().Model(currency).WherePK().Exec(s.Database.Ctx); err != nil {
+	//	if _, err := s.DefaultDatabase.Client.NewUpdate().Model(currency).WherePK().Exec(s.DefaultDatabase.Context); err != nil {
 	//		j.errLogger.Printf("could not update currency %s: %s", code, err)
 	//	}
 	//

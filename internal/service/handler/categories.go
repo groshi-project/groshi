@@ -38,7 +38,7 @@ func (h *Handler) CategoriesCreate(w http.ResponseWriter, r *http.Request) {
 
 	// fetch current user from the database:
 	user := &database.User{}
-	if err := h.database.SelectUserByUsername(username, user); err != nil {
+	if err := h.database.SelectUserByUsername(r.Context(), username, user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			httpresp.Render(w, response.UserNotFound)
 			return
@@ -53,7 +53,7 @@ func (h *Handler) CategoriesCreate(w http.ResponseWriter, r *http.Request) {
 		Name:    params.Name,
 		OwnerID: user.ID,
 	}
-	if err := h.database.CreateCategory(category); err != nil {
+	if err := h.database.CreateCategory(r.Context(), category); err != nil {
 		h.internalServerErrorLogger.Println(err)
 		httpresp.Render(w, response.InternalServerError)
 		return
@@ -79,7 +79,7 @@ func (h *Handler) CategoriesGet(w http.ResponseWriter, r *http.Request) {
 
 	// fetch current user from the database:
 	user := &database.User{}
-	if err := h.database.SelectUserByUsername(username, user); err != nil {
+	if err := h.database.SelectUserByUsername(r.Context(), username, user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			httpresp.Render(w, response.UserNotFound)
 			return
@@ -91,7 +91,7 @@ func (h *Handler) CategoriesGet(w http.ResponseWriter, r *http.Request) {
 
 	// fetch categories that belong to this user from the database:
 	categories := make([]database.Category, 0)
-	if err := h.database.SelectCategoriesByOwnerID(user.ID, &categories); err != nil {
+	if err := h.database.SelectCategoriesByOwnerID(r.Context(), user.ID, &categories); err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			h.internalServerErrorLogger.Println(err)
 			httpresp.Render(w, response.InternalServerError)
@@ -137,7 +137,7 @@ func (h *Handler) CategoriesUpdate(w http.ResponseWriter, r *http.Request) {
 
 	// fetch category:
 	category := &database.Category{}
-	if err := h.database.SelectCategoryByUUID(uuid, category); err != nil {
+	if err := h.database.SelectCategoryByUUID(r.Context(), uuid, category); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			httpresp.Render(w, response.CategoryNotFound)
 			return
@@ -152,7 +152,7 @@ func (h *Handler) CategoriesUpdate(w http.ResponseWriter, r *http.Request) {
 
 	// fetch current user:
 	user := &database.User{}
-	if err := h.database.SelectUserByUsername(username, user); err != nil {
+	if err := h.database.SelectUserByUsername(r.Context(), username, user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			httpresp.Render(w, response.UserNotFound)
 			return
@@ -170,7 +170,7 @@ func (h *Handler) CategoriesUpdate(w http.ResponseWriter, r *http.Request) {
 
 	// update category name:
 	category.Name = params.Name
-	if err := h.database.UpdateCategory(category); err != nil {
+	if err := h.database.UpdateCategory(r.Context(), category); err != nil {
 		h.internalServerErrorLogger.Println(err)
 		httpresp.Render(w, response.InternalServerError)
 		return
@@ -193,7 +193,7 @@ func (h *Handler) CategoriesDelete(w http.ResponseWriter, r *http.Request) {
 
 	// fetch the given category from the database:
 	category := &database.Category{}
-	if err := h.database.SelectCategoryByUUID(uuid, category); err != nil {
+	if err := h.database.SelectCategoryByUUID(r.Context(), uuid, category); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			httpresp.Render(w, response.CategoryNotFound)
 			return
@@ -208,7 +208,7 @@ func (h *Handler) CategoriesDelete(w http.ResponseWriter, r *http.Request) {
 
 	// fetch current user from the database:
 	user := &database.User{}
-	if err := h.database.SelectUserByUsername(username, user); err != nil {
+	if err := h.database.SelectUserByUsername(r.Context(), username, user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			httpresp.Render(w, response.UserNotFound)
 			return
@@ -225,7 +225,7 @@ func (h *Handler) CategoriesDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// delete the given category from the database:
-	if err := h.database.DeleteCategoryByID(category.ID); err != nil {
+	if err := h.database.DeleteCategoryByID(r.Context(), category.ID); err != nil {
 		h.internalServerErrorLogger.Println(err)
 		httpresp.Render(w, response.InternalServerError)
 		return

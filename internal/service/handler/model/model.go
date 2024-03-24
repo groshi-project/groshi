@@ -3,7 +3,7 @@ package model
 // Error represents error response model.
 type Error struct {
 	ErrorMessage string `json:"error_message" example:"example error message (who cares)"`
-}
+} // @name Error
 
 // NewError creates a new instance of [Error] and returns pointer to it.
 func NewError(errorMessage string) *Error {

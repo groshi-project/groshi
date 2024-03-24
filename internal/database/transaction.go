@@ -7,7 +7,9 @@ import (
 	"time"
 )
 
-// Transaction represents financial transaction created by the service user.
+var _ bun.BeforeAppendModelHook = (*Transaction)(nil)
+
+// Transaction database model.
 type Transaction struct {
 	bun.BaseModel `bun:"table:transactions"`
 
@@ -35,8 +37,6 @@ type Transaction struct {
 	UpdatedAt time.Time `bun:",notnull,default:current_timestamp"`
 }
 
-var _ bun.BeforeAppendModelHook = (*Transaction)(nil)
-
 func (t *Transaction) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	switch query.(type) {
 	case *bun.InsertQuery:
@@ -47,8 +47,13 @@ func (t *Transaction) BeforeAppendModel(_ context.Context, query bun.Query) erro
 	return nil
 }
 
-func (d *Database) CreateTransaction(t *Transaction) error {
-	if _, err := d.Client.NewInsert().Model(t).Exec(d.Ctx); err != nil {
+// TransactionQuerier interface describes a type which executes database queries related to the [Transaction] model.
+type TransactionQuerier interface {
+	CreateTransaction(context.Context, *Transaction) error
+}
+
+func (d *DefaultDatabase) CreateTransaction(ctx context.Context, t *Transaction) error {
+	if _, err := d.client.NewInsert().Model(t).Exec(ctx); err != nil {
 		return err
 	}
 	return nil

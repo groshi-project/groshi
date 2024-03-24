@@ -41,7 +41,7 @@ func (h *Handler) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 
 	// fetch provided currency:
 	currency := &database.Currency{}
-	if err := h.database.SelectCurrencyByCode(params.CurrencyCode, currency); err != nil {
+	if err := h.database.SelectCurrencyByCode(r.Context(), params.CurrencyCode, currency); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			httpresp.Render(w, response.CurrencyNotFound)
 			return
@@ -53,7 +53,7 @@ func (h *Handler) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 
 	// fetch provided category:
 	category := &database.Category{}
-	if err := h.database.SelectCategoryByUUID(params.CategoryUUID, category); err != nil {
+	if err := h.database.SelectCategoryByUUID(r.Context(), params.CategoryUUID, category); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			httpresp.Render(w, response.CategoryNotFound)
 			return
@@ -68,7 +68,7 @@ func (h *Handler) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 
 	// fetch the current user from the database:
 	user := &database.User{}
-	if err := h.database.SelectUserByUsername(username, user); err != nil {
+	if err := h.database.SelectUserByUsername(r.Context(), username, user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			httpresp.Render(w, response.UserNotFound)
 			return
@@ -93,7 +93,7 @@ func (h *Handler) TransactionsCreate(w http.ResponseWriter, r *http.Request) {
 
 		Timestamp: utcTimestamp,
 	}
-	if err := h.database.CreateTransaction(transaction); err != nil {
+	if err := h.database.CreateTransaction(r.Context(), transaction); err != nil {
 		h.internalServerErrorLogger.Println(err)
 		httpresp.Render(w, response.InternalServerError)
 		return

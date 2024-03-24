@@ -1,11 +1,12 @@
 package database
 
 import (
+	"context"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
 
-// Category represents transaction category.
+// Category database model.
 type Category struct {
 	bun.BaseModel `bun:"table:categories"`
 
@@ -18,44 +19,53 @@ type Category struct {
 	Name string `bun:",notnull"`
 }
 
-func (d *Database) selectCategoryByUUIDQuery(uuid string) *bun.SelectQuery {
-	return d.Client.NewSelect().Model(sampleCategory).Where("uuid = ?", uuid)
+// CategoryQuerier interface describes a type which executes database queries related to the [Category] model.
+type CategoryQuerier interface {
+	CreateCategory(ctx context.Context, c *Category) error
+	SelectCategoryByUUID(ctx context.Context, uuid string, c *Category) error
+	SelectCategoriesByOwnerID(ctx context.Context, ownerID int64, c *[]Category) error
+	UpdateCategory(ctx context.Context, c *Category) error
+	DeleteCategoryByID(ctx context.Context, id int64) error
 }
 
-func (d *Database) selectCategoriesByOwnerIDQuery(ownerId int64) *bun.SelectQuery {
-	return d.Client.NewSelect().Model(sampleCategory).Where("owner_id = ?", ownerId)
+func (d *DefaultDatabase) selectCategoryByUUIDQuery(uuid string) *bun.SelectQuery {
+	return d.client.NewSelect().Model(sampleCategory).Where("uuid = ?", uuid)
 }
 
-func (d *Database) CreateCategory(c *Category) error {
-	if _, err := d.Client.NewInsert().Model(c).Exec(d.Ctx); err != nil {
+func (d *DefaultDatabase) selectCategoriesByOwnerIDQuery(ownerId int64) *bun.SelectQuery {
+	return d.client.NewSelect().Model(sampleCategory).Where("owner_id = ?", ownerId)
+}
+
+func (d *DefaultDatabase) CreateCategory(ctx context.Context, c *Category) error {
+	if _, err := d.client.NewInsert().Model(c).Exec(ctx); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *Database) SelectCategoryByUUID(uuid string, c *Category) error {
-	if err := d.selectCategoryByUUIDQuery(uuid).Scan(d.Ctx, c); err != nil {
+func (d *DefaultDatabase) SelectCategoryByUUID(ctx context.Context, uuid string, c *Category) error {
+	if err := d.selectCategoryByUUIDQuery(uuid).Scan(ctx, c); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *Database) SelectCategoriesByOwnerID(ownerID int64, categories *[]Category) error {
-	if err := d.selectCategoriesByOwnerIDQuery(ownerID).Scan(d.Ctx, categories); err != nil {
+func (d *DefaultDatabase) SelectCategoriesByOwnerID(ctx context.Context, ownerID int64, c *[]Category) error {
+	if err := d.selectCategoriesByOwnerIDQuery(ownerID).Scan(ctx, c); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *Database) UpdateCategory(c *Category) error {
-	if _, err := d.Client.NewUpdate().Model(c).WherePK().Exec(d.Ctx); err != nil {
+func (d *DefaultDatabase) UpdateCategory(ctx context.Context, c *Category) error {
+	if _, err := d.client.NewUpdate().Model(c).WherePK().Exec(ctx); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (d *Database) DeleteCategoryByID(id int64) error {
-	if _, err := d.Client.NewDelete().Model(sampleCategory).Where("id = ?", id).Exec(d.Ctx); err != nil {
+func (d *DefaultDatabase) DeleteCategoryByID(ctx context.Context, id int64) error {
+	if _, err := d.client.NewDelete().Model(sampleCategory).Where("id = ?", id).Exec(ctx); err != nil {
 		return err
 	}
 	return nil

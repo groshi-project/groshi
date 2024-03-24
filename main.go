@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/go-chi/chi/v5"
@@ -23,8 +24,8 @@ import (
 const loggingBaseFlags = log.Ldate | log.Ltime | log.Lmsgprefix
 
 var (
-	infoLogger  = log.New(os.Stdout, "[info]: ", loggingBaseFlags)
-	fatalLogger = log.New(os.Stderr, "[fatal]: ", loggingBaseFlags|log.Llongfile)
+	infoLog  = log.New(os.Stdout, "[info]: ", loggingBaseFlags)
+	fatalLog = log.New(os.Stderr, "[fatal]: ", loggingBaseFlags|log.Llongfile)
 )
 
 // Options provides application options which can be provided both using CLI and environmental variables.
@@ -131,7 +132,7 @@ func getOptions() *Options {
 	return &options
 }
 
-// getHTTPRouter creates and configures a new HTTP router for groshi service
+// newMux creates and configures a new HTTP router for groshi service
 //
 //	@title						groshi
 //	@version					0.1.0
@@ -144,7 +145,7 @@ func getOptions() *Options {
 //	@in							header
 //	@name						Authorization
 //	@description				Type "Bearer" followed by a space and JWT token.
-func getHTTPRouter(groshi *service.Service) *chi.Mux {
+func newMux(groshi *service.Service) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.RequestID)
@@ -222,22 +223,21 @@ func main() {
 	// get options provided using CLI and environmental variables:
 	options := getOptions()
 
-	infoLogger.Printf("starting groshi")
+	infoLog.Printf("starting groshi")
 
 	// initialize postgres:
-	db := database.New()
-	time.Sleep(time.Duration(4) * time.Second) // todo: remove
-	if err := db.Connect(
-		options.Postgres.Host,
-		options.Postgres.Port,
-		options.Postgres.User,
-		options.Postgres.Password,
-		options.Postgres.Database,
-	); err != nil {
-		fatalLogger.Fatalf("could not connect to the database: %s", err)
+	db := database.New(database.Credentials{
+		Host:     options.Postgres.Host,
+		Port:     options.Postgres.Port,
+		User:     options.Postgres.User,
+		Password: options.Postgres.Password,
+		Database: options.Postgres.Database,
+	})
+	if err := db.TestConnection(); err != nil {
+		fatalLog.Fatalf("could not connect to the database: %s", err)
 	}
-	if err := db.Init(); err != nil {
-		fatalLogger.Printf("could not initialize database: %s", err)
+	if err := db.Init(context.Background()); err != nil {
+		fatalLog.Printf("could not initialize database: %s", err)
 	}
 
 	// create a groshi service:
@@ -250,12 +250,12 @@ func main() {
 	)
 
 	// create an HTTP router:
-	router := getHTTPRouter(groshi)
+	router := newMux(groshi)
 
 	// start listening:
 	addr := fmt.Sprintf("%s:%d", options.General.Host, options.General.Port)
-	infoLogger.Printf("groshi is listening for HTTP requests on %v", addr)
+	infoLog.Printf("groshi is listening for HTTP requests on %v", addr)
 	if err := http.ListenAndServe(addr, router); err != nil {
-		fatalLogger.Fatal(err)
+		fatalLog.Fatal(err)
 	}
 }

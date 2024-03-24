@@ -8,7 +8,7 @@ import (
 
 var _ bun.BeforeAppendModelHook = (*Currency)(nil)
 
-// Currency represents currency supported by the service.
+// Currency database model.
 type Currency struct {
 	bun.BaseModel `bun:"table:currencies"`
 
@@ -32,12 +32,16 @@ func (c *Currency) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	return nil
 }
 
-func (d *Database) selectCurrencyByCodeQuery(code string) *bun.SelectQuery {
-	return d.Client.NewSelect().Model(sampleCurrency).Where("code = ?", code)
+type CurrencyQuerier interface {
+	SelectCurrencyByCode(ctx context.Context, code string, c *Currency) error
 }
 
-func (d *Database) SelectCurrencyByCode(code string, c *Currency) error {
-	if err := d.selectCurrencyByCodeQuery(code).Scan(d.Ctx, c); err != nil {
+func (d *DefaultDatabase) selectCurrencyByCodeQuery(code string) *bun.SelectQuery {
+	return d.client.NewSelect().Model(sampleCurrency).Where("code = ?", code)
+}
+
+func (d *DefaultDatabase) SelectCurrencyByCode(ctx context.Context, code string, c *Currency) error {
+	if err := d.selectCurrencyByCodeQuery(code).Scan(ctx, c); err != nil {
 		return err
 	}
 	return nil

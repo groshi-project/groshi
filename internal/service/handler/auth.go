@@ -12,8 +12,8 @@ import (
 )
 
 type authLoginParams struct {
-	Username string `json:"username" username:"elle4ka"`
-	Password string `json:"password" password:"my-secret-password"`
+	Username string `json:"username" username:"username" validate:"required"`
+	Password string `json:"password" password:"my-secret-password" validate:"required"`
 }
 
 type authLoginResponse struct {
@@ -50,7 +50,7 @@ func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 
 	// fetch the user from the database:
 	user := &database.User{}
-	if err := h.database.SelectUserByUsername(params.Username, user); err != nil {
+	if err := h.database.SelectUserByUsername(r.Context(), params.Username, user); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			httpresp.Render(w, response.InvalidCredentials)
 			return
@@ -60,7 +60,12 @@ func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate provided password:
-	if !h.passwordAuthenticator.VerifyPassword(params.Password, user.Password) {
+	ok, err := h.passwordAuthenticator.VerifyPassword(params.Password, user.Password)
+	if err != nil {
+		httpresp.Render(w, response.InternalServerError)
+		return
+	}
+	if !ok {
 		httpresp.Render(w, response.InvalidCredentials)
 		return
 	}

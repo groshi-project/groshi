@@ -2,21 +2,20 @@ package handler
 
 import (
 	"encoding/json"
+	"github.com/groshi-project/groshi/internal/database"
 	"github.com/groshi-project/groshi/internal/service/handler/httpresp"
 	"github.com/groshi-project/groshi/internal/service/handler/model"
 	"github.com/groshi-project/groshi/internal/service/handler/response"
 	"net/http"
-
-	"github.com/groshi-project/groshi/internal/database"
 )
 
 type userCreateParams struct {
-	Username string `json:"username" example:"jieggii"`
-	Password string `json:"password" example:"my-secret-password"`
+	Username string `json:"username" example:"username" validate:"required"`
+	Password string `json:"password" example:"my-secret-password" validate:"required"`
 }
 
 type userCreateResponse struct {
-	Username string `json:"username" example:"jieggii"`
+	Username string `json:"username" example:"username"`
 }
 
 // UserCreate creates a new user and returns its username.
@@ -48,7 +47,7 @@ func (h *Handler) UserCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check if user with such username already exist:
-	exists, err := h.database.UserExistsByUsername(params.Username)
+	exists, err := h.database.UserExistsByUsername(r.Context(), params.Username)
 	if err != nil {
 		h.internalServerErrorLogger.Println(err)
 		httpresp.Render(w, response.InternalServerError)
@@ -70,7 +69,7 @@ func (h *Handler) UserCreate(w http.ResponseWriter, r *http.Request) {
 		Username: params.Username,
 		Password: passwordHash,
 	}
-	if err := h.database.CreateUser(user); err != nil {
+	if err := h.database.CreateUser(r.Context(), user); err != nil {
 		h.internalServerErrorLogger.Println(err)
 		httpresp.Render(w, response.InternalServerError)
 		return
@@ -96,15 +95,27 @@ type userGetResponse struct {
 //	@Produce		json
 //	@Success		200	{object}	userGetResponse	"Successful operation"
 //	@Failure		404	{object}	model.Error		"User not found"
-//	@Failure		400	{object}	model.Error		"Invalid request body format or invalid request params"
 //	@Failure		500	{object}	model.Error		"Internal server error"
 //	@Security		Bearer
 //	@Router			/user [get]
 func (h *Handler) UserGet(w http.ResponseWriter, r *http.Request) {
 	// extract current user's username from context:
-	username := r.Context().Value("username").(string)
+	username, ok := r.Context().Value("username").(string)
+	if !ok {
+		httpresp.Render(w, response.InternalServerError)
+		return
+	}
 
-	// todo?: fetch user from the database to check if it exists.
+	// check if user exists:
+	exists, err := h.database.UserExistsByUsername(r.Context(), username)
+	if err != nil {
+		httpresp.Render(w, response.InternalServerError)
+		return
+	}
+	if !exists {
+		httpresp.Render(w, response.UserNotFound)
+		return
+	}
 
 	// respond:
 	resp := &userGetResponse{Username: username}
@@ -128,15 +139,18 @@ type userDeleteResponse struct {
 //	@Produce		json
 //	@Success		200	{object}	userDeleteResponse	"Successful operation"
 //	@Failure		404	{object}	model.Error			"User not found"
-//	@Failure		400	{object}	model.Error			"Invalid request body format or invalid request params"
 //	@Failure		500	{object}	model.Error			"Internal server error"
 //	@Router			/user [delete]
 func (h *Handler) UserDelete(w http.ResponseWriter, r *http.Request) {
 	// extract current user's username from context:
-	username := r.Context().Value("username").(string)
+	username, ok := r.Context().Value("username").(string)
+	if !ok {
+		httpresp.Render(w, response.InternalServerError)
+		return
+	}
 
 	// check if the user exists:
-	exists, err := h.database.UserExistsByUsername(username)
+	exists, err := h.database.UserExistsByUsername(r.Context(), username)
 	if err != nil {
 		h.internalServerErrorLogger.Println(err)
 		httpresp.Render(w, response.InternalServerError)
@@ -148,7 +162,7 @@ func (h *Handler) UserDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// delete the user from the database:
-	if err := h.database.DeleteUserByUsername(username); err != nil {
+	if err := h.database.DeleteUserByUsername(r.Context(), username); err != nil {
 		h.internalServerErrorLogger.Println(err)
 		httpresp.Render(w, response.InternalServerError)
 		return

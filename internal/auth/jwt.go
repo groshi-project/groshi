@@ -7,9 +7,12 @@ import (
 
 // JWTAuthenticator is an interface for a JWT authenticator: it can create and verify tokens.
 type JWTAuthenticator interface {
+	// CreateToken generates a new JWT and returns its string representation and expiration timestamp.
 	// todo: should `expires` be returned and is it necessary for a user?
-	CreateToken(string) (string, time.Time, error)
-	VerifyToken(string) (jwt.MapClaims, error)
+	CreateToken(username string) (token string, expires time.Time, err error)
+
+	// VerifyToken verifies that JWT token is valid and not expired, returns claims it contains.
+	VerifyToken(token string) (jwt.MapClaims, error)
 }
 
 // DefaultJWTAuthenticator is the default JWT authenticator.

@@ -2,10 +2,11 @@ package auth
 
 import (
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/crypto/bcrypt"
 	"testing"
 )
 
-func newTestPasswordAuthenticator() *PasswordAuthenticator {
+func newTestPasswordAuthenticator() *DefaultPasswordAuthenticator {
 	return NewPasswordAuthenticator(1)
 }
 
@@ -32,9 +33,23 @@ func TestAuthority_VerifyPassword(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, hash)
 
-	ok := a.VerifyPassword(wrongPassword, hash)
+	// test with wrong password:
+	ok, err := a.VerifyPassword(wrongPassword, hash)
+	assert.NoError(t, err)
 	assert.False(t, ok)
 
-	ok = a.VerifyPassword(rightPassword, hash)
+	// test with right password:
+	ok, err = a.VerifyPassword(rightPassword, hash)
+	assert.NoError(t, err)
 	assert.True(t, ok)
+
+	// test with empty password:
+	ok, err = a.VerifyPassword("", hash)
+	assert.NoError(t, err)
+	assert.False(t, ok)
+
+	// test with empty hash:
+	ok, err = a.VerifyPassword(rightPassword, "")
+	assert.Error(t, bcrypt.ErrHashTooShort)
+	assert.False(t, ok)
 }

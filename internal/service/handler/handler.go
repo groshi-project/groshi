@@ -9,14 +9,14 @@ import (
 
 // Handler represents dependencies for HTTP handler functions.
 type Handler struct {
-	// Database used to store and retrieve data.
-	database *database.Database
+	// DefaultDatabase used to store and retrieve data.
+	database database.Database
 
 	// JWT authenticator used to generate and validate JWTs.
 	JWTAuthenticator auth.JWTAuthenticator
 
 	// Password authenticator used to hash and validate passwords.
-	passwordAuthenticator *auth.PasswordAuthenticator
+	passwordAuthenticator auth.PasswordAuthenticator
 
 	// Logger used to log internal server errors.
 	internalServerErrorLogger *log.Logger
@@ -26,7 +26,7 @@ type Handler struct {
 }
 
 // New creates a new instance of [Handler] and returns pointer to it.
-func New(database *database.Database, jwtAuthenticator auth.JWTAuthenticator, passwordAuthenticator *auth.PasswordAuthenticator, internalServerErrorLogger *log.Logger) *Handler {
+func New(database database.Database, jwtAuthenticator auth.JWTAuthenticator, passwordAuthenticator auth.PasswordAuthenticator, internalServerErrorLogger *log.Logger) *Handler {
 	return &Handler{
 		database:                  database,
 		JWTAuthenticator:          jwtAuthenticator,
