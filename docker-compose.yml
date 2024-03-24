@@ -22,7 +22,8 @@ services:
       GROSHI_POSTGRES_DATABASE: groshi
 
     depends_on:
-      - groshi-postgres
+      groshi-postgres:
+        condition: service_healthy
 
     ports:
       - "8080:8080"
@@ -44,6 +45,14 @@ services:
 
     secrets:
       - postgres
+
+    restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "groshi"]  # todo: set username from docker secret
+      interval: 2s
+      timeout: 2s
+      retries: 4
+      start_period: 2s
 
 secrets:
   groshi:
