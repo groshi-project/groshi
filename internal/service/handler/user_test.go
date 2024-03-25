@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/groshi-project/groshi/internal/database"
+	"github.com/groshi-project/groshi/internal/middleware"
 	"github.com/stretchr/testify/assert"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
@@ -17,145 +17,163 @@ func TestHandler_UserCreate(t *testing.T) {
 		testPasswordHash = "hash(test-password)"
 	)
 
-	var (
-		ctx = context.Background() // context which will be used for all test requests
+	t.Run("create a new user with non-taken username", func(t *testing.T) {
+		var (
+			handler = newTestHandler()
+			ctx     = context.Background()
+		)
 
-		handler *Handler
-		params  *userCreateParams
-		rec     *httptest.ResponseRecorder
-	)
-
-	// case: create a new user with a unique non-existing username:
-	handler = newTestHandler()
-
-	params = &userCreateParams{
-		Username: testUsername,
-		Password: testPassword,
-	}
-	rec = testRequest(ctx, params, handler.UserCreate)
-	if assert.Equal(t, http.StatusOK, rec.Code) {
-		u := &database.User{}
-		err := handler.database.SelectUserByUsername(ctx, testUsername, u)
-		if assert.NoError(t, err) {
-			if assert.NotEmpty(t, u) {
-				assert.Equal(t, testUsername, u.Username)
-				assert.Equal(t, testPasswordHash, u.Password)
+		params := &userCreateParams{
+			Username: testUsername,
+			Password: testPassword,
+		}
+		rec := testRequest(ctx, params, handler.UserCreate)
+		if assert.Equal(t, http.StatusOK, rec.Code) {
+			u := &database.User{}
+			err := handler.database.SelectUserByUsername(ctx, testUsername, u)
+			if assert.NoError(t, err) {
+				if assert.NotEmpty(t, u) {
+					assert.Equal(t, testUsername, u.Username)
+					assert.Equal(t, testPasswordHash, u.Password)
+				}
 			}
 		}
-	}
+	})
 
-	// case: create a user with username which is already taken:
-	handler = newTestHandler()
+	t.Run("create a user with username which is already taken", func(t *testing.T) {
+		var (
+			handler = newTestHandler()
+			ctx     = context.Background()
+		)
 
-	if err := handler.database.CreateUser(ctx, &database.User{
-		Username: testUsername,
-	}); err != nil {
-		panic(err)
-	}
+		// create a test user:
+		if err := handler.database.CreateUser(ctx, &database.User{
+			Username: testUsername,
+		}); err != nil {
+			panic(err)
+		}
 
-	params = &userCreateParams{
-		Username: testUsername,
-		Password: testPassword,
-	}
-	rec = testRequest(ctx, params, handler.UserCreate)
-	assert.Equal(t, http.StatusConflict, rec.Code)
+		params := &userCreateParams{
+			Username: testUsername,
+			Password: testPassword,
+		}
+		rec := testRequest(ctx, params, handler.UserCreate)
+		assert.Equal(t, http.StatusConflict, rec.Code)
+	})
 
-	// case: empty params:
-	handler = newTestHandler()
-
-	params = nil
-	rec = testRequest(ctx, params, handler.UserCreate)
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	t.Run("call the handler without params", func(t *testing.T) {
+		var (
+			handler = newTestHandler()
+			ctx     = context.Background()
+		)
+		rec := testRequest(ctx, nil, handler.UserCreate)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
 }
 
 func TestHandler_UserGet(t *testing.T) {
 	const (
+		//testUserID   int64 = 99
 		testUsername = "test-user"
 	)
 
-	var (
-		handler = newTestHandler() // handler which will be used to test all requests
+	t.Run("get existing user", func(t *testing.T) {
+		var (
+			handler = newTestHandler()
+			ctx     = context.Background()
+		)
 
-		ctx context.Context
-		rec *httptest.ResponseRecorder
-	)
-
-	if err := handler.database.CreateUser(context.Background(), &database.User{
-		Username: testUsername,
-	}); err != nil {
-		panic(err)
-	}
-
-	// case: get existing user:
-	ctx = context.WithValue(context.Background(), "username", testUsername)
-	rec = testRequest(ctx, nil, handler.UserGet)
-	if assert.Equal(t, http.StatusOK, rec.Code) {
-		resp := &userGetResponse{}
-		err := json.NewDecoder(rec.Body).Decode(&resp)
-		assert.NoError(t, err)
-
-		if assert.NotEmpty(t, resp) {
-			assert.Equal(t, testUsername, resp.Username)
+		// create a test user:
+		if err := handler.database.CreateUser(ctx, &database.User{
+			Username: testUsername,
+		}); err != nil {
+			panic(err)
 		}
-	}
 
-	// case: get non-existing user:
-	ctx = context.WithValue(context.Background(), "username", "i-do-not-exist")
-	rec = testRequest(ctx, nil, handler.UserGet)
-	assert.Equal(t, http.StatusNotFound, rec.Code)
+		ctx = context.WithValue(ctx, middleware.UsernameContextVar, testUsername)
+		rec := testRequest(ctx, nil, handler.UserGet)
+		if assert.Equal(t, http.StatusOK, rec.Code) {
+			resp := &userGetResponse{}
+			err := json.NewDecoder(rec.Body).Decode(&resp)
+			if assert.NoError(t, err) {
+				if assert.NotEmpty(t, resp) {
+					assert.Equal(t, testUsername, resp.Username)
+				}
+			}
+		}
 
-	// case: call handler without "username" context var:
-	ctx = context.Background()
-	rec = testRequest(ctx, nil, handler.UserGet)
-	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
+
+	t.Run("get a non-existent user", func(t *testing.T) {
+		var (
+			handler = newTestHandler()
+			ctx     = context.WithValue(context.Background(), middleware.UsernameContextVar, "i-dont-exist")
+		)
+		rec := testRequest(ctx, nil, handler.UserGet)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+
+	t.Run("call the handler without username context value", func(t *testing.T) {
+		var (
+			handler = newTestHandler()
+			ctx     = context.Background()
+		)
+		rec := testRequest(ctx, nil, handler.UserGet)
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
 }
-
-// todo: test user update?
 
 func TestHandler_UserDelete(t *testing.T) {
 	const (
 		testUsername = "test-user"
 	)
 
-	var (
-		handler = newTestHandler()
+	t.Run("delete existing user", func(t *testing.T) {
+		var (
+			handler = newTestHandler()
+			ctx     = context.Background()
+		)
 
-		ctx context.Context
-		rec *httptest.ResponseRecorder
-	)
-
-	// test deleting existing user:
-	if err := handler.database.CreateUser(context.Background(), &database.User{
-		Username: testUsername,
-	}); err != nil {
-		panic(err)
-	}
-
-	ctx = context.WithValue(context.Background(), "username", testUsername)
-	rec = testRequest(ctx, nil, handler.UserDelete)
-	if assert.Equal(t, http.StatusOK, rec.Code) {
-		resp := &userDeleteResponse{}
-		err := json.NewDecoder(rec.Body).Decode(&resp)
-		if assert.NoError(t, err) {
-			if assert.NotEmpty(t, resp) {
-				assert.Equal(t, testUsername, resp.Username)
-			}
-		}
-
-		exists, err := handler.database.UserExistsByUsername(ctx, testUsername)
-		if err != nil {
+		// create a test user:
+		if err := handler.database.CreateUser(ctx, &database.User{
+			Username: testUsername,
+		}); err != nil {
 			panic(err)
 		}
-		assert.Equal(t, false, exists)
-	}
 
-	// test deleting non-existing user:
-	ctx = context.WithValue(context.Background(), "username", "i-do-not-exist")
-	rec = testRequest(ctx, nil, handler.UserDelete)
-	assert.Equal(t, http.StatusNotFound, rec.Code)
+		ctx = context.WithValue(ctx, middleware.UsernameContextVar, testUsername)
+		rec := testRequest(ctx, nil, handler.UserDelete)
+		if assert.Equal(t, http.StatusOK, rec.Code) {
+			resp := &userDeleteResponse{}
+			err := json.NewDecoder(rec.Body).Decode(&resp)
+			if assert.NoError(t, err) {
+				if assert.NotEmpty(t, resp) {
+					assert.Equal(t, testUsername, resp.Username)
+				}
+			}
 
-	// test without "username" context var:
-	ctx = context.Background()
-	rec = testRequest(ctx, nil, handler.UserDelete)
-	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+			exists, err := handler.database.UserExistsByUsername(ctx, testUsername)
+			if assert.NoError(t, err) {
+				assert.False(t, exists)
+			}
+		}
+	})
+
+	t.Run("delete non-existent user", func(t *testing.T) {
+		var (
+			handler = newTestHandler()
+			ctx     = context.WithValue(context.Background(), middleware.UsernameContextVar, "i-dont-exist")
+		)
+		rec := testRequest(ctx, nil, handler.UserDelete)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
+	})
+
+	t.Run("call the handler without username context value", func(t *testing.T) {
+		var (
+			handler = newTestHandler()
+			ctx     = context.Background()
+		)
+		rec := testRequest(ctx, nil, handler.UserDelete)
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
+	})
 }
