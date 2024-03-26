@@ -8,6 +8,27 @@ import (
 	"testing"
 )
 
+func TestNew(t *testing.T) {
+	var (
+		body = map[string]any{
+			"foo": "bar",
+		}
+		statusCode = http.StatusOK
+	)
+	response := New(statusCode, body)
+	assert.Equal(t, body, response.body)
+	assert.Equal(t, statusCode, response.statusCode)
+}
+
+func TestNewOK(t *testing.T) {
+	body := map[string]any{
+		"foo": "bar",
+	}
+	response := NewOK(body)
+	assert.Equal(t, body, response.body)
+	assert.Equal(t, http.StatusOK, response.statusCode)
+}
+
 func TestRenderJSON(t *testing.T) {
 	r := httptest.NewRecorder()
 

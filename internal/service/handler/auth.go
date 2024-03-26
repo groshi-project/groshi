@@ -60,7 +60,7 @@ func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// validate provided password:
-	ok, err := h.passwordAuthenticator.VerifyPassword(params.Password, user.Password)
+	ok, err := h.passwordAuth.VerifyPassword(params.Password, user.Password)
 	if err != nil {
 		httpresp.Render(w, response.InternalServerError)
 		return
@@ -71,7 +71,7 @@ func (h *Handler) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// generate a new jwt:
-	token, expires, err := h.JWTAuthenticator.CreateToken(user.Username)
+	token, expires, err := h.JWTAuth.CreateToken(user.Username)
 	if err != nil {
 		httpresp.Render(w, response.InternalServerError)
 		return

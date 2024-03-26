@@ -40,20 +40,14 @@ func (m *mockPasswordAuthenticator) VerifyPassword(password string, hash string)
 	return false, nil
 }
 
-type mockJWTAuthenticator struct {
-	//Username string
-	//Token    string
-}
+type mockJWTAuthenticator struct{}
 
-func newMockJWTAuthenticator(username string, token string) *mockJWTAuthenticator {
-	return &mockJWTAuthenticator{
-		//Username: username,
-		//Token:    token,
-	}
+func newMockJWTAuthenticator() *mockJWTAuthenticator {
+	return &mockJWTAuthenticator{}
 }
 
 func (m *mockJWTAuthenticator) CreateToken(username string) (token string, expires time.Time, err error) {
-	return "test-token", time.Now().Add(24 * time.Hour), nil
+	return "", time.Time{}, nil
 }
 
 func (m *mockJWTAuthenticator) VerifyToken(token string) (jwt.MapClaims, error) {
@@ -61,9 +55,9 @@ func (m *mockJWTAuthenticator) VerifyToken(token string) (jwt.MapClaims, error) 
 }
 
 type mockDatabase struct {
-	users []*database.User // todo: slice of pointers or slice of objects?
+	users []*database.User
 
-	categories []*database.Category // todo: slice of pointers or slice of objects?
+	categories []*database.Category
 }
 
 func newMockDatabase() *mockDatabase {
@@ -74,7 +68,6 @@ func newMockDatabase() *mockDatabase {
 }
 
 func (m *mockDatabase) TestConnection() error {
-	//TODO implement me
 	panic("implement me")
 }
 
@@ -164,34 +157,29 @@ func (m *mockDatabase) SelectCategoryByUUID(ctx context.Context, uuid string, c 
 }
 
 func (m *mockDatabase) SelectCategoriesByOwnerID(ctx context.Context, ownerID int64, c *[]database.Category) error {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockDatabase) UpdateCategory(ctx context.Context, c *database.Category) error {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockDatabase) DeleteCategoryByID(ctx context.Context, id int64) error {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockDatabase) SelectCurrencyByCode(ctx context.Context, code string, c *database.Currency) error {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (m *mockDatabase) CreateTransaction(ctx context.Context, transaction *database.Transaction) error {
-	//TODO implement me
 	panic("implement me")
 }
 
 func newTestHandler() *Handler {
 	return New(
 		newMockDatabase(),
-		newMockJWTAuthenticator("some-username", "some-token"),
+		newMockJWTAuthenticator(),
 		newMockPasswordAuthenticator(),
 		log.New(io.Discard, "", 0),
 	)

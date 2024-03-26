@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"fmt"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/groshi-project/groshi/internal/auth"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -10,108 +12,162 @@ import (
 )
 
 func TestTokenFromHeader(t *testing.T) {
-	// test empty header value:
-	token1, err := tokenFromHeader("")
-	if assert.Error(t, err) {
-		assert.ErrorIs(t, err, errEmptyOrMissingAuthHeader)
+	type out struct {
+		token string
+		err   error
 	}
-	assert.Empty(t, token1)
-
-	// test malformed header value:
-	token2, err := tokenFromHeader("something bla bla blabla")
-	if assert.Error(t, err) {
-		assert.ErrorIs(t, err, errInvalidAuthHeader)
+	testCases := []struct {
+		input  string
+		output out
+	}{
+		{"", out{"", errEmptyOrMissingAuthHeader}},
+		{"a", out{"", errInvalidAuthHeader}},
+		{"a b", out{"", errInvalidAuthHeader}},
+		{"Bearer", out{"", errInvalidAuthHeader}},
+		{"Bearer ", out{"", errInvalidAuthHeader}},
+		{"Bearer  ", out{"", errInvalidAuthHeader}},
+		{"Bearer   ", out{"", errInvalidAuthHeader}},
+		{"Bearer token extra", out{"", errInvalidAuthHeader}},
+		{"Bearer some-token", out{"some-token", nil}},
 	}
-	assert.Empty(t, token2)
 
-	// test "Bearer" header value:
-	token3, err := tokenFromHeader("Bearer")
-	if assert.Error(t, err) {
-		assert.ErrorIs(t, err, errInvalidAuthHeader)
+	for i, testCase := range testCases {
+		msg := fmt.Sprintf("input=\"%s\", case_index=%d", testCase.input, i)
+
+		token, err := tokenFromHeader(testCase.input)
+		assert.Equal(t, testCase.output.err, err, msg)
+		assert.Equal(t, testCase.output.token, token, msg)
 	}
-	assert.Empty(t, token3)
-
-	// test "Bearer token extra" header value:
-	token4, err := tokenFromHeader("Bearer token extra")
-	if assert.Error(t, err) {
-		assert.ErrorIs(t, err, errInvalidAuthHeader)
-	}
-	assert.Empty(t, token4)
-
-	// finally, test valid header value:
-	token5, err := tokenFromHeader("Bearer some-token")
-	assert.NoError(t, err)
-	assert.Equal(t, "some-token", token5)
 }
 
-// mockAuthority is a mock implementation of the AuthorityInterface interface.
-type mockAuthority struct {
-	Token  string
-	Claims jwt.MapClaims
+type mockJWTAuthenticator struct {
+	secretKey []byte
+	*auth.DefaultJWTAuthenticator
 }
 
-// CreateToken stub.
-func (m *mockAuthority) CreateToken(username string) (string, time.Time, error) {
-	return m.Token, time.Time{}, nil
-}
-
-// VerifyToken stub. Simply checks if provided tokenString equal to the struct field [mockAuthority.Token].
-func (m *mockAuthority) VerifyToken(tokenString string) (jwt.MapClaims, error) {
-	if tokenString == m.Token {
-		return m.Claims, nil
-	} else {
-		return nil, jwt.ErrTokenSignatureInvalid
+func newMockJWTAuthenticator(secretKey string) *mockJWTAuthenticator {
+	return &mockJWTAuthenticator{
+		secretKey:               []byte(secretKey),
+		DefaultJWTAuthenticator: auth.NewJWTAuthenticator(secretKey, time.Hour),
 	}
+}
+
+func (m *mockJWTAuthenticator) CreateExpiredToken(username string) (string, time.Time, error) {
+	issued := time.Now()
+	expires := time.Now().Add(-time.Hour) // token expired an hour ago
+	token := jwt.NewWithClaims(auth.JWTSigningMethod, jwt.MapClaims{
+		"username": username,
+		"exp":      expires.Unix(),
+		"iat":      issued.Unix(),
+	})
+
+	tokenString, err := token.SignedString(m.secretKey)
+	if err != nil {
+		return "", expires, err
+	}
+
+	return tokenString, expires, nil
+}
+
+func (m *mockJWTAuthenticator) CreateNotYetValidToken(username string) (string, time.Time, error) {
+	issued := time.Now().Add(time.Hour) // issued in one hour from now
+	expires := time.Now().Add(2 * time.Hour)
+	token := jwt.NewWithClaims(auth.JWTSigningMethod, jwt.MapClaims{
+		"username": username,
+		"exp":      expires.Unix(),
+		"iat":      issued.Unix(),
+	})
+
+	tokenString, err := token.SignedString(m.secretKey)
+	if err != nil {
+		return "", expires, err
+	}
+
+	return tokenString, expires, nil
 }
 
 // testRequest creates a new [httptest.Recorder] and makes a test request to handler using it,
 // then returns pointer to this recorder.
-func testRequest(setAuthHeader bool, authHeaderValue string, handler http.Handler) *httptest.ResponseRecorder {
-	recorder := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodPost, "/", nil)
+func testRequest(setAuthHeader bool, authHeader string, handler http.Handler) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
 	if setAuthHeader {
-		request.Header.Set("Authorization", authHeaderValue)
+		req.Header.Set("Authorization", authHeader)
 	}
 
-	handler.ServeHTTP(recorder, request)
-	return recorder
+	handler.ServeHTTP(rec, req)
+	return rec
 }
 
 func TestNewJWT(t *testing.T) {
-	// username of the test user:
-	username := "my-username-123"
+	const (
+		testUsername  = "test-username"
+		testSecretKey = "test-secret-key"
+	)
 
-	authority := &mockAuthority{
-		Token:  "example-token-123",
-		Claims: map[string]any{"username": username},
-	}
+	var (
+		// Test handler which checks if username context value is equal to testUsername.
+		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			username, ok := r.Context().Value(UsernameContextKey).(string)
+			if !ok {
+				panic("username context key is missing")
+			}
+			assert.Equal(t, testUsername, username)
+		})
 
-	// test handler which checks username from context:
-	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		actualUsername := r.Context().Value("username").(string)
-		assert.Equal(t, username, actualUsername)
+		// JWT Authenticator used to issue and validate JWTs.
+		jwtAuth = newMockJWTAuthenticator(testSecretKey)
+
+		// Middleware which validates JWT.
+		middleware = NewJWT(jwtAuth)
+	)
+
+	t.Run("call the handler with valid token", func(t *testing.T) {
+		// create a new valid token for the test user:
+		token, _, err := jwtAuth.CreateToken(testUsername)
+		if err != nil {
+			panic(err)
+		}
+		rec := testRequest(true, fmt.Sprintf("Bearer %s", token), middleware(handler))
+		assert.Equal(t, http.StatusOK, rec.Code)
 	})
 
-	middleware := NewJWT(authority)
-	handlerWithMiddleware := middleware(testHandler)
+	t.Run("call the handler with expired token", func(t *testing.T) {
+		// create a new expired token for the test user:
+		token, _, err := jwtAuth.CreateExpiredToken(testUsername)
+		if err != nil {
+			panic(err)
+		}
+		rec := testRequest(true, fmt.Sprintf("Bearer %s", token), middleware(handler))
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	})
 
-	// test with correct token:
-	recorder := testRequest(true, "Bearer example-token-123", handlerWithMiddleware)
-	assert.Equal(t, http.StatusOK, recorder.Code)
+	t.Run("call the handler with token which is not yet valid", func(t *testing.T) {
+		token, _, err := jwtAuth.CreateNotYetValidToken(testUsername)
+		if err != nil {
+			panic(err)
+		}
+		rec := testRequest(true, fmt.Sprintf("Bearer %s", token), middleware(handler))
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	})
 
-	// test with wrong token:
-	recorder = testRequest(true, "Bearer wrong-token", handlerWithMiddleware)
-	assert.Equal(t, http.StatusUnauthorized, recorder.Code)
+	t.Run("call the handler with invalid token", func(t *testing.T) {
+		rec := testRequest(true, "Bearer invalid-token", middleware(handler))
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	})
 
-	// test with empty authorization header value:
-	recorder = testRequest(true, "", handlerWithMiddleware)
-	assert.Equal(t, http.StatusUnauthorized, recorder.Code)
+	t.Run("call the handler with invalid authorization header", func(t *testing.T) {
+		rec := testRequest(true, "Bearer is... who the hell is Bearer???", middleware(handler))
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+	})
 
-	// test without authorization header at all:
-	recorder = testRequest(false, "", handlerWithMiddleware)
-	assert.Equal(t, http.StatusUnauthorized, recorder.Code)
+	t.Run("call the handler with empty authorization header", func(t *testing.T) {
+		rec := testRequest(true, "", middleware(handler))
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	})
 
-	// test with invalid authorization header:
-	recorder = testRequest(true, "Bearer is... who the hell is Bearer???", handlerWithMiddleware)
-	assert.Equal(t, http.StatusBadRequest, recorder.Code)
+	t.Run("call the handler without authorization header", func(t *testing.T) {
+		rec := testRequest(false, "", middleware(handler))
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+	})
 }

@@ -59,7 +59,7 @@ func (h *Handler) UserCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create a new user:
-	passwordHash, err := h.passwordAuthenticator.HashPassword(params.Password)
+	passwordHash, err := h.passwordAuth.HashPassword(params.Password)
 	if err != nil {
 		h.internalServerErrorLogger.Println(err)
 		httpresp.Render(w, response.InternalServerError)

@@ -16,10 +16,10 @@ type Handler struct {
 	database database.Database
 
 	// JWT authenticator used to generate and validate JWTs.
-	JWTAuthenticator auth.JWTAuthenticator
+	JWTAuth auth.JWTAuthenticator
 
 	// Password authenticator used to hash and validate passwords.
-	passwordAuthenticator auth.PasswordAuthenticator
+	passwordAuth auth.PasswordAuthenticator
 
 	// Logger used to log internal server errors.
 	internalServerErrorLogger *log.Logger
@@ -29,11 +29,11 @@ type Handler struct {
 }
 
 // New creates a new instance of [Handler] and returns pointer to it.
-func New(database database.Database, jwtAuthenticator auth.JWTAuthenticator, passwordAuthenticator auth.PasswordAuthenticator, internalServerErrorLogger *log.Logger) *Handler {
+func New(database database.Database, jwtAuth auth.JWTAuthenticator, passwordAuth auth.PasswordAuthenticator, internalServerErrorLogger *log.Logger) *Handler {
 	return &Handler{
 		database:                  database,
-		JWTAuthenticator:          jwtAuthenticator,
-		passwordAuthenticator:     passwordAuthenticator,
+		JWTAuth:                   jwtAuth,
+		passwordAuth:              passwordAuth,
 		internalServerErrorLogger: internalServerErrorLogger,
 		paramsValidate:            validator.New(),
 	}

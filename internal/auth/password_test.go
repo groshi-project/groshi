@@ -13,43 +13,52 @@ func newTestPasswordAuthenticator() *DefaultPasswordAuthenticator {
 func TestAuthority_HashPassword(t *testing.T) {
 	a := newTestPasswordAuthenticator()
 
-	// [a.HashPassword] can hash an empty password, so check what you are passing!
-	hash1, err := a.HashPassword("")
-	assert.NoError(t, err)
-	assert.NotEmpty(t, hash1)
+	t.Run("hash a regular password", func(t *testing.T) {
+		hash, err := a.HashPassword("my-password")
+		assert.NoError(t, err)
+		assert.NotEmpty(t, hash)
+	})
 
-	hash2, err := a.HashPassword("my-password")
-	assert.NoError(t, err)
-	assert.NotEmpty(t, hash2)
+	t.Run("hash an empty password", func(t *testing.T) {
+		hash, err := a.HashPassword("")
+		assert.NoError(t, err)
+		assert.NotEmpty(t, hash)
+	})
 }
 
 func TestAuthority_VerifyPassword(t *testing.T) {
+	const (
+		correctPassword = "correct-password"
+		wrongPassword   = "wrong-password"
+	)
+
 	a := newTestPasswordAuthenticator()
+	correctPasswordHash, err := a.HashPassword(correctPassword)
+	if err != nil {
+		panic(err)
+	}
 
-	rightPassword := "password-123"
-	wrongPassword := "wrong lol"
+	t.Run("verify correct password", func(t *testing.T) {
+		ok, err := a.VerifyPassword(correctPassword, correctPasswordHash)
+		assert.NoError(t, err)
+		assert.True(t, ok)
+	})
 
-	hash, err := a.HashPassword(rightPassword)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, hash)
+	t.Run("verify wrong password", func(t *testing.T) {
+		ok, err := a.VerifyPassword(wrongPassword, correctPasswordHash)
+		assert.NoError(t, err)
+		assert.False(t, ok)
+	})
 
-	// test with wrong password:
-	ok, err := a.VerifyPassword(wrongPassword, hash)
-	assert.NoError(t, err)
-	assert.False(t, ok)
+	t.Run("verify empty password", func(t *testing.T) {
+		ok, err := a.VerifyPassword("", correctPasswordHash)
+		assert.NoError(t, err)
+		assert.False(t, ok)
+	})
 
-	// test with right password:
-	ok, err = a.VerifyPassword(rightPassword, hash)
-	assert.NoError(t, err)
-	assert.True(t, ok)
-
-	// test with empty password:
-	ok, err = a.VerifyPassword("", hash)
-	assert.NoError(t, err)
-	assert.False(t, ok)
-
-	// test with empty hash:
-	ok, err = a.VerifyPassword(rightPassword, "")
-	assert.Error(t, bcrypt.ErrHashTooShort)
-	assert.False(t, ok)
+	t.Run("verify correct password over an empty hash", func(t *testing.T) {
+		ok, err := a.VerifyPassword(correctPasswordHash, "")
+		assert.ErrorIs(t, err, bcrypt.ErrHashTooShort)
+		assert.False(t, ok)
+	})
 }

@@ -15,13 +15,13 @@ type Response struct {
 }
 
 // New creates a new instance of [Response] and returns pointer to it.
-func New(statusCode int, response any) *Response {
-	return &Response{statusCode: statusCode, body: response}
+func New(statusCode int, body any) *Response {
+	return &Response{statusCode: statusCode, body: body}
 }
 
 // NewOK creates a new instance of [Response] with HTTP status code 200 and returns pointer to it.
-func NewOK(response any) *Response {
-	return &Response{statusCode: http.StatusOK, body: response}
+func NewOK(body any) *Response {
+	return &Response{statusCode: http.StatusOK, body: body}
 }
 
 // Render renders HTTP response.

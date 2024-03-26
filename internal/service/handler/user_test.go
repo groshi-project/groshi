@@ -90,7 +90,7 @@ func TestHandler_UserGet(t *testing.T) {
 			panic(err)
 		}
 
-		ctx = context.WithValue(ctx, middleware.UsernameContextVar, testUsername)
+		ctx = context.WithValue(ctx, middleware.UsernameContextKey, testUsername)
 		rec := testRequest(ctx, nil, handler.UserGet)
 		if assert.Equal(t, http.StatusOK, rec.Code) {
 			resp := &userGetResponse{}
@@ -107,7 +107,7 @@ func TestHandler_UserGet(t *testing.T) {
 	t.Run("get a non-existent user", func(t *testing.T) {
 		var (
 			handler = newTestHandler()
-			ctx     = context.WithValue(context.Background(), middleware.UsernameContextVar, "i-dont-exist")
+			ctx     = context.WithValue(context.Background(), middleware.UsernameContextKey, "i-dont-exist")
 		)
 		rec := testRequest(ctx, nil, handler.UserGet)
 		assert.Equal(t, http.StatusNotFound, rec.Code)
@@ -141,7 +141,7 @@ func TestHandler_UserDelete(t *testing.T) {
 			panic(err)
 		}
 
-		ctx = context.WithValue(ctx, middleware.UsernameContextVar, testUsername)
+		ctx = context.WithValue(ctx, middleware.UsernameContextKey, testUsername)
 		rec := testRequest(ctx, nil, handler.UserDelete)
 		if assert.Equal(t, http.StatusOK, rec.Code) {
 			resp := &userDeleteResponse{}
@@ -162,7 +162,7 @@ func TestHandler_UserDelete(t *testing.T) {
 	t.Run("delete non-existent user", func(t *testing.T) {
 		var (
 			handler = newTestHandler()
-			ctx     = context.WithValue(context.Background(), middleware.UsernameContextVar, "i-dont-exist")
+			ctx     = context.WithValue(context.Background(), middleware.UsernameContextKey, "i-dont-exist")
 		)
 		rec := testRequest(ctx, nil, handler.UserDelete)
 		assert.Equal(t, http.StatusNotFound, rec.Code)

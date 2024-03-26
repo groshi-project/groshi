@@ -31,7 +31,7 @@ func TestHandler_CategoriesCreate(t *testing.T) {
 			panic(err)
 		}
 
-		ctx = context.WithValue(context.Background(), middleware.UsernameContextVar, testUsername)
+		ctx = context.WithValue(context.Background(), middleware.UsernameContextKey, testUsername)
 		params := &categoriesCreateParams{
 			Name: testCategoryName,
 		}
@@ -61,7 +61,7 @@ func TestHandler_CategoriesCreate(t *testing.T) {
 	t.Run("create a new category owned by a non-existed user", func(t *testing.T) {
 		var (
 			handler = newTestHandler()
-			ctx     = context.WithValue(context.Background(), middleware.UsernameContextVar, "i-dont-exist")
+			ctx     = context.WithValue(context.Background(), middleware.UsernameContextKey, "i-dont-exist")
 		)
 
 		params := &categoriesCreateParams{
@@ -74,7 +74,7 @@ func TestHandler_CategoriesCreate(t *testing.T) {
 	t.Run("call the handler with no params", func(t *testing.T) {
 		var (
 			handler = newTestHandler()
-			ctx     = context.WithValue(context.Background(), middleware.UsernameContextVar, testUsername)
+			ctx     = context.WithValue(context.Background(), middleware.UsernameContextKey, testUsername)
 		)
 
 		rec := testRequest(ctx, nil, handler.CategoriesCreate)

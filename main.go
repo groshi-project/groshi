@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/golang-jwt/jwt/v4"
 	_ "github.com/groshi-project/groshi/docs"
 	"github.com/groshi-project/groshi/internal/auth"
 	"github.com/groshi-project/groshi/internal/database"
@@ -154,7 +153,7 @@ func newMux(groshi *service.Service) *chi.Mux {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(time.Duration(30) * time.Second))
 
-	jwtMiddleware := serviceMiddleware.NewJWT(groshi.Handler.JWTAuthenticator)
+	jwtMiddleware := serviceMiddleware.NewJWT(groshi.Handler.JWTAuth)
 
 	// public routes:
 	r.Group(func(r chi.Router) {
@@ -243,7 +242,7 @@ func main() {
 	// create a groshi service:
 	groshi := service.New(
 		db,
-		auth.NewJWTAuthenticator(jwt.SigningMethodHS256, options.Service.JWTSecretKey, options.Service.JWTTimeToLive),
+		auth.NewJWTAuthenticator(options.Service.JWTSecretKey, options.Service.JWTTimeToLive),
 		auth.NewPasswordAuthenticator(options.Service.BcryptCost),
 		log.New(os.Stderr, "[internal server error]: ", loggingBaseFlags|log.Llongfile),
 		options.Development.Swagger,

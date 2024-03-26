@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+// JWTClaimUsername is claims key which holds user's username.
+var JWTClaimUsername = "username"
+
+// JWTSigningMethod is a signing method used to sign JWT claims.
+var JWTSigningMethod = jwt.SigningMethodHS256
+
 // JWTAuthenticator is an interface for a JWT authenticator: it can create and verify tokens.
 type JWTAuthenticator interface {
 	// CreateToken generates a new JWT and returns its string representation and expiration timestamp.
@@ -17,9 +23,6 @@ type JWTAuthenticator interface {
 
 // DefaultJWTAuthenticator is the default JWT authenticator.
 type DefaultJWTAuthenticator struct {
-	// signing method which is used to sign token claims.
-	signingMethod jwt.SigningMethod
-
 	// secret key which is used to sign token claims.
 	secretKey []byte
 
@@ -28,11 +31,10 @@ type DefaultJWTAuthenticator struct {
 }
 
 // NewJWTAuthenticator creates a new instance of [DefaultJWTAuthenticator] and returns pointer to it.
-func NewJWTAuthenticator(signingMethod jwt.SigningMethod, secretKey string, tokenTTL time.Duration) *DefaultJWTAuthenticator {
+func NewJWTAuthenticator(secretKey string, tokenTTL time.Duration) *DefaultJWTAuthenticator {
 	return &DefaultJWTAuthenticator{
-		signingMethod: signingMethod,
-		secretKey:     []byte(secretKey),
-		tokenTTL:      tokenTTL,
+		secretKey: []byte(secretKey),
+		tokenTTL:  tokenTTL,
 	}
 }
 
@@ -40,10 +42,10 @@ func NewJWTAuthenticator(signingMethod jwt.SigningMethod, secretKey string, toke
 func (a *DefaultJWTAuthenticator) CreateToken(username string) (string, time.Time, error) {
 	issued := time.Now()
 	expires := time.Now().Add(a.tokenTTL)
-	token := jwt.NewWithClaims(a.signingMethod, jwt.MapClaims{
-		"username": username,
-		"exp":      expires.Unix(),
-		"iat":      issued.Unix(),
+	token := jwt.NewWithClaims(JWTSigningMethod, jwt.MapClaims{
+		JWTClaimUsername: username,
+		"exp":            expires.Unix(),
+		"iat":            issued.Unix(),
 	})
 
 	tokenString, err := token.SignedString(a.secretKey)

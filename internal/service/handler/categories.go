@@ -49,7 +49,7 @@ func (h *Handler) CategoriesCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// extract current user's username from context:
-	username, ok := r.Context().Value(middleware.UsernameContextVar).(string)
+	username, ok := r.Context().Value(middleware.UsernameContextKey).(string)
 	if !ok {
 		h.internalServerErrorLogger.Println(errMissingUsernameContextValue)
 		httpresp.Render(w, response.InternalServerError)
@@ -106,7 +106,7 @@ type categoriesGetResponse []categoriesGetResponseItem
 //	@Router			/categories [get]
 func (h *Handler) CategoriesGet(w http.ResponseWriter, r *http.Request) {
 	// extract current user's username from context
-	username, ok := r.Context().Value(middleware.UsernameContextVar).(string)
+	username, ok := r.Context().Value(middleware.UsernameContextKey).(string)
 	if !ok {
 		h.internalServerErrorLogger.Println(errMissingUsernameContextValue)
 		httpresp.Render(w, response.InternalServerError)

@@ -10,10 +10,8 @@ import (
 	"strings"
 )
 
-const (
-	UsernameContextVar  = "username" // todo: is it the right place for this const?
-	authorizationHeader = "Authorization"
-)
+const UsernameContextKey = "username"
+const authorizationHeader = "Authorization"
 
 var (
 	errEmptyOrMissingAuthHeader = errors.New("empty or missing authorization header")
@@ -36,8 +34,8 @@ func tokenFromHeader(headerValue string) (string, error) {
 }
 
 // NewJWT returns new JWT middleware which extracts and verifies JWT from authorization header.
-// Additionally, sets [UsernameContextVar] context key to the authorized user's username.
-func NewJWT(jwtAuthority auth.JWTAuthenticator) func(next http.Handler) http.Handler {
+// Additionally, sets [UsernameContextKey] context key to the authorized user's username.
+func NewJWT(authenticator auth.JWTAuthenticator) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// extract token from authorization header value:
@@ -55,14 +53,19 @@ func NewJWT(jwtAuthority auth.JWTAuthenticator) func(next http.Handler) http.Han
 				}
 			}
 
-			claims, err := jwtAuthority.VerifyToken(token)
+			claims, err := authenticator.VerifyToken(token)
 			if err != nil {
 				// todo: is it safe to display error?
 				httpresp.Render(w, httpresp.New(http.StatusUnauthorized, model.NewError(err.Error())))
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), UsernameContextVar, claims["username"])
+			username, ok := claims[auth.JWTClaimUsername]
+			if !ok {
+				panic("token does not contain username claim")
+			}
+
+			ctx := context.WithValue(r.Context(), UsernameContextKey, username)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
