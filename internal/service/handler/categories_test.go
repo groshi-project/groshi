@@ -81,7 +81,6 @@ func TestHandler_CategoriesCreate(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 	})
 
-	// case: call handler without username context key
 	t.Run("call the handler without username context value", func(t *testing.T) {
 		var (
 			handler = newTestHandler()

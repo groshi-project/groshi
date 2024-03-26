@@ -47,7 +47,7 @@ func newMockJWTAuthenticator() *mockJWTAuthenticator {
 }
 
 func (m *mockJWTAuthenticator) CreateToken(username string) (token string, expires time.Time, err error) {
-	return "", time.Time{}, nil
+	return "token", time.Now(), nil
 }
 
 func (m *mockJWTAuthenticator) VerifyToken(token string) (jwt.MapClaims, error) {
