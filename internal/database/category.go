@@ -13,10 +13,10 @@ type Category struct {
 	ID   int64     `bun:"id,pk,autoincrement"`
 	UUID uuid.UUID `bun:"uuid,type:uuid,notnull,default:uuid_generate_v4()"`
 
+	Name string `bun:",notnull"`
+
 	Owner   User  `bun:"rel:belongs-to,join:owner_id=id"`
 	OwnerID int64 `bun:"owner_id,notnull"`
-
-	Name string `bun:",notnull"`
 }
 
 // CategoryQuerier interface describes a type which executes database queries related to the [Category] model.

@@ -144,7 +144,7 @@ func (h *Handler) CategoriesGet(w http.ResponseWriter, r *http.Request) {
 			Name: category.Name,
 		})
 	}
-	httpresp.NewOK(&resp)
+	httpresp.Render(w, httpresp.NewOK(&resp))
 }
 
 type categoriesUpdateParams struct {

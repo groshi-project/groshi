@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
-	"github.com/google/uuid"
 	"github.com/groshi-project/groshi/internal/database"
 	"io"
 	"log"
@@ -122,15 +121,16 @@ func (m *mockDatabase) DeleteUserByUsername(ctx context.Context, username string
 
 func (m *mockDatabase) CreateCategory(ctx context.Context, c *database.Category) error {
 	if c.UUID.String() == "" {
-		c.UUID = uuid.New()
-	} else {
-		exists, err := m.CategoryExistsByUUID(ctx, c.UUID.String())
-		if err != nil {
-			panic(err)
-		}
-		if exists {
-			panic(fmt.Errorf("category with UUID %s already exists", c.UUID.String()))
-		}
+		panic("empty uuid")
+	}
+
+	exists, err := m.CategoryExistsByUUID(ctx, c.UUID.String())
+	if err != nil {
+		panic(err)
+	}
+
+	if exists {
+		panic(fmt.Errorf("category with UUID %s already exists", c.UUID.String()))
 	}
 
 	m.categories = append(m.categories, c)
@@ -157,7 +157,18 @@ func (m *mockDatabase) SelectCategoryByUUID(ctx context.Context, uuid string, c 
 }
 
 func (m *mockDatabase) SelectCategoriesByOwnerID(ctx context.Context, ownerID int64, c *[]database.Category) error {
-	panic("implement me")
+	found := false
+	for _, category := range m.categories {
+		if category.OwnerID == ownerID {
+			found = true
+			*c = append(*c, *category)
+		}
+	}
+
+	if !found {
+		return sql.ErrNoRows
+	}
+	return nil
 }
 
 func (m *mockDatabase) UpdateCategory(ctx context.Context, c *database.Category) error {
